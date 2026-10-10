@@ -1,0 +1,194 @@
+plugins {
+    id 'java-library'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.148'
+    id 'me.modmuss50.mod-publish-plugin' version '2.2.1'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = "${mod_id}-neoforge-${minecraft_version}"
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+sourceSets.main.resources {
+    srcDir('src/generated/resources')
+    exclude('**/*.bbmodel')
+    exclude('src/generated/**/.cache')
+}
+
+repositories {
+}
+
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            // Separate directory, so a dedicated server can run next to the dev client.
+            gameDirectory = project.file('run-server')
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        gameTestServer {
+            type = 'gameTestServer'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all',
+                    '--output', file('src/generated/resources/').absolutePath,
+                    '--existing', file('src/main/resources/').absolutePath
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+// Dependencies added to localRuntime are available in dev runs but are not published as dependencies.
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+dependencies {
+}
+
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+            mod_url                : mod_url,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('jar', Jar) {
+    def licenseName = "LICENSE_${mod_id}"
+    from('LICENSE') {
+        rename { licenseName }
+    }
+    manifest.attributes(
+            'Implementation-Title': mod_name,
+            'Implementation-Version': mod_version,
+            'Implementation-Vendor': mod_authors,
+    )
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Release
+// ---------------------------------------------------------------------------
+
+// Returns the body of the "## [version]" section of CHANGELOG.md, or null when it is missing.
+static String extractChangelog(String changelog, String version) {
+    def lines = changelog.readLines()
+    def start = lines.findIndexOf { it ==~ /^##\s+\[?${java.util.regex.Pattern.quote(version)}\]?(\s.*)?$/ }
+    if (start < 0) {
+        return null
+    }
+    def end = lines.findIndexOf(start + 1) { it.startsWith('## ') }
+    def body = lines.subList(start + 1, end < 0 ? lines.size() : end).join('\n').trim()
+    return body ?: null
+}
+
+def releaseNotes = extractChangelog(
+        providers.fileContents(layout.projectDirectory.file('CHANGELOG.md')).asText.getOrElse(''),
+        mod_version)
+def curseforgeToken = providers.gradleProperty('curseforge_token')
+        .orElse(providers.environmentVariable('CURSEFORGE_TOKEN'))
+
+// Validates release metadata and writes the notes of the current version to build/release-notes.md.
+var releaseNotesTask = tasks.register('releaseNotes') {
+    group = 'publishing'
+    description = 'Validates release metadata and writes notes for the current version.'
+
+    def notes = releaseNotes
+    def version = mod_version
+    def projectId = curseforge_project_id
+    def output = layout.buildDirectory.file('release-notes.md')
+    inputs.property('notes', notes ?: '')
+    inputs.property('projectId', projectId)
+    outputs.file(output)
+
+    doLast {
+        if (!notes) {
+            throw new GradleException("CHANGELOG.md has no non-empty section for version ${version}")
+        }
+        if (!(projectId ==~ /\d+/)) {
+            throw new GradleException('curseforge_project_id is not set in gradle.properties')
+        }
+        output.get().asFile.text = notes + '\n'
+    }
+}
+
+publishMods {
+    file = tasks.named('jar', Jar).flatMap { it.archiveFile }
+    changelog = releaseNotes ?: ''
+    type = STABLE
+    displayName = "${mod_name} ${mod_version}"
+    modLoaders.add('neoforge')
+    dryRun = providers.gradleProperty('dryRun').map { it != 'false' }.orElse(false)
+
+    curseforge {
+        projectId = curseforge_project_id
+        accessToken = curseforgeToken
+        minecraftVersions.add(minecraft_version)
+        javaVersions.add(JavaVersion.VERSION_21)
+        client = curseforge_client.toBoolean()
+        server = curseforge_server.toBoolean()
+        curseforge_requires.split(',')*.trim().findAll().each { requires(it) }
+        curseforge_optional.split(',')*.trim().findAll().each { optional(it) }
+    }
+}
+
+tasks.named('publishCurseforge') {
+    dependsOn releaseNotesTask
+}
