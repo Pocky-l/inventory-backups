@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.storage.BackupStore;
+import com.pockyl.inventorybackups.storage.LegacyImporter;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -16,6 +17,9 @@ import java.util.Optional;
  * Owns the storage of the running server: opened when the server starts, flushed and closed when it has stopped.
  */
 public final class BackupService {
+    /** Folder of the 2.x JSON backups, relative to the server folder. */
+    private static final String LEGACY_FOLDER = "InventoryLog";
+
     @Nullable
     private static BackupStore store;
     @Nullable
@@ -30,12 +34,25 @@ public final class BackupService {
         Path root = root(newServer);
         store = new BackupStore(root, newServer.registryAccess(), Config.KEYFRAME_INTERVAL::get);
         InventoryBackups.LOGGER.info("Inventory backups are stored in {}", root.toAbsolutePath().normalize());
+        importLegacyBackups(store, newServer.getServerDirectory().resolve(LEGACY_FOLDER));
         for (ModConfigSpec.ConfigValue<?> value : Config.DEPRECATED_VALUES) {
             if (!value.get().equals(value.getDefault())) {
                 InventoryBackups.LOGGER.info("Config option {} is no longer used since 3.0 and is ignored",
                         String.join(".", value.getPath()));
             }
         }
+    }
+
+    /** Queues the one-time import of 2.x backups; it runs before any capture of this session is written. */
+    private static void importLegacyBackups(BackupStore target, Path legacy) {
+        Config.LegacyAction action = Config.LEGACY_BACKUPS.get();
+        target.execute(() -> {
+            LegacyImporter.Result result = LegacyImporter.run(target, legacy, action);
+            if (result != null) {
+                InventoryBackups.LOGGER.info("Imported {} 2.x backups of {} players ({} unreadable files skipped)", result.files(),
+                        result.players(), result.skippedFiles());
+            }
+        });
     }
 
     static void stop() {
