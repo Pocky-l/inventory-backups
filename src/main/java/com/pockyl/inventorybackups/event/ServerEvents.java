@@ -6,6 +6,7 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.command.BackupCommands;
+import com.pockyl.inventorybackups.command.SearchCommands;
 
 /**
  * Registers the chat commands.
@@ -18,5 +19,6 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         BackupCommands.register(event.getDispatcher());
+        SearchCommands.register(event.getDispatcher());
     }
 }

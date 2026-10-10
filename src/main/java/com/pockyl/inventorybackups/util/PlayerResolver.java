@@ -10,8 +10,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Finds a player by name among online players and, failing that, in the server's profile cache, so backups of offline
- * players can be browsed too.
+ * Finds a player by name (or UUID) among online players and, failing that, in the server's profile cache, so backups
+ * of offline players can be browsed too.
  */
 public final class PlayerResolver {
     private PlayerResolver() {
@@ -26,7 +26,18 @@ public final class PlayerResolver {
         }
     }
 
+    /** Resolves a player name or, for players without a known name, a UUID. */
     public static Optional<ResolvedPlayer> resolve(MinecraftServer server, String name) {
+        UUID uuid = parseUuid(name);
+        if (uuid != null) {
+            ServerPlayer byUuid = server.getPlayerList().getPlayer(uuid);
+            if (byUuid != null) {
+                return Optional.of(new ResolvedPlayer(uuid, byUuid.getScoreboardName(), byUuid));
+            }
+            GameProfileCache cache = server.getProfileCache();
+            String known = cache == null ? null : cache.get(uuid).map(GameProfile::getName).orElse(null);
+            return Optional.of(new ResolvedPlayer(uuid, known == null ? name : known, null));
+        }
         ServerPlayer online = server.getPlayerList().getPlayerByName(name);
         if (online != null) {
             return Optional.of(new ResolvedPlayer(online.getUUID(), online.getScoreboardName(), online));
@@ -36,6 +47,18 @@ public final class PlayerResolver {
             return Optional.empty();
         }
         return cache.get(name).map(PlayerResolver::offline);
+    }
+
+    @Nullable
+    private static UUID parseUuid(String text) {
+        if (text.length() != 36) {
+            return null;
+        }
+        try {
+            return UUID.fromString(text);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static ResolvedPlayer offline(GameProfile profile) {
