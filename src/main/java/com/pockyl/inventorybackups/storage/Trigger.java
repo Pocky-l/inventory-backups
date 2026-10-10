@@ -16,7 +16,7 @@ public enum Trigger {
     /** An admin restored a state; the context names the admin. */
     RESTORE(5, "restore", true, true),
     /** An admin edited the live inventory; the context names the admin. */
-    EDIT(6, "edit", true, true),
+    EDIT(6, "edit", false, true),
     /** An admin asked for a snapshot. */
     COMMAND(7, "command", true, true),
     /** Imported from a 2.x backup file. */

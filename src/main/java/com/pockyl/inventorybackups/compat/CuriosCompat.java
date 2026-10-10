@@ -1,26 +1,26 @@
 package com.pockyl.inventorybackups.compat;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
 
 import com.pockyl.inventorybackups.InventoryBackups;
+import com.pockyl.inventorybackups.backup.Slots;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * Optional Curios support. Curios is reached through reflection, so the mod neither compiles against it nor needs it
- * at runtime. Curio slots are numbered from {@link #FIRST_SLOT} in the order Curios lists them.
+ * at runtime. Curio slots are numbered from {@link Slots#CURIOS_START} in the order Curios lists them.
  */
 public final class CuriosCompat {
-    public static final int FIRST_SLOT = 1000;
-
     private static final String MOD_ID = "curios";
     private static Boolean loaded;
 
@@ -34,22 +34,18 @@ public final class CuriosCompat {
         return loaded;
     }
 
-    public static boolean isCurioSlot(int index) {
-        return index >= FIRST_SLOT;
-    }
-
-    /** Non-empty curio slots of the player; empty when Curios is absent. */
-    public static Map<Integer, ItemStack> collect(Player player) {
-        Map<Integer, ItemStack> items = new HashMap<>();
+    /** Copies of the non-empty curio slots of the player; empty when Curios is absent. */
+    public static Int2ObjectMap<ItemStack> collect(Player player) {
+        Int2ObjectMap<ItemStack> items = new Int2ObjectOpenHashMap<>();
         if (!isLoaded()) {
             return items;
         }
         try {
-            int index = FIRST_SLOT;
+            int index = Slots.CURIOS_START;
             for (Object handler : stackHandlers(player)) {
                 int slots = (int) handler.getClass().getMethod("getSlots").invoke(handler);
                 Method get = handler.getClass().getMethod("getStackInSlot", int.class);
-                for (int i = 0; i < slots; i++, index++) {
+                for (int i = 0; i < slots && index < Slots.CURIOS_END; i++, index++) {
                     ItemStack stack = (ItemStack) get.invoke(handler, i);
                     if (!stack.isEmpty()) {
                         items.put(index, stack.copy());
@@ -62,18 +58,30 @@ public final class CuriosCompat {
         return items;
     }
 
-    /** Replaces every curio slot of the player with the backup contents (slots missing from it are cleared). */
-    public static void restore(Player player, Map<Integer, ItemStack> items) {
+    /** Replaces every curio slot of the player with the given contents (missing slots are cleared). */
+    public static void restore(Player player, Int2ObjectMap<ItemStack> items) {
+        write(player, items, true);
+    }
+
+    /** Replaces only the given curio slots. */
+    public static void restoreSlots(Player player, Int2ObjectMap<ItemStack> items) {
+        write(player, items, false);
+    }
+
+    private static void write(Player player, Int2ObjectMap<ItemStack> items, boolean clearOthers) {
         if (!isLoaded()) {
             return;
         }
         try {
-            int index = FIRST_SLOT;
+            int index = Slots.CURIOS_START;
             for (Object handler : stackHandlers(player)) {
                 int slots = (int) handler.getClass().getMethod("getSlots").invoke(handler);
                 Method set = handler.getClass().getMethod("setStackInSlot", int.class, ItemStack.class);
-                for (int i = 0; i < slots; i++, index++) {
-                    set.invoke(handler, i, items.getOrDefault(index, ItemStack.EMPTY).copy());
+                for (int i = 0; i < slots && index < Slots.CURIOS_END; i++, index++) {
+                    if (clearOthers || items.containsKey(index)) {
+                        ItemStack stack = items.get(index);
+                        set.invoke(handler, i, stack == null ? ItemStack.EMPTY : stack.copy());
+                    }
                 }
             }
         } catch (ReflectiveOperationException | RuntimeException e) {

@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -18,6 +19,11 @@ import org.jetbrains.annotations.Nullable;
 public record EntryContext(String dimension, BlockPos pos, @Nullable String detail, @Nullable BlockPos containerPos,
                            @Nullable String actor) {
     public static final EntryContext NONE = new EntryContext("", BlockPos.ZERO, null, null, null);
+
+    /** Dimension and position of the player. */
+    public static EntryContext of(ServerPlayer player) {
+        return new EntryContext(player.level().dimension().location().toString(), player.blockPosition(), null, null, null);
+    }
 
     public EntryContext withDetail(@Nullable String newDetail) {
         return new EntryContext(dimension, pos, newDetail, containerPos, actor);

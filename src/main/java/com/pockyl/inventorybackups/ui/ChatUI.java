@@ -2,14 +2,18 @@ package com.pockyl.inventorybackups.ui;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.backup.BackupKind;
-import com.pockyl.inventorybackups.backup.BackupService;
-import com.pockyl.inventorybackups.backup.BackupStorage;
+import com.pockyl.inventorybackups.command.EntrySelector;
+import com.pockyl.inventorybackups.storage.Entry;
+import com.pockyl.inventorybackups.storage.EntryContext;
+import com.pockyl.inventorybackups.storage.Trigger;
 import com.pockyl.inventorybackups.util.PlayerResolver.ResolvedPlayer;
 
 import java.time.LocalDate;
@@ -19,14 +23,13 @@ import java.util.List;
 import static com.pockyl.inventorybackups.ui.Texts.tr;
 
 /**
- * Chat output of the commands: the clickable backup list with filters and pages, help and status messages.
+ * Chat output of the commands: the clickable timeline list with filters and pages, help and status messages. This is
+ * the whole interface for admins without the client mod.
  */
 public final class ChatUI {
     public static final int PAGE_SIZE = 10;
 
     private static final String RULE = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
-    /** Length of the timestamp that starts every backup name, {@code yyyy-MM-dd-HH-mm-ss}. */
-    private static final int TIMESTAMP_LENGTH = 19;
 
     private ChatUI() {
     }
@@ -48,16 +51,20 @@ public final class ChatUI {
         return Component.literal(String.valueOf(value)).withStyle(ChatFormatting.WHITE);
     }
 
-    /** Backups of a player matching the filter (a date prefix like 2025-01 or a type like death), one page of them. */
-    public static void showList(CommandSourceStack source, BackupKind kind, ResolvedPlayer target, String filter, int page) {
+    /**
+     * One page of a player's entries that match the filter.
+     *
+     * @param entries all entries of the player, newest first
+     */
+    public static void showList(CommandSourceStack source, BackupKind kind, ResolvedPlayer target, List<Entry> entries, String filter,
+                                int page) {
         source.sendSystemMessage(header(tr(key(kind, "header.list"))));
-        List<String> all = BackupStorage.list(kind, target.uuid());
-        if (all.isEmpty()) {
+        if (entries.isEmpty()) {
             source.sendSystemMessage(Component.literal("✖ ").append(tr(key(kind, "error.no_backups"))).withStyle(ChatFormatting.RED));
             source.sendSystemMessage(rule());
             return;
         }
-        List<String> matching = all.stream().filter(name -> matches(name, filter)).toList();
+        List<Entry> matching = entries.stream().filter(entry -> EntrySelector.matches(entry, filter)).toList();
         if (matching.isEmpty()) {
             source.sendSystemMessage(Component.literal("✖ ")
                     .append(tr("inventorybackups.error.no_match", Component.literal(filter).withStyle(ChatFormatting.YELLOW)))
@@ -69,23 +76,33 @@ public final class ChatUI {
 
         int pages = (matching.size() + PAGE_SIZE - 1) / PAGE_SIZE;
         int current = Math.max(1, Math.min(page, pages));
-        source.sendSystemMessage(tr("inventorybackups.info.player", value(target.name())).withStyle(ChatFormatting.GRAY));
+        source.sendSystemMessage(tr("inventorybackups.info.player", value(target.name())).withStyle(ChatFormatting.GRAY)
+                .append(" ")
+                .append(target.isOnline()
+                        ? tr("inventorybackups.info.online").withStyle(ChatFormatting.GREEN)
+                        : tr("inventorybackups.info.offline").withStyle(ChatFormatting.DARK_GRAY)));
         source.sendSystemMessage(tr(key(kind, "info.total"), value(matching.size())).withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(quickFilters(kind, target.name()));
         source.sendSystemMessage(Component.empty());
 
         int from = (current - 1) * PAGE_SIZE;
         for (int i = from; i < Math.min(from + PAGE_SIZE, matching.size()); i++) {
-            String name = matching.get(i);
-            String args = " " + target.name() + " " + name;
-            source.sendSystemMessage(Component.literal((i + 1) + ". ").withStyle(ChatFormatting.DARK_GRAY)
-                    .append(describe(name))
+            Entry entry = matching.get(i);
+            String args = " " + target.name() + " " + entry.time();
+            MutableComponent line = Component.literal((i + 1) + ". ").withStyle(ChatFormatting.DARK_GRAY)
+                    .append(describe(entry))
                     .append(" ")
                     .append(button("[👁]", ChatFormatting.GREEN, command(kind, "view" + args), tr("inventorybackups.button.hover.view")))
                     .append(" ")
-                    .append(button("[↻]", ChatFormatting.YELLOW, command(kind, "set" + args), tr("inventorybackups.button.hover.restore")))
+                    .append(button("[↻]", ChatFormatting.YELLOW, command(kind, "set" + args),
+                            tr("inventorybackups.button.hover.restore")))
                     .append(" ")
-                    .append(button("[📥]", ChatFormatting.AQUA, command(kind, "copy" + args), tr("inventorybackups.button.hover.copy"))));
+                    .append(button("[📥]", ChatFormatting.AQUA, command(kind, "copy" + args), tr("inventorybackups.button.hover.copy")));
+            Component teleport = teleportButton(entry.context());
+            if (teleport != null) {
+                line.append(" ").append(teleport);
+            }
+            source.sendSystemMessage(line);
         }
         if (pages > 1) {
             source.sendSystemMessage(Component.empty());
@@ -97,54 +114,118 @@ public final class ChatUI {
     public static void showHelp(CommandSourceStack source, BackupKind kind) {
         source.sendSystemMessage(header(tr(key(kind, "header.help"))));
         ChatFormatting color = kind == BackupKind.ENDER_CHEST ? ChatFormatting.DARK_PURPLE : ChatFormatting.GOLD;
-        for (String command : List.of("player", "list", "view", "set", "copy")) {
+        for (String command : List.of("player", "list", "view", "set", "copy", "undo", "snapshot")) {
             source.sendSystemMessage(tr(key(kind, "help." + command)).withStyle(color));
-            source.sendSystemMessage(Component.literal("  ").append(tr(key(kind, "help." + command + ".desc")).withStyle(ChatFormatting.GRAY)));
+            source.sendSystemMessage(Component.literal("  ")
+                    .append(tr(key(kind, "help." + command + ".desc")).withStyle(ChatFormatting.GRAY)));
         }
         source.sendSystemMessage(Component.empty());
         source.sendSystemMessage(tr("inventorybackups.help.filters").withStyle(ChatFormatting.GRAY));
         for (String example : List.of("month", "day", "type", "page")) {
-            source.sendSystemMessage(Component.literal("  ").append(tr("inventorybackups.help.filter." + example).withStyle(ChatFormatting.WHITE)));
+            source.sendSystemMessage(Component.literal("  ")
+                    .append(tr("inventorybackups.help.filter." + example).withStyle(ChatFormatting.WHITE)));
         }
+        source.sendSystemMessage(tr("inventorybackups.help.more").withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(rule());
     }
 
-    /** Whether a backup name passes a list filter: a date prefix or a backup type. */
-    public static boolean matches(String name, String filter) {
-        return filter.isEmpty() || name.startsWith(filter) || name.endsWith("-" + filter);
+    /** Entry as a readable line: icon, time, trigger and what happened; the details show on hover. */
+    public static MutableComponent describe(Entry entry) {
+        Trigger trigger = entry.trigger();
+        MutableComponent line = Component.literal(icon(trigger) + " " + EntrySelector.display(entry.time()) + " ")
+                .withStyle(ChatFormatting.WHITE)
+                .append(tr("inventorybackups.trigger." + trigger.key()).withStyle(color(trigger)));
+        Component summary = summary(entry);
+        if (summary != null) {
+            line.append(Component.literal(" ").append(summary).withStyle(ChatFormatting.GRAY));
+        }
+        return line.withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, details(entry))));
     }
 
-    /** Backup name as a readable line: type icon, timestamp and type label. */
-    private static MutableComponent describe(String name) {
-        String type = name.length() > TIMESTAMP_LENGTH ? name.substring(TIMESTAMP_LENGTH + 1) : "";
-        String timestamp = name.length() > TIMESTAMP_LENGTH ? name.substring(0, TIMESTAMP_LENGTH) : name;
-        String icon;
-        ChatFormatting color;
-        switch (type) {
-            case BackupService.DEATH -> {
-                icon = "💀 ";
-                color = ChatFormatting.RED;
-            }
-            case BackupService.JOIN -> {
-                icon = "➡ ";
-                color = ChatFormatting.GREEN;
-            }
-            case BackupService.QUIT -> {
-                icon = "⬅ ";
-                color = ChatFormatting.GRAY;
-            }
-            case BackupService.OPEN -> {
-                icon = "📦 ";
-                color = ChatFormatting.LIGHT_PURPLE;
-            }
-            default -> {
-                type = "auto";
-                icon = "⏰ ";
-                color = ChatFormatting.YELLOW;
+    /** Short description of an entry: the death cause, the container, the admin or the number of changed slots. */
+    @Nullable
+    public static Component summary(Entry entry) {
+        EntryContext context = entry.context();
+        return switch (entry.trigger()) {
+            case DEATH -> context.detail() == null ? null : Component.literal(context.detail());
+            case CONTAINER -> context.detail() == null ? changed(entry) : tr("inventorybackups.entry.container", context.detail(),
+                    position(context.containerPos()));
+            case RESTORE, EDIT, COMMAND -> context.actor() == null ? changed(entry) : tr("inventorybackups.entry.by", context.actor());
+            default -> changed(entry);
+        };
+    }
+
+    public static String icon(Trigger trigger) {
+        return switch (trigger) {
+            case CHANGE -> "✎";
+            case DEATH -> "💀";
+            case JOIN -> "➡";
+            case QUIT -> "⬅";
+            case CONTAINER -> "📦";
+            case RESTORE -> "↺";
+            case EDIT -> "✍";
+            case COMMAND -> "📌";
+            case IMPORT -> "📜";
+        };
+    }
+
+    public static ChatFormatting color(Trigger trigger) {
+        return switch (trigger) {
+            case CHANGE -> ChatFormatting.YELLOW;
+            case DEATH -> ChatFormatting.RED;
+            case JOIN -> ChatFormatting.GREEN;
+            case QUIT -> ChatFormatting.GRAY;
+            case CONTAINER -> ChatFormatting.LIGHT_PURPLE;
+            case RESTORE -> ChatFormatting.AQUA;
+            case EDIT -> ChatFormatting.GOLD;
+            case COMMAND -> ChatFormatting.BLUE;
+            case IMPORT -> ChatFormatting.DARK_AQUA;
+        };
+    }
+
+    public static String position(@Nullable BlockPos pos) {
+        return pos == null ? "?" : pos.getX() + " " + pos.getY() + " " + pos.getZ();
+    }
+
+    @Nullable
+    private static Component changed(Entry entry) {
+        return entry.changed() == 0 ? null : tr("inventorybackups.entry.changed", entry.changed());
+    }
+
+    private static Component details(Entry entry) {
+        EntryContext context = entry.context();
+        MutableComponent text = tr("inventorybackups.trigger." + entry.trigger().key()).withStyle(color(entry.trigger()))
+                .append(Component.literal(" " + EntrySelector.display(entry.time())).withStyle(ChatFormatting.WHITE));
+        if (!context.dimension().isEmpty()) {
+            text.append("\n").append(tr("inventorybackups.entry.where", context.dimension(), position(context.pos()))
+                    .withStyle(ChatFormatting.GRAY));
+        }
+        if (context.detail() != null && entry.trigger() != Trigger.RESTORE) {
+            text.append("\n").append(Component.literal(context.detail()).withStyle(ChatFormatting.GRAY));
+        }
+        if (entry.trigger() == Trigger.RESTORE && context.detail() != null) {
+            try {
+                text.append("\n").append(tr("inventorybackups.entry.restored_from",
+                        EntrySelector.display(Long.parseLong(context.detail()))).withStyle(ChatFormatting.GRAY));
+            } catch (NumberFormatException e) {
+                text.append("\n").append(Component.literal(context.detail()).withStyle(ChatFormatting.GRAY));
             }
         }
-        return Component.literal(icon + timestamp + " ").withStyle(ChatFormatting.WHITE)
-                .append(tr("inventorybackups.type." + type).withStyle(color));
+        if (context.actor() != null) {
+            text.append("\n").append(tr("inventorybackups.entry.by", context.actor()).withStyle(ChatFormatting.GRAY));
+        }
+        text.append("\n").append(tr("inventorybackups.entry.changed", entry.changed()).withStyle(ChatFormatting.DARK_GRAY));
+        return text;
+    }
+
+    @Nullable
+    private static Component teleportButton(EntryContext context) {
+        if (context.dimension().isEmpty()) {
+            return null;
+        }
+        String command = "/execute in " + context.dimension() + " run tp @s " + position(context.pos());
+        return button("[⌖]", ChatFormatting.DARK_AQUA, command,
+                tr("inventorybackups.button.hover.teleport", context.dimension(), position(context.pos())));
     }
 
     private static Component quickFilters(BackupKind kind, String target) {
@@ -158,7 +239,9 @@ public final class ChatUI {
                 .append(" ")
                 .append(filterButton(kind, target, "this_month", today.format(DateTimeFormatter.ofPattern("yyyy-MM")), ChatFormatting.AQUA))
                 .append(" ")
-                .append(filterButton(kind, target, "deaths", BackupService.DEATH, ChatFormatting.RED))
+                .append(filterButton(kind, target, "deaths", Trigger.DEATH.key(), ChatFormatting.RED))
+                .append(" ")
+                .append(filterButton(kind, target, "restores", Trigger.RESTORE.key(), ChatFormatting.DARK_AQUA))
                 .append(" ")
                 .append(filterButton(kind, target, "all", "", ChatFormatting.GRAY));
     }
@@ -191,11 +274,11 @@ public final class ChatUI {
         return command(kind, "list " + target + " \"" + filter + "\" " + page);
     }
 
-    private static String command(BackupKind kind, String arguments) {
+    public static String command(BackupKind kind, String arguments) {
         return "/" + kind.id() + " " + arguments;
     }
 
-    private static Component button(String label, ChatFormatting color, String command, Component hover) {
+    public static Component button(String label, ChatFormatting color, String command, Component hover) {
         return withClick(Component.literal(label), color, command, hover);
     }
 
@@ -212,14 +295,14 @@ public final class ChatUI {
                 .append(message);
     }
 
-    private static Component header(Component title) {
+    public static Component header(Component title) {
         return Component.empty()
                 .append(rule())
                 .append("\n")
                 .append(title.copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
     }
 
-    private static Component rule() {
+    public static Component rule() {
         return Component.literal(RULE).withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.STRIKETHROUGH);
     }
 

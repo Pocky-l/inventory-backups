@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -228,8 +229,22 @@ public final class BackupStore {
         cache.keySet().removeIf(path -> path.startsWith(playerDir(player)));
     }
 
-    void forgetDirectoryEntry(UUID player) {
+    /** Deletes every stored entry of a player. */
+    public void deletePlayer(UUID player) {
+        logs.remove(player);
+        cache.keySet().removeIf(path -> path.startsWith(playerDir(player)));
         directory.forget(player);
+        Path dir = playerDir(player);
+        if (!Files.isDirectory(dir)) {
+            return;
+        }
+        try (Stream<Path> files = Files.walk(dir)) {
+            for (Path file : files.sorted(Comparator.reverseOrder()).toList()) {
+                Files.deleteIfExists(file);
+            }
+        } catch (IOException e) {
+            InventoryBackups.LOGGER.error("Could not delete the backups of {}", player, e);
+        }
     }
 
     void saveDirectory() {

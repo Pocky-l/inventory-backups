@@ -1,13 +1,17 @@
 package com.pockyl.inventorybackups.menu;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+
+import com.pockyl.inventorybackups.backup.ChangeTracker;
 
 /**
  * A chest screen showing another player's live inventory or ender chest. Changes apply immediately, so nothing the
@@ -16,10 +20,30 @@ import net.minecraft.world.item.ItemStack;
 public final class LivePlayerMenu extends ChestMenu {
     private final ServerPlayer target;
 
-    public LivePlayerMenu(MenuType<?> type, int containerId, Inventory playerInventory, Container target, int rows,
-                          ServerPlayer targetPlayer) {
+    private LivePlayerMenu(MenuType<?> type, int containerId, Inventory playerInventory, Container target, int rows,
+                           ServerPlayer targetPlayer) {
         super(type, containerId, playerInventory, new PaddedContainer(target, rows * 9), rows);
         this.target = targetPlayer;
+    }
+
+    /**
+     * Opens the live inventory or ender chest of a player for an admin. While it is open the target's changes are held
+     * back, so the whole edit is recorded as one entry naming the admin.
+     */
+    public static void open(ServerPlayer admin, ServerPlayer target, boolean enderChest, Component title) {
+        Container contents = enderChest ? target.getEnderChestInventory() : target.getInventory();
+        int rows = enderChest ? 3 : 6;
+        MenuType<?> type = enderChest ? MenuType.GENERIC_9x3 : MenuType.GENERIC_9x6;
+        admin.openMenu(new SimpleMenuProvider((id, inventory, viewer) -> {
+            ChangeTracker.startEdit(target, admin.getScoreboardName());
+            return new LivePlayerMenu(type, id, inventory, contents, rows, target);
+        }, title));
+    }
+
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        ChangeTracker.endEdit(target);
     }
 
     @Override
