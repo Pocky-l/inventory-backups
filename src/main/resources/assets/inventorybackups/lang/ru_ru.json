@@ -147,5 +147,15 @@
   "inventorybackups.configuration.search": "Поиск",
   "inventorybackups.configuration.probableLinkSeconds": "Окно вероятной передачи (секунды)",
   "inventorybackups.configuration.probableLinkDistance": "Расстояние вероятной передачи (блоки)",
-  "inventorybackups.configuration.maxResults": "Наибольшее число результатов на запрос"
+  "inventorybackups.configuration.maxResults": "Наибольшее число результатов на запрос",
+  "inventorybackups.permission.view": "Просмотр бэкапов",
+  "inventorybackups.permission.view.desc": "Просмотр истории и состояний, снимки",
+  "inventorybackups.permission.restore": "Восстановление бэкапов",
+  "inventorybackups.permission.restore.desc": "Восстановление, отмена восстановления и копирование предметов",
+  "inventorybackups.permission.edit": "Правка инвентарей",
+  "inventorybackups.permission.edit.desc": "Правка инвентаря и эндер-сундука игроков в сети",
+  "inventorybackups.permission.search": "Поиск предметов",
+  "inventorybackups.permission.search.desc": "Поиск предметов и их передач среди всех игроков",
+  "inventorybackups.permission.ui": "Экран администратора",
+  "inventorybackups.permission.ui.desc": "Открывать экран истории клиентского мода"
 }

@@ -21,6 +21,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.Config;
@@ -32,6 +33,7 @@ import com.pockyl.inventorybackups.backup.PerfStats;
 import com.pockyl.inventorybackups.backup.Restorer;
 import com.pockyl.inventorybackups.menu.LivePlayerMenu;
 import com.pockyl.inventorybackups.menu.ReadOnlyChestMenu;
+import com.pockyl.inventorybackups.permission.Permissions;
 import com.pockyl.inventorybackups.storage.BackupStore;
 import com.pockyl.inventorybackups.storage.Entry;
 import com.pockyl.inventorybackups.storage.EntryContext;
@@ -49,17 +51,18 @@ import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static com.pockyl.inventorybackups.ui.ChatUI.value;
 import static com.pockyl.inventorybackups.ui.Texts.tr;
 
 /**
- * {@code /inventory} and {@code /enderchest}: the chat interface for admins without the client mod. Both work on the
+ * {@code /inventory} and {@code /enderchest}: the chat interface for admins without the client mod. Each sub-command
+ * needs its own permission node (see {@link Permissions}). Both work on the
  * same timeline; {@code /enderchest} shows and restores the ender chest part of it. Reads run on the storage thread
  * and answer when they are done, so a large history never stalls the server.
  */
 public final class BackupCommands {
-    private static final int PERMISSION_LEVEL = 2;
     private static final int SUGGESTED_ENTRIES = 30;
     private static final SuggestionProvider<CommandSourceStack> PLAYERS =
             (context, builder) -> SharedSuggestionProvider.suggest(context.getSource().getOnlinePlayerNames(), builder);
@@ -75,34 +78,39 @@ public final class BackupCommands {
 
     private static LiteralArgumentBuilder<CommandSourceStack> tree(BackupKind kind) {
         LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(kind.id())
-                .requires(source -> source.hasPermission(PERMISSION_LEVEL))
+                .requires(Permissions::hasAny)
                 .executes(context -> {
                     ChatUI.showHelp(context.getSource(), kind);
                     return 1;
                 })
-                .then(Commands.literal("player").then(target()
+                .then(Commands.literal("player").requires(needs(Permissions.EDIT)).then(target()
                         .executes(context -> openLive(context, kind))))
-                .then(Commands.literal("list").then(target()
+                .then(Commands.literal("list").requires(needs(Permissions.VIEW)).then(target()
                         .executes(context -> list(context, kind, "", 1))
                         .then(Commands.argument("filter", StringArgumentType.string())
                                 .executes(context -> list(context, kind, StringArgumentType.getString(context, "filter"), 1))
                                 .then(Commands.argument("page", IntegerArgumentType.integer(1))
                                         .executes(context -> list(context, kind, StringArgumentType.getString(context, "filter"),
                                                 IntegerArgumentType.getInteger(context, "page")))))))
-                .then(Commands.literal("view").then(target().then(backup()
+                .then(Commands.literal("view").requires(needs(Permissions.VIEW)).then(target().then(backup()
                         .executes(context -> view(context, kind)))))
-                .then(Commands.literal("set").then(target().then(backup()
+                .then(Commands.literal("set").requires(needs(Permissions.RESTORE)).then(target().then(backup()
                         .executes(context -> restore(context, kind)))))
-                .then(Commands.literal("copy").then(target().then(backup()
+                .then(Commands.literal("copy").requires(needs(Permissions.RESTORE)).then(target().then(backup()
                         .executes(context -> copy(context, kind)))))
-                .then(Commands.literal("undo").then(target()
+                .then(Commands.literal("undo").requires(needs(Permissions.RESTORE)).then(target()
                         .executes(BackupCommands::undo)))
-                .then(Commands.literal("snapshot").then(target()
+                .then(Commands.literal("snapshot").requires(needs(Permissions.VIEW)).then(target()
                         .executes(BackupCommands::snapshot)));
         if (kind == BackupKind.INVENTORY) {
-            root.then(Commands.literal("stats").executes(BackupCommands::stats));
+            root.then(Commands.literal("stats").requires(needs(Permissions.VIEW))
+                    .executes(BackupCommands::stats));
         }
         return root;
+    }
+
+    private static Predicate<CommandSourceStack> needs(PermissionNode<Boolean> node) {
+        return source -> Permissions.has(source, node);
     }
 
     private static RequiredArgumentBuilder<CommandSourceStack, String> target() {

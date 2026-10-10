@@ -147,5 +147,15 @@
   "inventorybackups.configuration.search": "Search",
   "inventorybackups.configuration.probableLinkSeconds": "Probable transfer window (seconds)",
   "inventorybackups.configuration.probableLinkDistance": "Probable transfer distance (blocks)",
-  "inventorybackups.configuration.maxResults": "Most results per request"
+  "inventorybackups.configuration.maxResults": "Most results per request",
+  "inventorybackups.permission.view": "View backups",
+  "inventorybackups.permission.view.desc": "Browse timelines, preview states, take snapshots",
+  "inventorybackups.permission.restore": "Restore backups",
+  "inventorybackups.permission.restore.desc": "Restore states, undo restores and copy stored items",
+  "inventorybackups.permission.edit": "Edit live inventories",
+  "inventorybackups.permission.edit.desc": "Edit the inventory and ender chest of online players",
+  "inventorybackups.permission.search": "Search items",
+  "inventorybackups.permission.search.desc": "Find items and their transfers across all players",
+  "inventorybackups.permission.ui": "Admin screen",
+  "inventorybackups.permission.ui.desc": "Open the timeline screen of the client mod"
 }
