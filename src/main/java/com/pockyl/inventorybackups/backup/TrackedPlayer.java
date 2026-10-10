@@ -105,17 +105,18 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
 
     @Override
     public void slotChanged(AbstractContainerMenu menu, int slotIndex, ItemStack stack) {
-        if (slotIndex < 0 || slotIndex >= menu.slots.size()) {
-            return;
-        }
-        Container container = menu.getSlot(slotIndex).container;
-        if (container == player.getInventory()) {
-            if (Config.TICK_SAVE_ENABLED.get()) {
-                markDirty(player.server.getTickCount());
+        long start = System.nanoTime();
+        if (slotIndex >= 0 && slotIndex < menu.slots.size()) {
+            Container container = menu.getSlot(slotIndex).container;
+            if (container == player.getInventory()) {
+                if (Config.TICK_SAVE_ENABLED.get()) {
+                    markDirty(player.server.getTickCount());
+                }
+            } else if (container == player.getEnderChestInventory()) {
+                enderChanged();
             }
-        } else if (container == player.getEnderChestInventory()) {
-            enderChanged();
         }
+        PerfStats.addEvent(System.nanoTime() - start);
     }
 
     @Override
@@ -124,7 +125,9 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
 
     @Override
     public void containerChanged(Container container) {
+        long start = System.nanoTime();
         enderChanged();
+        PerfStats.addEvent(System.nanoTime() - start);
     }
 
     private void enderChanged() {
