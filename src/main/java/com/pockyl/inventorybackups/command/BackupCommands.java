@@ -33,6 +33,7 @@ import com.pockyl.inventorybackups.backup.PerfStats;
 import com.pockyl.inventorybackups.backup.Restorer;
 import com.pockyl.inventorybackups.menu.LivePlayerMenu;
 import com.pockyl.inventorybackups.menu.ReadOnlyChestMenu;
+import com.pockyl.inventorybackups.network.ServerRequests;
 import com.pockyl.inventorybackups.permission.Permissions;
 import com.pockyl.inventorybackups.storage.BackupStore;
 import com.pockyl.inventorybackups.storage.Entry;
@@ -105,6 +106,8 @@ public final class BackupCommands {
         if (kind == BackupKind.INVENTORY) {
             root.then(Commands.literal("stats").requires(needs(Permissions.VIEW))
                     .executes(BackupCommands::stats));
+            root.then(Commands.literal("ui").requires(needs(Permissions.UI))
+                    .executes(BackupCommands::openScreen));
         }
         return root;
     }
@@ -264,6 +267,16 @@ public final class BackupCommands {
         source.sendSystemMessage(tr("inventorybackups.stats.written", value(written.entries()), value(written.bytes() / 1024),
                 value(written.bytesPerChange()), value(written.skipped())).withStyle(ChatFormatting.GRAY));
         source.sendSystemMessage(ChatUI.rule());
+        return 1;
+    }
+
+    private static int openScreen(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        if (!ServerRequests.hasScreen(player)) {
+            ChatUI.error(context.getSource(), tr("inventorybackups.ui.requires_client"));
+            return 0;
+        }
+        ServerRequests.sendHello(player);
         return 1;
     }
 

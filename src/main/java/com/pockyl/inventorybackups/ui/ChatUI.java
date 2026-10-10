@@ -114,7 +114,10 @@ public final class ChatUI {
     public static void showHelp(CommandSourceStack source, BackupKind kind) {
         source.sendSystemMessage(header(tr(key(kind, "header.help"))));
         ChatFormatting color = kind == BackupKind.ENDER_CHEST ? ChatFormatting.DARK_PURPLE : ChatFormatting.GOLD;
-        for (String command : List.of("player", "list", "view", "set", "copy", "undo", "snapshot")) {
+        List<String> commands = kind == BackupKind.INVENTORY
+                ? List.of("player", "list", "view", "set", "copy", "undo", "snapshot", "ui")
+                : List.of("player", "list", "view", "set", "copy", "undo", "snapshot");
+        for (String command : commands) {
             source.sendSystemMessage(tr(key(kind, "help." + command)).withStyle(color));
             source.sendSystemMessage(Component.literal("  ")
                     .append(tr(key(kind, "help." + command + ".desc")).withStyle(ChatFormatting.GRAY)));

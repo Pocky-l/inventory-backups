@@ -179,5 +179,20 @@
   "inventorybackups.search.put": "%s: положено %s × %s",
   "inventorybackups.search.took": "%s: взято %s × %s",
   "inventorybackups.search.hover.player": "Показать инвентарь %s на %s",
-  "inventorybackups.search.hover.trace": "Отследить именно этот предмет"
+  "inventorybackups.search.hover.trace": "Отследить именно этот предмет",
+  "inventorybackups.ui.denied": "Вам нельзя открывать экран бэкапов",
+  "inventorybackups.ui.requires_client": "Для экрана бэкапов нужен мод Inventory Backups на клиенте; команды в чате работают и без него",
+  "inventorybackups.ui.bad_request": "Неверный запрос",
+  "inventorybackups.ui.busy": "Сервер ещё обрабатывает ваши прошлые запросы",
+  "inventorybackups.ui.no_permission": "Нет права %s",
+  "inventorybackups.ui.offline": "Игрок не в сети",
+  "inventorybackups.ui.nothing_selected": "Сначала выберите слоты",
+  "inventorybackups.ui.copied": "Вам выданы копии стаков: %s",
+  "inventorybackups.ui.no_position": "У этой записи нет позиции",
+  "inventorybackups.ui.teleported": "Телепортация в %s",
+  "inventorybackups.ui.restored": "Игроку %s восстановлено состояние от %s",
+  "inventorybackups.ui.restored_slots": "Восстановлено слотов: %s у игрока %s, состояние от %s",
+  "inventorybackups.ui.too_large": "%s (слишком большой для просмотра)",
+  "inventorybackups.inventory.help.ui": "/inventory ui",
+  "inventorybackups.inventory.help.ui.desc": "Открыть экран истории (нужен клиентский мод)"
 }

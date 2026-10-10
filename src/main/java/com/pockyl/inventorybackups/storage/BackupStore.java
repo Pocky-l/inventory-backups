@@ -1,5 +1,7 @@
 package com.pockyl.inventorybackups.storage;
 
+import it.unimi.dsi.fastutil.ints.Int2LongMap;
+import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.core.HolderLookup;
@@ -373,6 +375,47 @@ public final class BackupStore {
             return Optional.of(new StateView(entry, items, null, new Int2ObjectOpenHashMap<>()));
         }
         return Optional.empty();
+    }
+
+    /**
+     * When the stack in each slot got there, for the state at the newest entry at or before {@code time}. Looks back up
+     * to {@code lookBackDays} days; slots unchanged for longer get 0.
+     */
+    public Int2LongMap since(UUID player, long time, int lookBackDays) {
+        Int2LongMap since = new Int2LongOpenHashMap();
+        LocalDate target = DayFiles.day(time);
+        Int2ObjectMap<StackRef> state = new Int2ObjectOpenHashMap<>();
+        boolean first = true;
+        for (LocalDate day : days(player)) {
+            if (day.isAfter(target) || day.isBefore(target.minusDays(lookBackDays))) {
+                continue;
+            }
+            Optional<DayLog> found = day(player, day);
+            if (found.isEmpty()) {
+                continue;
+            }
+            for (Entry entry : found.get().entries()) {
+                if (entry.time() > time) {
+                    break;
+                }
+                Int2ObjectMap<StackRef> next = new Int2ObjectOpenHashMap<>(state);
+                found.get().apply(next, entry);
+                for (Int2ObjectMap.Entry<StackRef> slot : next.int2ObjectEntrySet()) {
+                    if (!slot.getValue().equals(state.get(slot.getIntKey()))) {
+                        since.put(slot.getIntKey(), first ? 0 : entry.time());
+                    }
+                }
+                state.keySet().forEach((int slot) -> {
+                    if (!next.containsKey(slot)) {
+                        since.remove(slot);
+                    }
+                });
+                state = next;
+                first = false;
+            }
+        }
+        since.keySet().retainAll(state.keySet());
+        return since;
     }
 
     /** The current (newest) stored state of a player. */

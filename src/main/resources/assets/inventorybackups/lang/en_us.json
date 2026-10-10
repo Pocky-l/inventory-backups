@@ -179,5 +179,20 @@
   "inventorybackups.search.put": "%s put in %s × %s",
   "inventorybackups.search.took": "%s took %s × %s",
   "inventorybackups.search.hover.player": "Show the inventory of %s at %s",
-  "inventorybackups.search.hover.trace": "Trace this exact item"
+  "inventorybackups.search.hover.trace": "Trace this exact item",
+  "inventorybackups.ui.denied": "You may not open the backup screen",
+  "inventorybackups.ui.requires_client": "The backup screen needs the Inventory Backups mod on your client; the chat commands work without it",
+  "inventorybackups.ui.bad_request": "Invalid request",
+  "inventorybackups.ui.busy": "The server is still working on your previous requests",
+  "inventorybackups.ui.no_permission": "Missing permission %s",
+  "inventorybackups.ui.offline": "The player is offline",
+  "inventorybackups.ui.nothing_selected": "Select slots first",
+  "inventorybackups.ui.copied": "Gave you copies of %s stacks",
+  "inventorybackups.ui.no_position": "This entry has no position",
+  "inventorybackups.ui.teleported": "Teleported to %s",
+  "inventorybackups.ui.restored": "Restored %s to %s",
+  "inventorybackups.ui.restored_slots": "Restored %s slots of %s to %s",
+  "inventorybackups.ui.too_large": "%s (too large to preview)",
+  "inventorybackups.inventory.help.ui": "/inventory ui",
+  "inventorybackups.inventory.help.ui.desc": "Open the timeline screen (needs the client mod)"
 }
