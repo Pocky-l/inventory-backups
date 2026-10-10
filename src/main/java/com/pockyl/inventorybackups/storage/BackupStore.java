@@ -229,11 +229,16 @@ public final class BackupStore {
         cache.keySet().removeIf(path -> path.startsWith(playerDir(player)));
     }
 
-    /** Deletes every stored entry of a player. */
-    public void deletePlayer(UUID player) {
+    /** Drops everything cached about a player whose files are all gone. */
+    void forgetPlayer(UUID player) {
         logs.remove(player);
         cache.keySet().removeIf(path -> path.startsWith(playerDir(player)));
         directory.forget(player);
+    }
+
+    /** Deletes every stored entry of a player. */
+    public void deletePlayer(UUID player) {
+        forgetPlayer(player);
         Path dir = playerDir(player);
         if (!Files.isDirectory(dir)) {
             return;

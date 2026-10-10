@@ -56,8 +56,11 @@ public final class LogFile {
     private LogFile() {
     }
 
-    /** A decoded file and the length of its valid part (shorter than the file when the last frame is torn). */
-    public record Read(DayLog log, long validLength) {
+    /**
+     * A decoded file, the length of its valid part (shorter than the file when the last frame is torn) and its number of
+     * frames (more than one until retention compacts it).
+     */
+    public record Read(DayLog log, long validLength, int frames) {
     }
 
     public static Read read(Path file, LocalDate day) throws IOException {
@@ -69,6 +72,7 @@ public final class LogFile {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.position(HEADER_SIZE);
         long valid = HEADER_SIZE;
+        int frames = 0;
         boolean first = true;
         while (buffer.remaining() >= 8) {
             int length = buffer.getInt();
@@ -102,8 +106,46 @@ public final class LogFile {
                 log.addEntry(Entry.load((CompoundTag) entry));
             }
             valid = buffer.position();
+            frames++;
         }
-        return new Read(log, valid);
+        return new Read(log, valid, frames);
+    }
+
+    /** How far a file is thinned and how many frames it has, read without decoding its entries. */
+    public record Header(int thin, int frames) {
+    }
+
+    public static Header peek(Path file) throws IOException {
+        try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
+            long size = channel.size();
+            ByteBuffer header = ByteBuffer.allocate(8);
+            long position = HEADER_SIZE;
+            int frames = 0;
+            int thin = 0;
+            while (position + 8 <= size) {
+                header.clear();
+                channel.read(header, position);
+                header.flip();
+                int length = header.getInt();
+                if (length <= 0 || length > MAX_FRAME || position + 8 + length > size) {
+                    break;
+                }
+                if (frames == 0) {
+                    ByteBuffer payload = ByteBuffer.allocate(length);
+                    channel.read(payload, position + 8);
+                    try {
+                        CompoundTag frame = NbtIo.read(new DataInputStream(new ByteArrayInputStream(inflate(payload.array()))),
+                                NbtAccounter.unlimitedHeap());
+                        thin = frame.getInt("thin");
+                    } catch (DataFormatException e) {
+                        break;
+                    }
+                }
+                frames++;
+                position += 8 + length;
+            }
+            return new Header(thin, frames);
+        }
     }
 
     /**
