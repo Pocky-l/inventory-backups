@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inventory Backups - admin screen mockup</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<p class="caption">
+    Inventory Backups admin screen, drawn at Minecraft GUI scale (640 x 360 GUI pixels) and shown at twice the size.
+    The timeline screen is interactive: use the arrow keys, Space, A and B, or click the markers and slots.
+</p>
+
+<!-- ============================================================ 1. timeline -->
+<div class="screen zoom" id="timeline-screen">
+    <div class="topbar">
+        <div class="brand">Inventory Backups</div>
+        <div class="tab active">Timeline</div>
+        <div class="tab">Search</div>
+        <div class="spacer"></div>
+        <div class="clock">server 14:32</div>
+        <div class="close">✕</div>
+    </div>
+
+    <div class="sidebar">
+        <div class="field focus" style="left:6px;top:6px;width:144px;">ste</div>
+        <div class="chips" style="left:6px;top:26px;">
+            <span class="chip on">All</span><span class="chip">Online</span><span class="chip">Died today</span>
+        </div>
+        <div class="players" id="players"></div>
+    </div>
+
+    <div class="main">
+        <div class="who">
+            <canvas class="face" data-face="steve"></canvas>
+            <div class="title">Steve_Builder <span class="pill" style="color:var(--added)">online</span></div>
+            <div class="meta">1 284 entries · 41 KiB · since 2026-09-12 · last death 14:02 today</div>
+            <div class="right">overworld 120 64 -30</div>
+        </div>
+
+        <div class="timeline">
+            <div class="seg"><span>1H</span><span class="on">1D</span><span>1W</span><span>All</span></div>
+            <div class="range">Today, 00:00 - 24:00</div>
+            <div class="legend">
+                <span><i style="background:var(--t-change)"></i>change</span>
+                <span><i style="background:var(--t-death)"></i>death</span>
+                <span><i style="background:var(--t-container)"></i>chest</span>
+                <span><i style="background:var(--t-restore)"></i>admin</span>
+            </div>
+            <div class="track" id="track"></div>
+            <div class="ticks" id="ticks"></div>
+            <div class="transport">
+                <span class="btn" title="first">⏮</span>
+                <span class="btn" title="previous change">◀</span>
+                <span class="btn play" title="play">▶</span>
+                <span class="btn" title="next change">▶|</span>
+                <span class="btn" title="newest">⏭</span>
+                <span class="btn death" title="jump to death">☠</span>
+                <div class="now" id="now"></div>
+                <span class="btn" style="color:var(--pin-a)">A</span>
+                <span class="btn" style="color:var(--pin-b)">B</span>
+                <span class="btn ghost">A⇄B</span>
+            </div>
+        </div>
+
+        <div class="inventory">
+            <div class="subtabs"><span class="on">Inventory</span><span>Ender chest</span><span>Curios 3</span></div>
+            <div class="label" style="left:8px;top:26px;">Equipment</div>
+            <div class="slots" id="equipment" style="left:8px;top:36px;grid-template-columns:repeat(4,18px) 10px 18px;"></div>
+            <div class="label" style="left:8px;top:58px;">Inventory</div>
+            <div class="slots" id="main" style="left:8px;top:72px;grid-template-columns:repeat(9,18px);"></div>
+            <div class="slots" id="hotbar" style="left:8px;top:130px;grid-template-columns:repeat(9,18px);"></div>
+            <div class="selected-card" id="selected-card"></div>
+            <div class="diffkey">
+                <span><i style="background:var(--added)"></i>added</span>
+                <span><i style="background:var(--removed)"></i>removed</span>
+                <span><i style="background:var(--changed)"></i>count</span>
+            </div>
+        </div>
+
+        <div class="details">
+            <div class="section" style="top:4px;">
+                <h3>What changed <span class="toggle">vs <b>previous</b> · A · B</span></h3>
+                <div id="changes"></div>
+            </div>
+            <div class="section" style="top:104px;">
+                <h3>Entry</h3>
+                <dl class="ctx" id="context"></dl>
+            </div>
+            <div class="actions">
+                <span class="btn primary">Restore all</span>
+                <span class="btn">Restore 2</span>
+                <span class="btn">Give copy</span>
+                <span class="btn">Live edit</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" style="left:186px;top:204px;" id="tooltip">
+        <div class="name">Backup Blade</div>
+        <div class="ench">Sharpness V</div>
+        <div class="ench">Unbreaking III</div>
+        <div class="sep"></div>
+        <div class="ib">Appeared <b>13:58:12</b> · picked up from Alex_42</div>
+        <div class="ib">at overworld 118 64 -31</div>
+        <div class="ib">Held since 13:58, unique #a91f03</div>
+    </div>
+
+    <div class="statusbar">
+        <span><span class="key">← →</span> step · <span class="key">Shift</span> jump 10 · <span class="key">Space</span> play ·
+            <span class="key">Ctrl+F</span> search · <span class="key">A B</span> pin · <span class="key">D</span> death</span>
+        <span>view · restore · edit</span>
+    </div>
+</div>
+
+<!-- ============================================================ 2. search -->
+<div class="screen zoom" id="search-screen">
+    <div class="topbar">
+        <div class="brand">Inventory Backups</div>
+        <div class="tab">Timeline</div>
+        <div class="tab active">Search</div>
+        <div class="spacer"></div>
+        <div class="clock">server 14:32</div>
+        <div class="close">✕</div>
+    </div>
+
+    <div class="search">
+        <div class="searchbar">
+            <div class="field focus" style="left:8px;top:6px;width:220px;">diamond_sw</div>
+            <div class="chips" style="left:236px;top:8px;">
+                <span class="chip on">Item</span><span class="chip">Name</span><span class="chip">Enchant</span><span class="chip">Unique</span>
+            </div>
+            <div class="chips" style="left:420px;top:8px;">
+                <span class="chip">24h</span><span class="chip on">7d</span><span class="chip">30d</span><span class="chip">All</span>
+            </div>
+            <div class="chips" style="left:536px;top:8px;"><span class="chip">player: anyone ▾</span></div>
+            <div class="label" style="left:8px;top:28px;">34 players held it · 6 hold it now · 9 transfers in 7 days</div>
+            <div class="dropdown" id="dropdown"></div>
+        </div>
+
+        <div class="col" style="left:0;width:170px;">
+            <h3>Items</h3>
+            <div id="items"></div>
+        </div>
+        <div class="col" style="left:170px;width:220px;">
+            <h3>Holders · last 7 days</h3>
+            <div id="holders"></div>
+        </div>
+        <div class="col" style="left:390px;width:250px;border-right:0;">
+            <h3>Transfer trail of Backup Blade</h3>
+            <div class="chain" id="chain"></div>
+        </div>
+    </div>
+
+    <div class="statusbar">
+        <span><span class="key">↑ ↓</span> choose · <span class="key">Enter</span> search · <span class="key">Click</span> a player or
+            transfer to open that moment on the timeline</span>
+        <span>search</span>
+    </div>
+</div>
+
+<!-- ============================================================ 3. confirmation -->
+<div class="screen zoom" id="restore-screen">
+    <div class="topbar">
+        <div class="brand">Inventory Backups</div>
+        <div class="tab active">Timeline</div>
+        <div class="tab">Search</div>
+        <div class="spacer"></div>
+        <div class="clock">server 14:32</div>
+        <div class="close">✕</div>
+    </div>
+    <div class="sidebar"></div>
+    <div class="main" id="restore-main"></div>
+    <div class="dim"></div>
+    <div class="dialog">
+        <h2>Restore the whole inventory?</h2>
+        <p>Steve_Builder gets the inventory and ender chest of <span style="color:var(--text)">today 14:01:55</span>
+            (right before the death). 23 slots change; what they carry now stays recorded and the restore can be undone.</p>
+        <p style="color:var(--faint)">Recorded as: restore by Pocky</p>
+        <div class="buttons"><span class="btn ghost">Cancel</span><span class="btn primary">Restore</span></div>
+    </div>
+    <div class="statusbar"><span><span class="key">Enter</span> confirm · <span class="key">Esc</span> cancel</span><span></span></div>
+</div>
+
+<script>
+/* Pixel-art stand-ins for item icons: drawn on 16 x 16 canvases and scaled without smoothing. */
+function px(ctx, color, x, y, w = 1, h = 1) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+}
+
+function disc(ctx, cx, cy, r, color) {
+    for (let y = -r; y <= r; y++) {
+        for (let x = -r; x <= r; x++) {
+            if (x * x + y * y <= r * r + r * 0.6) {
+                px(ctx, color, cx + x, cy + y);
+            }
+        }
+    }
+}
+
+function line(ctx, x0, y0, x1, y1, color, thick = 1) {
+    const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+    for (let i = 0; i <= steps; i++) {
+        const x = Math.round(x0 + (x1 - x0) * i / steps);
+        const y = Math.round(y0 + (y1 - y0) * i / steps);
+        px(ctx, color, x, y, thick, thick);
+    }
+}
+
+function seeded(seed) {
+    return () => {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+    };
+}
+
+const ICONS = {
+    diamond(c) {
+        const rows = [[6, 4], [5, 6], [4, 8], [3, 10], [3, 10], [4, 8], [5, 6], [6, 4], [7, 2]];
+        rows.forEach(([x, w], i) => px(c, '#1fb5ab', x, 3 + i, w, 1));
+        rows.forEach(([x, w], i) => px(c, '#5ff0e4', x + 1, 3 + i, Math.max(1, w - 4), 1));
+        px(c, '#d8fffb', 6, 5, 2, 2);
+    },
+    sword(c, blade = '#4fe3d8', edge = '#c6fff9') {
+        line(c, 13, 2, 5, 10, blade, 2);
+        line(c, 13, 2, 6, 9, edge, 1);
+        line(c, 3, 8, 7, 12, '#2d2d2d', 2);
+        line(c, 4, 11, 2, 13, '#6b4a2b', 2);
+    },
+    pickaxe(c) {
+        line(c, 3, 4, 7, 2, '#4fe3d8', 2);
+        line(c, 8, 2, 13, 7, '#4fe3d8', 2);
+        line(c, 9, 6, 3, 13, '#6b4a2b', 2);
+    },
+    apple(c) {
+        disc(c, 8, 9, 5, '#d8312e');
+        px(c, '#ff8f7f', 6, 7, 2, 2);
+        px(c, '#6b4a2b', 8, 2, 1, 3);
+        px(c, '#3fae4a', 9, 3, 3, 2);
+    },
+    torch(c) {
+        px(c, '#6b4a2b', 7, 6, 2, 9);
+        px(c, '#ffb224', 7, 3, 2, 3);
+        px(c, '#fff3a0', 7, 4, 2, 1);
+    },
+    ingot(c, base = '#c9c9c9', light = '#f2f2f2', dark = '#7d7d7d') {
+        for (let i = 0; i < 5; i++) {
+            px(c, base, 3 + i, 9 - i, 9, 1);
+        }
+        px(c, light, 5, 7, 6, 1);
+        px(c, dark, 3, 10, 9, 1);
+    },
+    gold(c) {
+        ICONS.ingot(c, '#f2c94c', '#fff3b0', '#b8860b');
+    },
+    emerald(c) {
+        disc(c, 8, 8, 5, '#17a34a');
+        px(c, '#6df29a', 6, 5, 3, 4);
+        px(c, '#0b5f2a', 4, 11, 8, 1);
+    },
+    bread(c) {
+        px(c, '#a86b2d', 2, 7, 12, 5);
+        px(c, '#d39a52', 3, 6, 10, 2);
+        px(c, '#f0c27b', 5, 7, 1, 1);
+        px(c, '#f0c27b', 8, 7, 1, 1);
+        px(c, '#f0c27b', 11, 7, 1, 1);
+    },
+    cobble(c) {
+        const rnd = seeded(7);
+        px(c, '#7a7a7a', 1, 1, 14, 14);
+        for (let i = 0; i < 40; i++) {
+            px(c, rnd() > .5 ? '#5a5a5a' : '#9a9a9a', 1 + Math.floor(rnd() * 14), 1 + Math.floor(rnd() * 14), 2, 1);
+        }
+    },
+    planks(c) {
+        px(c, '#b08a50', 1, 1, 14, 14);
+        [4, 8, 12].forEach(y => px(c, '#7d5f33', 1, y, 14, 1));
+        px(c, '#7d5f33', 6, 1, 1, 3);
+        px(c, '#7d5f33', 11, 5, 1, 3);
+    },
+    helmet(c, base = '#d0d0d0', dark = '#8a8a8a') {
+        px(c, base, 3, 4, 10, 4);
+        px(c, base, 2, 7, 3, 4);
+        px(c, base, 11, 7, 3, 4);
+        px(c, dark, 3, 8, 1, 3);
+        px(c, dark, 12, 8, 1, 3);
+        px(c, '#ffffff', 5, 5, 4, 1);
+    },
+    crown(c) {
+        ICONS.helmet(c, '#f2c94c', '#b8860b');
+        px(c, '#e33', 7, 5, 2, 2);
+    },
+    chestplate(c) {
+        px(c, '#d0d0d0', 2, 3, 4, 4);
+        px(c, '#d0d0d0', 10, 3, 4, 4);
+        px(c, '#d0d0d0', 4, 5, 8, 9);
+        px(c, '#8a8a8a', 7, 6, 2, 7);
+    },
+    boots(c) {
+        px(c, '#d0d0d0', 2, 6, 4, 6);
+        px(c, '#d0d0d0', 10, 6, 4, 6);
+        px(c, '#d0d0d0', 1, 11, 5, 2);
+        px(c, '#d0d0d0', 10, 11, 5, 2);
+        px(c, '#8a8a8a', 2, 6, 4, 1);
+        px(c, '#8a8a8a', 10, 6, 4, 1);
+    },
+    shield(c) {
+        px(c, '#8a8a8a', 3, 2, 10, 12);
+        px(c, '#7a5230', 4, 3, 8, 10);
+        px(c, '#a87443', 5, 4, 2, 8);
+        px(c, '#c0c0c0', 7, 7, 2, 2);
+    },
+    pearl(c) {
+        disc(c, 8, 8, 5, '#0f4f4a');
+        disc(c, 8, 8, 3, '#2c8f7f');
+        px(c, '#8ff5e0', 7, 6, 2, 2);
+    },
+    totem(c) {
+        px(c, '#e6b422', 6, 2, 4, 4);
+        px(c, '#e6b422', 4, 6, 8, 4);
+        px(c, '#e6b422', 6, 10, 4, 4);
+        px(c, '#2fae60', 6, 3, 1, 1);
+        px(c, '#2fae60', 9, 3, 1, 1);
+        px(c, '#fff3b0', 5, 7, 6, 1);
+    },
+    chest(c) {
+        px(c, '#8a5a2b', 2, 4, 12, 10);
+        px(c, '#5a3a1b', 2, 8, 12, 1);
+        px(c, '#c0c0c0', 7, 7, 2, 3);
+    }
+};
+
+function iconUrl(name) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 16;
+    ICONS[name](canvas.getContext('2d'));
+    return canvas.toDataURL();
+}
+
+const FACES = {
+    steve: ['#c69c6d', '#3b2a1a', '#4a6fd1'], alex: ['#f0c8a0', '#d9772b', '#3c8f4a'], kira: ['#8d5a3b', '#151515', '#6b3fa0'],
+    notch: ['#e0b48f', '#5a3a1b', '#2a6fb0'], mira: ['#f3d2b5', '#e8d070', '#2aa0a0'], olaf: ['#d9a77f', '#9a9a9a', '#3060d0'],
+    pocky: ['#f0c8a0', '#2b2b6b', '#d04040'], zed: ['#7a4a2b', '#d04040', '#202020']
+};
+
+function drawFace(canvas, key) {
+    const [skin, hair, eye] = FACES[key];
+    canvas.width = canvas.height = 8;
+    const c = canvas.getContext('2d');
+    px(c, skin, 0, 0, 8, 8);
+    px(c, hair, 0, 0, 8, 2);
+    px(c, hair, 0, 2, 1, 2);
+    px(c, hair, 7, 2, 1, 2);
+    px(c, '#ffffff', 1, 4, 2, 1);
+    px(c, '#ffffff', 5, 4, 2, 1);
+    px(c, eye, 2, 4, 1, 1);
+    px(c, eye, 5, 4, 1, 1);
+    px(c, '#7a4a3a', 3, 6, 2, 1);
+}
+
+/* ------------------------------------------------------------------ data */
+
+const ITEM_NAMES = {
+    diamond: 'Diamond', sword: 'Backup Blade', pickaxe: 'Diamond Pickaxe', apple: 'Apple', torch: 'Torch', ingot: 'Iron Ingot',
+    gold: 'Gold Ingot', emerald: 'Emerald', bread: 'Bread', cobble: 'Cobblestone', planks: 'Oak Planks', helmet: 'Iron Helmet',
+    chestplate: 'Iron Chestplate', boots: 'Iron Boots', shield: 'Shield', pearl: 'Ender Pearl', totem: 'Totem of Undying',
+    crown: 'Crown of Spawn', chest: 'Chest'
+};
+
+/* Slots: e0-e3 equipment (helmet, chest, legs, boots), off offhand, m0-m26 main, h0-h8 hotbar. */
+const base = {
+    e0: ['helmet', 1], e1: ['chestplate', 1], e3: ['boots', 1], off: ['shield', 1],
+    h1: ['pickaxe', 1], h2: ['torch', 48], h3: ['bread', 17], h4: ['cobble', 64], h5: ['planks', 64], h8: ['pearl', 6],
+    m0: ['diamond', 12], m1: ['gold', 23], m2: ['ingot', 40], m3: ['emerald', 5], m9: ['cobble', 64], m10: ['cobble', 64],
+    m11: ['cobble', 31], m18: ['apple', 9], m20: ['totem', 1], m26: ['chest', 2]
+};
+
+function variant(changes) {
+    const state = Object.assign({}, entries.length ? entries[entries.length - 1].state : base);
+    for (const [slot, value] of Object.entries(changes)) {
+        if (value === null) {
+            delete state[slot];
+        } else {
+            state[slot] = value;
+        }
+    }
+    return state;
+}
+
+const entries = [];
+
+function entry(time, trigger, label, ctx, changes) {
+    entries.push({time, trigger, label, ctx, state: variant(changes)});
+}
+
+entry('13:20:04', 'join', 'Join', {where: 'overworld 96 70 -12'}, {});
+entry('13:41:37', 'change', 'Change', {where: 'overworld 101 41 -8', note: 'mining'}, {m0: ['diamond', 9], m11: ['cobble', 52]});
+entry('13:52:10', 'container', 'Chest', {where: 'overworld 110 64 -20', container: 'minecraft:chest at 111 64 -20'},
+    {m1: ['gold', 3], m26: null});
+entry('13:58:12', 'change', 'Change', {where: 'overworld 118 64 -31', note: 'picked up Backup Blade from Alex_42'},
+    {h0: ['sword', 1], h3: ['bread', 15]});
+entry('14:01:55', 'change', 'Change', {where: 'overworld 120 64 -30'}, {m0: ['diamond', 14], m3: ['emerald', 8], h7: ['crown', 1]});
+entry('14:02:03', 'death', 'Death', {where: 'overworld 120 12 -30', cause: 'Steve_Builder fell from a high place'}, {});
+entry('14:02:40', 'change', 'Change', {where: 'overworld 0 70 0', note: 'respawned, items dropped'},
+    Object.fromEntries(Object.keys(entries[entries.length - 1].state).map(k => [k, null])));
+entry('14:05:21', 'restore', 'Restore', {where: 'overworld 0 70 0', actor: 'Pocky', restored: '14:01:55'}, entries[4].state);
+
+let current = 3;
+let pinA = 2;
+
+/* ------------------------------------------------------------------ rendering */
+
+function slotEl(slot, state, previous, hint) {
+    const div = document.createElement('div');
+    div.className = 'slot';
+    const now = state[slot];
+    const before = previous ? previous[slot] : undefined;
+    if (now) {
+        div.innerHTML = `<img src="${iconUrl(now[0])}"><span class="count">${now[1] > 1 ? now[1] : ''}</span>`;
+    } else if (before) {
+        div.innerHTML = `<img src="${iconUrl(before[0])}">`;
+    } else if (hint) {
+        div.classList.add('empty-hint');
+        div.dataset.hint = hint;
+    }
+    if (previous) {
+        if (now && !before) {
+            div.classList.add('added');
+        } else if (!now && before) {
+            div.classList.add('removed');
+        } else if (now && before && now[0] === before[0] && now[1] !== before[1]) {
+            div.classList.add('changed');
+            const delta = now[1] - before[1];
+            div.insertAdjacentHTML('beforeend', `<span class="delta ${delta > 0 ? 'up' : 'down'}">${delta > 0 ? '+' : ''}${delta}</span>`);
+        } else if (now && before && now[0] !== before[0]) {
+            div.classList.add('added');
+        }
+    }
+    if (slot === 'h0' || slot === 'm0') {
+        div.classList.add('selected');
+    }
+    return div;
+}
+
+function render() {
+    const e = entries[current];
+    const previous = current > 0 ? entries[current - 1].state : null;
+    const equipment = document.getElementById('equipment');
+    equipment.innerHTML = '';
+    ['e0', 'e1', 'e2', 'e3'].forEach((s, i) => equipment.appendChild(slotEl(s, e.state, previous, ['H', 'C', 'L', 'B'][i])));
+    equipment.appendChild(document.createElement('span'));
+    equipment.appendChild(slotEl('off', e.state, previous, 'O'));
+    const main = document.getElementById('main');
+    main.innerHTML = '';
+    for (let i = 0; i < 27; i++) {
+        main.appendChild(slotEl('m' + i, e.state, previous));
+    }
+    const hotbar = document.getElementById('hotbar');
+    hotbar.innerHTML = '';
+    for (let i = 0; i < 9; i++) {
+        hotbar.appendChild(slotEl('h' + i, e.state, previous));
+    }
+    if (current === 3) {
+        hotbar.children[0].classList.add('hover');
+    }
+
+    const changes = document.getElementById('changes');
+    changes.innerHTML = '';
+    const keys = new Set([...Object.keys(e.state), ...Object.keys(previous || {})]);
+    let rows = 0;
+    for (const k of keys) {
+        const a = previous ? previous[k] : undefined;
+        const b = e.state[k];
+        if (JSON.stringify(a) === JSON.stringify(b) || rows >= 5) {
+            continue;
+        }
+        rows++;
+        const item = (b || a)[0];
+        let text;
+        if (a && b && a[0] === b[0]) {
+            const d = b[1] - a[1];
+            text = `<span class="${d > 0 ? 'plus' : 'minus'}">${d > 0 ? '+' : ''}${d}</span> ${ITEM_NAMES[item]} <span style="color:var(--faint)">(${a[1]} → ${b[1]})</span>`;
+        } else if (b) {
+            text = `<span class="plus">+${b[1]}</span> ${ITEM_NAMES[b[0]]}`;
+        } else {
+            text = `<span class="minus">-${a[1]}</span> ${ITEM_NAMES[a[0]]}`;
+        }
+        changes.insertAdjacentHTML('beforeend', `<div class="row"><img src="${iconUrl(item)}">${text}<span class="where">${slotName(k)}</span></div>`);
+    }
+    if (rows === 0) {
+        changes.insertAdjacentHTML('beforeend', '<div class="row" style="padding-left:2px;color:var(--faint)">Nothing changed - a timeline marker</div>');
+    }
+
+    const ctx = document.getElementById('context');
+    const color = `var(--t-${e.trigger})`;
+    ctx.innerHTML = `<dt>Trigger</dt><dd><span style="color:${color}">■ ${e.label}</span></dd>
+        <dt>Time</dt><dd>today ${e.time} <span style="color:var(--faint)">(${ago(e.time)})</span></dd>
+        <dt>Where</dt><dd>${e.ctx.where} <a>⌖ teleport</a></dd>
+        ${e.ctx.cause ? `<dt>Cause</dt><dd>${e.ctx.cause}</dd>` : ''}
+        ${e.ctx.container ? `<dt>Container</dt><dd>${e.ctx.container}</dd>` : ''}
+        ${e.ctx.note ? `<dt>Note</dt><dd>${e.ctx.note}</dd>` : ''}
+        ${e.ctx.actor ? `<dt>Admin</dt><dd>${e.ctx.actor}, restored ${e.ctx.restored}</dd>` : ''}
+        <dt>Stored</dt><dd>delta, 3 slots, 118 bytes</dd>`;
+    document.getElementById('now').innerHTML = `<b>today ${e.time}</b> <span style="color:${color}">${e.label}</span>
+        <span class="t">· entry ${current + 1} of ${entries.length}</span>`;
+    document.getElementById('tooltip').style.display = current === 3 ? 'block' : 'none';
+    const blade = e.state.h0;
+    document.getElementById('selected-card').innerHTML = blade
+        ? `<img src="${iconUrl('sword')}"><div><b>Backup Blade</b> <span class="tag">#a91f</span></div>
+           <div class="sub">hotbar 1 · held since 13:58</div>
+           <div class="links"><a>⌕ trace</a> · <a>⇩ copy</a> · <a>↺ restore</a></div>`
+        : `<div class="sub" style="padding-left:0">Select slots to restore them alone or give copies.</div>`;
+    renderTrack();
+}
+
+function slotName(k) {
+    if (k.startsWith('h')) return 'hotbar ' + (+k.slice(1) + 1);
+    if (k.startsWith('m')) return 'inventory ' + (+k.slice(1) + 1);
+    if (k === 'off') return 'offhand';
+    return ['helmet', 'chestplate', 'leggings', 'boots'][+k.slice(1)];
+}
+
+function minutes(time) {
+    const [h, m] = time.split(':').map(Number);
+    return h * 60 + m;
+}
+
+function ago(time) {
+    const d = 14 * 60 + 32 - minutes(time);
+    return d <= 0 ? 'just now' : d + ' min ago';
+}
+
+function renderTrack() {
+    const track = document.getElementById('track');
+    track.innerHTML = '';
+    const x = time => Math.round(minutes(time) / 1440 * 466);
+    const rnd = seeded(3);
+    for (let i = 0; i < 116; i++) {
+        const busy = i > 30 && i < 60 ? 1 : (i > 75 && i < 90 ? .7 : .15);
+        const h = Math.round(rnd() * 12 * busy);
+        track.insertAdjacentHTML('beforeend', `<span class="density" style="left:${i * 4}px;height:${h}px"></span>`);
+    }
+    const background = [['07:12', 'join'], ['08:40', 'change'], ['09:05', 'container'], ['09:30', 'change'], ['10:10', 'change'],
+        ['11:02', 'quit'], ['12:20', 'join'], ['12:44', 'change']];
+    background.forEach(([t, kind]) => track.insertAdjacentHTML('beforeend',
+        `<span class="marker" style="left:${x(t)}px;background:var(--t-${kind})"></span>`));
+    entries.forEach((e, i) => track.insertAdjacentHTML('beforeend',
+        `<span class="marker ${e.trigger === 'death' || e.trigger === 'restore' ? 'big' : ''}" data-i="${i}"
+            style="left:${x(e.time)}px;background:var(--t-${e.trigger})"></span>`));
+    track.insertAdjacentHTML('beforeend', `<span class="pin a" style="left:${x(entries[pinA].time) - 4}px">A</span>`);
+    track.insertAdjacentHTML('beforeend', `<span class="thumb" style="left:${x(entries[current].time) - 1}px"></span>`);
+    track.querySelectorAll('.marker[data-i]').forEach(m => m.addEventListener('click', () => {
+        current = +m.dataset.i;
+        render();
+    }));
+    const ticks = document.getElementById('ticks');
+    ticks.innerHTML = ['00:00', '06:00', '12:00', '18:00', '24:00'].map((t, i) => i === 0
+        ? `<span style="left:0;transform:none">${t}</span>` : i === 4
+            ? `<span style="right:0;transform:none">${t}</span>` : `<span style="left:${i * 117}px">${t}</span>`).join('');
+}
+
+function renderPlayers() {
+    const players = [
+        ['Online', null],
+        ['steve', 'Steve_Builder', 'online · died 14:02', true, true],
+        ['alex', 'Alex_42', 'online · 3 h played', true, false],
+        ['kira', 'KiraNightfall', 'online', true, false],
+        ['Recently active', null],
+        ['notch', 'TheMiner', 'seen 12 min ago', false, true],
+        ['mira', 'Mira', 'seen 2 h ago', false, false],
+        ['olaf', 'Olaf_the_Grey', 'seen yesterday', false, false],
+        ['zed', 'zedd', 'seen 3 days ago', false, false],
+        ['pocky', 'Pocky', 'seen 5 days ago', false, false],
+        ['olaf', 'Stevenson', 'seen 2 weeks ago', false, false]
+    ];
+    const list = document.getElementById('players');
+    for (const [face, name, sub, online, death] of players) {
+        if (!name) {
+            list.insertAdjacentHTML('beforeend', `<div class="group">${face}</div>`);
+            continue;
+        }
+        list.insertAdjacentHTML('beforeend', `<div class="player ${face === 'steve' ? 'selected' : ''}">
+            <canvas class="face" data-face="${face}"></canvas><div class="name">${name}</div>
+            <div class="sub ${online ? 'online' : ''}">${sub}</div>${death ? '<span class="badge">☠</span>' : ''}</div>`);
+    }
+}
+
+function renderSearch() {
+    const dropdown = document.getElementById('dropdown');
+    [['sword', 'diamond_sw', 'ord', 'minecraft:diamond_sword', true], ['pickaxe', 'diamond_sh', 'ovel', 'minecraft:diamond_shovel', false],
+        ['diamond', 'diamond', '', 'minecraft:diamond', false]].forEach(([icon, typed, rest, id, on]) =>
+        dropdown.insertAdjacentHTML('beforeend', `<div class="opt ${on ? 'on' : ''}"><img src="${iconUrl(icon)}"><b>${typed}</b>${rest}<span class="k">${id.split(':')[0]}</span></div>`));
+    dropdown.style.display = 'none';
+
+    const items = document.getElementById('items');
+    [['sword', 'Diamond Sword', 'all stacks · 34 players', false, null], ['sword', 'Backup Blade', 'Sharpness V, Unbreaking III', true, 'a91f03'],
+        ['sword', 'Grandpa\'s Sword', 'renamed', false, '07c2d4'], ['sword', 'Diamond Sword', 'Looting III', false, '5e61b0']]
+        .forEach(([icon, name, sub, on, unique]) => items.insertAdjacentHTML('beforeend', `<div class="card ${on ? 'on' : ''}">
+            <img src="${iconUrl(icon)}">${name}${unique ? `<span class="tag">#${unique.slice(0, 4)}</span>` : ''}<div class="sub">${sub}</div></div>`));
+
+    const holders = document.getElementById('holders');
+    holders.insertAdjacentHTML('beforeend', '<div class="group" style="padding-top:4px">Holding now</div>');
+    const ranges = (list, color) => list.map(([a, b]) => `<i style="left:${a}%;width:${b - a}%;background:${color}"></i>`).join('');
+    [['steve', 'Steve_Builder', '×1', [[82, 100]], 'var(--added)', 'since today 13:58'],
+        ['kira', 'KiraNightfall', '×2', [[10, 55], [70, 100]], 'var(--added)', 'since Monday']].forEach(([face, name, count, r, color, sub]) =>
+        holders.insertAdjacentHTML('beforeend', `<div class="holder"><canvas class="face" data-face="${face}"></canvas><span class="n">${name}</span>
+            <span class="s">${sub}</span><span class="c">${count}</span><div class="bar">${ranges(r, color)}</div></div>`));
+    holders.insertAdjacentHTML('beforeend', '<div class="group" style="padding-top:4px">Held before</div>');
+    [['alex', 'Alex_42', 'max 1', [[40, 81]], 'var(--muted)', 'until today 13:58'],
+        ['notch', 'TheMiner', 'max 1', [[5, 38]], 'var(--muted)', 'until Tue 09:14'],
+        ['mira', 'Mira', 'max 3', [[0, 12], [20, 26]], 'var(--muted)', 'until Sun 11:20']].forEach(([face, name, count, r, color, sub]) =>
+        holders.insertAdjacentHTML('beforeend', `<div class="holder"><canvas class="face" data-face="${face}"></canvas><span class="n">${name}</span>
+            <span class="s">${sub}</span><span class="c" style="color:var(--faint)">${count}</span><div class="bar">${ranges(r, color)}</div></div>`));
+
+    const chain = document.getElementById('chain');
+    const node = (face, name, time) => `<div class="node"><canvas class="face" data-face="${face}"></canvas>${name}<span class="t">${time}</span></div>`;
+    const edge = (how, sub, probable) => `<div class="edge ${probable ? 'probable' : ''}"><b>${how}</b><div class="sub">${sub}</div></div>`;
+    chain.innerHTML = node('notch', 'TheMiner', 'crafted Mon 18:02')
+        + edge('via chest 10 64 10 · exact', 'put in Tue 09:14, taken out 21:40')
+        + node('alex', 'Alex_42', 'Tue 21:40')
+        + edge('dropped, picked up · exact', 'today 13:58:12 at 118 64 -31')
+        + node('steve', 'Steve_Builder', 'today 13:58')
+        + edge('probable · 3 s apart, 4 blocks', 'no drop or chest explains it', true)
+        + node('kira', 'KiraNightfall', 'today 14:21 · holds it now');
+}
+
+renderPlayers();
+renderSearch();
+render();
+
+// The confirmation screen shows the timeline behind its dialog.
+document.getElementById('restore-main').innerHTML = document.querySelector('#timeline-screen .main').innerHTML;
+document.querySelector('#restore-screen .sidebar').innerHTML = document.querySelector('#timeline-screen .sidebar').innerHTML;
+document.querySelectorAll('canvas[data-face]').forEach(canvas => drawFace(canvas, canvas.dataset.face));
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'ArrowLeft' && current > 0) current--;
+    else if (event.key === 'ArrowRight' && current < entries.length - 1) current++;
+    else if (event.key === 'd' || event.key === 'D') current = entries.findIndex(e => e.trigger === 'death');
+    else if (event.key === 'a' || event.key === 'A') pinA = current;
+    else if (event.key === ' ') {
+        event.preventDefault();
+        current = (current + 1) % entries.length;
+    } else return;
+    render();
+    document.querySelectorAll('#timeline-screen canvas[data-face]').forEach(canvas => drawFace(canvas, canvas.dataset.face));
+});
+</script>
+</body>
+</html>

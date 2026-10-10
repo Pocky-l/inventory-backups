@@ -1,0 +1,1072 @@
+/*
+ * Inventory Backups admin screen mockup.
+ * 1 CSS pixel = 1 Minecraft GUI pixel. The screen is 640 x 360 GUI pixels, the size Minecraft gives a 1920 x 1080 window
+ * at GUI scale 3; .zoom shows it at twice the size. Slots are 18 x 18 with 16 x 16 items, text uses the 9 pixel line
+ * height of the Minecraft font. Every color here exists as a constant in the Java screen (client.screen.Theme).
+ */
+
+:root {
+    --bg: #101217;
+    --panel: #181b21;
+    --panel-2: #1f232b;
+    --line: #2b3039;
+    --line-2: #363c47;
+    --text: #e6e8eb;
+    --muted: #8b93a1;
+    --faint: #5c6370;
+    --accent: #5aa9ff;
+    --accent-dim: #284a73;
+    --slot: #262a33;
+    --slot-hi: #323844;
+    --added: #4fd17a;
+    --removed: #f05f5f;
+    --changed: #f2c14e;
+    --pin-a: #ff8a3d;
+    --pin-b: #b48cff;
+    --t-change: #e5c07b;
+    --t-death: #ef5f5f;
+    --t-join: #6fcf7f;
+    --t-quit: #8b93a1;
+    --t-container: #c678dd;
+    --t-restore: #56b6c2;
+    --t-edit: #f0a35e;
+    --t-command: #61afef;
+    --t-import: #3fb8a5;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    background: #07080a;
+    color: var(--text);
+    font: 8px/9px "Menlo", "Consolas", monospace;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 24px 0;
+}
+
+.caption {
+    font: 14px/20px system-ui, sans-serif;
+    color: var(--muted);
+    max-width: 1280px;
+    text-align: center;
+}
+
+.zoom {
+    zoom: 2;
+}
+
+/* ---------------------------------------------------------------- screen frame */
+
+.screen {
+    position: relative;
+    width: 640px;
+    height: 360px;
+    background: var(--bg);
+    overflow: hidden;
+    image-rendering: pixelated;
+    border: 1px solid var(--line);
+}
+
+.topbar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 640px;
+    height: 22px;
+    background: #0c0e12;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: stretch;
+}
+
+.brand {
+    width: 156px;
+    padding: 7px 8px 0;
+    color: var(--accent);
+    font-weight: bold;
+    border-right: 1px solid var(--line);
+}
+
+.tab {
+    width: 72px;
+    padding-top: 7px;
+    text-align: center;
+    color: var(--muted);
+    border-right: 1px solid var(--line);
+}
+
+.tab.active {
+    color: var(--text);
+    background: var(--panel);
+    box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.topbar .spacer {
+    flex: 1;
+}
+
+.clock {
+    padding: 7px 8px 0;
+    color: var(--muted);
+}
+
+.close {
+    width: 22px;
+    padding-top: 7px;
+    text-align: center;
+    color: var(--muted);
+    border-left: 1px solid var(--line);
+}
+
+.statusbar {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 640px;
+    height: 14px;
+    padding: 3px 8px 0;
+    background: #0c0e12;
+    border-top: 1px solid var(--line);
+    color: var(--faint);
+    display: flex;
+    justify-content: space-between;
+}
+
+.key {
+    color: var(--muted);
+}
+
+/* ---------------------------------------------------------------- player browser */
+
+.sidebar {
+    position: absolute;
+    left: 0;
+    top: 22px;
+    width: 156px;
+    height: 324px;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+}
+
+.field {
+    position: absolute;
+    height: 16px;
+    padding: 4px 6px 0 18px;
+    background: #0e1014;
+    border: 1px solid var(--line-2);
+    color: var(--faint);
+}
+
+.field.focus {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.field::before {
+    content: "⌕";
+    position: absolute;
+    left: 6px;
+    top: 3px;
+    color: var(--muted);
+}
+
+.chips {
+    position: absolute;
+    display: flex;
+    gap: 3px;
+}
+
+.chip {
+    height: 12px;
+    padding: 2px 5px 0;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+}
+
+.chip.on {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.players {
+    position: absolute;
+    left: 0;
+    top: 46px;
+    width: 156px;
+}
+
+.group {
+    height: 13px;
+    padding: 3px 8px 0;
+    color: var(--faint);
+}
+
+.player {
+    position: relative;
+    height: 22px;
+    padding: 3px 0 0 28px;
+}
+
+.player.selected {
+    background: var(--panel-2);
+    box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.player .face {
+    position: absolute;
+    left: 8px;
+    top: 3px;
+}
+
+.player .name {
+    color: var(--text);
+}
+
+.player .sub {
+    color: var(--faint);
+    margin-top: 1px;
+}
+
+.player .sub.online {
+    color: var(--added);
+}
+
+.player .badge {
+    position: absolute;
+    right: 6px;
+    top: 3px;
+    color: var(--removed);
+}
+
+.face {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+/* ---------------------------------------------------------------- main area */
+
+.main {
+    position: absolute;
+    left: 156px;
+    top: 22px;
+    width: 484px;
+    height: 324px;
+}
+
+.who {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 484px;
+    height: 26px;
+    padding: 4px 8px 0 32px;
+    border-bottom: 1px solid var(--line);
+}
+
+.who .face {
+    position: absolute;
+    left: 8px;
+    top: 5px;
+}
+
+.who .title {
+    font-weight: bold;
+}
+
+.pill {
+    display: inline-block;
+    height: 10px;
+    padding: 1px 4px 0;
+    margin-left: 4px;
+    font-weight: normal;
+    border: 1px solid currentColor;
+}
+
+.who .meta {
+    color: var(--faint);
+    margin-top: 2px;
+}
+
+.who .right {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    color: var(--muted);
+}
+
+/* ---------------------------------------------------------------- timeline */
+
+.timeline {
+    position: absolute;
+    left: 0;
+    top: 26px;
+    width: 484px;
+    height: 66px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+}
+
+.seg {
+    position: absolute;
+    left: 8px;
+    top: 5px;
+    display: flex;
+}
+
+.seg span {
+    height: 12px;
+    padding: 2px 5px 0;
+    border: 1px solid var(--line-2);
+    margin-right: -1px;
+    color: var(--muted);
+}
+
+.seg span.on {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--text);
+    position: relative;
+}
+
+.range {
+    position: absolute;
+    left: 0;
+    width: 484px;
+    top: 7px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.legend {
+    position: absolute;
+    right: 8px;
+    top: 7px;
+    display: flex;
+    gap: 6px;
+    color: var(--faint);
+}
+
+.legend i {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    margin-right: 2px;
+}
+
+.track {
+    position: absolute;
+    left: 8px;
+    top: 24px;
+    width: 468px;
+    height: 16px;
+    background: #0e1014;
+    border: 1px solid var(--line-2);
+}
+
+.density {
+    position: absolute;
+    bottom: 0;
+    width: 4px;
+    background: #222833;
+}
+
+.marker {
+    position: absolute;
+    top: 2px;
+    width: 1px;
+    height: 10px;
+}
+
+.marker.big {
+    width: 3px;
+    top: 1px;
+    height: 12px;
+}
+
+.pin {
+    position: absolute;
+    top: -9px;
+    width: 9px;
+    height: 9px;
+    padding-left: 2px;
+    font-size: 7px;
+    line-height: 9px;
+    color: #000;
+    font-weight: bold;
+}
+
+.pin::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 9px;
+    width: 1px;
+    height: 16px;
+}
+
+.pin.a {
+    background: var(--pin-a);
+}
+
+.pin.a::after {
+    background: var(--pin-a);
+}
+
+.pin.b {
+    background: var(--pin-b);
+}
+
+.pin.b::after {
+    background: var(--pin-b);
+}
+
+.thumb {
+    position: absolute;
+    top: -3px;
+    width: 3px;
+    height: 20px;
+    background: var(--text);
+    box-shadow: 0 0 0 1px #000;
+}
+
+.thumb::before {
+    content: "";
+    position: absolute;
+    left: -2px;
+    top: -3px;
+    width: 7px;
+    height: 3px;
+    background: var(--text);
+}
+
+.ticks {
+    position: absolute;
+    left: 8px;
+    top: 41px;
+    width: 468px;
+    height: 9px;
+    color: var(--faint);
+}
+
+.ticks span {
+    position: absolute;
+    transform: translateX(-50%);
+}
+
+.transport {
+    position: absolute;
+    left: 8px;
+    top: 51px;
+    width: 468px;
+    height: 13px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.btn {
+    height: 13px;
+    min-width: 15px;
+    padding: 2px 4px 0;
+    text-align: center;
+    background: var(--panel-2);
+    border: 1px solid var(--line-2);
+    color: var(--text);
+}
+
+.btn.play {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+}
+
+.btn.death {
+    color: var(--removed);
+}
+
+.btn.primary {
+    background: #1f5c3a;
+    border-color: var(--added);
+}
+
+.btn.warn {
+    background: #5c2a2a;
+    border-color: var(--removed);
+}
+
+.btn.ghost {
+    background: transparent;
+}
+
+.now {
+    flex: 1;
+    text-align: center;
+}
+
+.now b {
+    color: var(--text);
+}
+
+.now .t {
+    color: var(--muted);
+}
+
+/* ---------------------------------------------------------------- inventory */
+
+.inventory {
+    position: absolute;
+    left: 0;
+    top: 92px;
+    width: 190px;
+    height: 232px;
+    border-right: 1px solid var(--line);
+}
+
+.subtabs {
+    position: absolute;
+    left: 6px;
+    top: 5px;
+    display: flex;
+}
+
+.subtabs span {
+    height: 13px;
+    padding: 2px 5px 0;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line-2);
+}
+
+.subtabs span.on {
+    color: var(--text);
+    border-bottom: 2px solid var(--accent);
+}
+
+.label {
+    position: absolute;
+    color: var(--faint);
+}
+
+.slots {
+    position: absolute;
+    display: grid;
+    grid-auto-rows: 18px;
+}
+
+.slot {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    background: var(--slot);
+    box-shadow: inset 1px 1px 0 #15181d, inset -1px -1px 0 var(--slot-hi);
+}
+
+.slot img {
+    position: absolute;
+    left: 1px;
+    top: 1px;
+    width: 16px;
+    height: 16px;
+}
+
+.slot .count {
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    color: #fff;
+    text-shadow: 1px 1px 0 #3f3f3f;
+}
+
+.slot.empty-hint::after {
+    content: attr(data-hint);
+    position: absolute;
+    left: 5px;
+    top: 4px;
+    color: #3a404c;
+}
+
+.slot.added {
+    background: #1d3b29;
+    box-shadow: inset 0 0 0 1px var(--added);
+}
+
+.slot.removed {
+    background: #3d1f22;
+    box-shadow: inset 0 0 0 1px var(--removed);
+}
+
+.slot.removed img {
+    opacity: .35;
+    filter: grayscale(.6);
+}
+
+.slot.changed {
+    box-shadow: inset 0 0 0 1px var(--changed);
+}
+
+.slot.selected::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border: 1px solid var(--accent);
+    z-index: 2;
+}
+
+.slot.hover {
+    background: #3b414d;
+}
+
+.delta {
+    position: absolute;
+    left: -2px;
+    top: -4px;
+    padding: 0 1px;
+    font-size: 7px;
+    line-height: 7px;
+    color: #000;
+    z-index: 3;
+}
+
+.delta.up {
+    background: var(--added);
+}
+
+.delta.down {
+    background: var(--removed);
+}
+
+.selected-card {
+    position: absolute;
+    left: 6px;
+    top: 156px;
+    width: 178px;
+    height: 46px;
+    padding: 4px 4px 0 24px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+}
+
+.selected-card img {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 16px;
+    height: 16px;
+}
+
+.selected-card b {
+    font-weight: normal;
+    color: #55ffff;
+}
+
+.selected-card .sub {
+    color: var(--faint);
+    margin-top: 2px;
+}
+
+.selected-card .links {
+    margin-top: 3px;
+    color: var(--accent);
+}
+
+.diffkey {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    display: flex;
+    gap: 6px;
+    color: var(--faint);
+}
+
+.diffkey i {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 2px;
+    vertical-align: -1px;
+}
+
+/* ---------------------------------------------------------------- details */
+
+.details {
+    position: absolute;
+    left: 190px;
+    top: 92px;
+    width: 294px;
+    height: 232px;
+}
+
+.section {
+    position: absolute;
+    left: 6px;
+    width: 282px;
+}
+
+.section h3 {
+    margin: 0;
+    height: 13px;
+    padding-top: 2px;
+    font: inherit;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+}
+
+.section h3 .toggle {
+    color: var(--faint);
+}
+
+.section h3 .toggle b {
+    color: var(--accent);
+    font-weight: normal;
+}
+
+.row {
+    position: relative;
+    height: 18px;
+    padding: 5px 0 0 20px;
+    border-bottom: 1px solid #1c2027;
+}
+
+.row img {
+    position: absolute;
+    left: 1px;
+    top: 1px;
+    width: 16px;
+    height: 16px;
+}
+
+.row .where {
+    position: absolute;
+    right: 0;
+    top: 5px;
+    color: var(--faint);
+}
+
+.plus {
+    color: var(--added);
+}
+
+.minus {
+    color: var(--removed);
+}
+
+.ctx {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    row-gap: 2px;
+    padding-top: 4px;
+}
+
+.ctx dt {
+    color: var(--faint);
+}
+
+.ctx dd {
+    margin: 0;
+}
+
+.ctx a {
+    color: var(--accent);
+}
+
+.actions {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    width: 282px;
+    display: flex;
+    gap: 3px;
+}
+
+.actions .btn {
+    flex: 1;
+}
+
+/* ---------------------------------------------------------------- tooltip and dialog */
+
+.tooltip {
+    position: absolute;
+    padding: 3px 4px;
+    background: #100010f0;
+    border: 1px solid #25015b;
+    box-shadow: inset 0 0 0 1px #5000ff50;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.tooltip .name {
+    color: #55ffff;
+}
+
+.tooltip .ench {
+    color: #aaaaaa;
+}
+
+.tooltip .sep {
+    height: 1px;
+    margin: 2px 0;
+    background: #3a2a5a;
+}
+
+.tooltip .ib {
+    color: var(--muted);
+}
+
+.tooltip .ib b {
+    color: var(--added);
+    font-weight: normal;
+}
+
+.dim {
+    position: absolute;
+    inset: 0;
+    background: #000000a0;
+    z-index: 20;
+}
+
+.dialog {
+    position: absolute;
+    left: 200px;
+    top: 120px;
+    width: 240px;
+    padding: 8px;
+    background: var(--panel);
+    border: 1px solid var(--line-2);
+    box-shadow: 0 0 0 1px #000;
+    z-index: 21;
+}
+
+.dialog h2 {
+    margin: 0 0 6px;
+    font: inherit;
+    font-weight: bold;
+}
+
+.dialog p {
+    margin: 0 0 6px;
+    color: var(--muted);
+}
+
+.dialog .buttons {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+/* ---------------------------------------------------------------- search */
+
+.search {
+    position: absolute;
+    left: 0;
+    top: 22px;
+    width: 640px;
+    height: 324px;
+}
+
+.searchbar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 640px;
+    height: 44px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+}
+
+.dropdown {
+    position: absolute;
+    left: 8px;
+    top: 24px;
+    width: 220px;
+    background: #0e1014;
+    border: 1px solid var(--accent);
+    z-index: 5;
+}
+
+.dropdown .opt {
+    position: relative;
+    height: 18px;
+    padding: 5px 0 0 22px;
+    color: var(--muted);
+}
+
+.dropdown .opt b {
+    color: var(--text);
+    font-weight: normal;
+}
+
+.dropdown .opt.on {
+    background: var(--accent-dim);
+    color: var(--text);
+}
+
+.dropdown .opt img {
+    position: absolute;
+    left: 3px;
+    top: 1px;
+    width: 16px;
+    height: 16px;
+}
+
+.dropdown .opt .k {
+    position: absolute;
+    right: 4px;
+    top: 5px;
+    color: var(--faint);
+}
+
+.col {
+    position: absolute;
+    top: 44px;
+    height: 280px;
+    border-right: 1px solid var(--line);
+}
+
+.col h3 {
+    margin: 0;
+    height: 15px;
+    padding: 4px 8px 0;
+    font: inherit;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+}
+
+.card {
+    position: relative;
+    height: 26px;
+    padding: 4px 6px 0 28px;
+    border-bottom: 1px solid #1c2027;
+}
+
+.card.on {
+    background: var(--panel-2);
+    box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.card img {
+    position: absolute;
+    left: 6px;
+    top: 5px;
+    width: 16px;
+    height: 16px;
+}
+
+.card .sub {
+    color: var(--faint);
+    margin-top: 1px;
+}
+
+.tag {
+    display: inline-block;
+    height: 9px;
+    padding: 0 2px;
+    margin-left: 3px;
+    color: var(--pin-b);
+    border: 1px solid var(--pin-b);
+    line-height: 8px;
+}
+
+.holder {
+    position: relative;
+    height: 26px;
+    padding: 4px 6px 0 28px;
+    border-bottom: 1px solid #1c2027;
+}
+
+.holder .face {
+    position: absolute;
+    left: 6px;
+    top: 5px;
+}
+
+.holder .n {
+    color: var(--text);
+}
+
+.holder .s {
+    margin-left: 4px;
+    color: var(--faint);
+}
+
+.holder .c {
+    position: absolute;
+    right: 6px;
+    top: 4px;
+    color: var(--text);
+}
+
+.bar {
+    position: relative;
+    height: 4px;
+    margin-top: 3px;
+    background: #0e1014;
+}
+
+.bar i {
+    position: absolute;
+    top: 0;
+    height: 4px;
+}
+
+.chain {
+    padding: 6px 8px;
+}
+
+.node {
+    position: relative;
+    height: 18px;
+    padding: 4px 0 0 22px;
+}
+
+.node .face {
+    position: absolute;
+    left: 0;
+    top: 1px;
+}
+
+.node .t {
+    position: absolute;
+    right: 0;
+    top: 4px;
+    color: var(--faint);
+}
+
+.edge {
+    position: relative;
+    min-height: 22px;
+    padding-bottom: 3px;
+    margin-left: 7px;
+    padding: 2px 0 0 14px;
+    border-left: 2px solid var(--added);
+    color: var(--muted);
+}
+
+.edge.probable {
+    border-left: 2px dashed var(--changed);
+}
+
+.edge b {
+    font-weight: normal;
+    color: var(--added);
+}
+
+.edge.probable b {
+    color: var(--changed);
+}
+
+.edge .sub {
+    color: var(--faint);
+    margin-top: 1px;
+}
