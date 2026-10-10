@@ -4,29 +4,40 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] - Unreleased
+## [3.0.0] - Unreleased
 
 ### Added
-- Tab completion for player names and backup names in all commands.
-- A "Deaths" quick filter in the backup list; `death`, `join`, `quit` and `open` work as list filters.
-- `list` and `set` of `/inventory` and `/enderchest` also work from the server console.
-- Ender chest backups taken when the chest was opened are marked as such in the list.
+- Every inventory, armor, offhand, Curios and ender chest change is recorded, merged into one entry per burst of
+  changes, instead of a save every 10 minutes. Deaths, joins, quits, container sessions, restores, live edits and
+  snapshots are marked on the timeline with position, death cause, container and admin.
+- An admin screen for admins who also install the mod on their client (`Ctrl+I` or `/inventory ui`): player browser,
+  timeline scrubber with zoom, playback, A/B pins and death jumps, the inventory at any moment with changes
+  highlighted, slot history in tooltips, and confirmed restore, copy, live edit, undo, snapshot and teleport actions.
+- Item search across all players, online and offline: `/invsearch` by item, custom name, enchantment or one specific
+  stack, who has it now, who had it at a given time, and the transfer trail through drops, death loot and shared
+  containers, with probable links marked as such. `/invsearch container <pos>` shows who put items into a chest and
+  who took them out.
+- `/inventory undo`, `/inventory snapshot`, `/inventory stats`, and a teleport button on timeline entries.
+- Permission nodes `inventorybackups.view`, `.restore`, `.edit`, `.search` and `.ui` for LuckPerms and other permission
+  mods; operator level 2 without one.
+- Tab completion for player names and backup times in all commands; the timeline list works from the server console.
 - A logo in the mod list and readable option names in the in-game config screen.
 
 ### Changed
-- Admins who do not have the mod installed see the chat messages in English instead of translation keys; with the mod
-  installed they appear in their own language.
-- `/inventory player` and `/enderchest player` now edit the live inventory: changes apply immediately, and items the
-  player picks up while the screen is open are no longer overwritten when it closes.
-- Backup previews show armor, offhand and curio slots in fixed places after the main inventory.
-- Periodic ender chest saves no longer depend on periodic inventory saves being enabled.
-- Restores are written to the server log.
-- Expired backups are also removed right after the server starts.
+- Backups are stored compactly in the world folder (`<world>/inventorybackups`): about 100 bytes per change, written
+  in the background, safe against crashes.
+- Old states are thinned instead of deleted: every change for a day, hourly for a week, daily for 30 days, deaths and
+  admin actions for 90 days, the newest state always; with disk budgets per player and in total.
+- 2.x JSON backups are imported once on the first start, then archived (configurable).
+- `/inventory` and `/enderchest` work on the same timeline; `/enderchest` shows and restores the ender chest part.
+- Admins without the mod see the chat in English instead of translation keys; with it, in their own language.
+- `/inventory player` edits the live inventory and records the edit as one entry naming the admin.
+- Previews show armor, offhand and curios in fixed places; restores are written to the server log.
+- `preservationPeriod` and the ender chest death, join, quit and open options are no longer used.
 - The mod is now under the MIT license.
 
 ### Fixed
-- With "save when opened" on, opening any other container with 27 slots (a chest, barrel or shulker box) also saved
-  the ender chest.
+- With "save when opened" on, opening any other container with 27 slots also saved the ender chest.
 - Copying a backup into a nearly full inventory could duplicate part of a stack.
 - Backup names in commands could point to files outside the backup folder.
 
