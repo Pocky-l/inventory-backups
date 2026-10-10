@@ -22,7 +22,6 @@ import com.pockyl.inventorybackups.storage.EntryContext;
 import com.pockyl.inventorybackups.storage.Trigger;
 
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -33,8 +32,6 @@ import java.util.UUID;
 @EventBusSubscriber(modid = InventoryBackups.MOD_ID)
 public final class ChangeTracker {
     private static final Map<UUID, TrackedPlayer> PLAYERS = new HashMap<>();
-    /** Container location per open menu, captured when the menu opens because the clicked block may change. */
-    private static final Map<AbstractContainerMenu, ContainerLocator.Location> OPEN_CONTAINERS = new IdentityHashMap<>();
 
     private ChangeTracker() {
     }
@@ -42,7 +39,7 @@ public final class ChangeTracker {
     @SubscribeEvent
     public static void onServerStarting(ServerStartingEvent event) {
         PLAYERS.clear();
-        OPEN_CONTAINERS.clear();
+        ContainerSessions.clear();
         BackupService.start(event.getServer());
     }
 
@@ -52,7 +49,6 @@ public final class ChangeTracker {
             submit(tracked.capture(Trigger.QUIT, EntryContext.of(tracked.player()), false));
         }
         PLAYERS.clear();
-        OPEN_CONTAINERS.clear();
         BackupService.stop();
     }
 
@@ -158,7 +154,7 @@ public final class ChangeTracker {
         tracked.watchMenu(menu);
         // Changes made before opening are recorded on their own, so the container entry only shows the session.
         submit(tracked.capture(Trigger.CHANGE, EntryContext.of(player), false));
-        OPEN_CONTAINERS.put(menu, ContainerLocator.locate(player, menu, tracked.clickedBlock(), tracked.clickTick()));
+        ContainerSessions.open(player, menu, ContainerLocator.locate(player, menu, tracked.clickedBlock(), tracked.clickTick()));
         PerfStats.addEvent(System.nanoTime() - start);
     }
 
@@ -167,13 +163,12 @@ public final class ChangeTracker {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        AbstractContainerMenu menu = event.getContainer();
-        ContainerLocator.Location location = OPEN_CONTAINERS.remove(menu);
+        long start = System.nanoTime();
+        ContainerLocator.Location location = ContainerSessions.close(player, event.getContainer(), System.currentTimeMillis());
         TrackedPlayer tracked = PLAYERS.get(player.getUUID());
         if (tracked == null || location == null) {
             return;
         }
-        long start = System.nanoTime();
         EntryContext context = EntryContext.of(player).withContainer(location.id(), location.pos());
         submit(tracked.capture(Trigger.CONTAINER, context, false));
         PerfStats.addEvent(System.nanoTime() - start);

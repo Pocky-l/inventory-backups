@@ -25,7 +25,7 @@ import java.util.UUID;
  * <p>
  * Every change is kept for {@code keepAll}; then the last state of each hour until {@code hourly}; then the last state
  * of each day until {@code daily}; deaths and admin actions until {@code important}. The newest entry of a player is
- * never removed, so the last known state survives any inactivity. A file records how far it has been thinned, so each
+ * never removed, so the last known state survives any inactivity. Item flows are kept for {@code daily}. A file records how far it has been thinned, so each
  * file is rewritten only a few times in its life, and the rewrite also compacts its frames into one.
  */
 public final class Retention {
@@ -84,6 +84,8 @@ public final class Retention {
             }
         }
         total = total.plus(enforceTotalBudget(store, policy.totalBudget()));
+        int flowDays = store.flowLog().deleteBefore(DayFiles.day(now - policy.daily()));
+        total = total.plus(new Result(0, flowDays, 0, 0));
         for (UUID player : store.storedPlayers()) {
             Path dir = store.playerDir(player);
             DayFiles.deleteIfEmpty(dir);

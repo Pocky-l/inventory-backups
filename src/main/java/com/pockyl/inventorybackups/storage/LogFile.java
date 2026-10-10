@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.CRC32;
 import java.util.zip.DataFormatException;
@@ -64,16 +65,36 @@ public final class LogFile {
     }
 
     public static Read read(Path file, LocalDate day) throws IOException {
-        byte[] bytes = Files.readAllBytes(file);
+        Frames frames = readFrames(file);
         DayLog log = new DayLog(day, 0);
+        if (!frames.frames().isEmpty()) {
+            log.setThin(frames.frames().get(0).getInt("thin"));
+        }
+        for (CompoundTag frame : frames.frames()) {
+            for (Tag item : frame.getList("p", Tag.TAG_COMPOUND)) {
+                CompoundTag pooled = (CompoundTag) item;
+                log.addToPool(pooled.getLong("h"), pooled.getCompound("i"));
+            }
+            for (Tag entry : frame.getList("e", Tag.TAG_COMPOUND)) {
+                log.addEntry(Entry.load((CompoundTag) entry));
+            }
+        }
+        return new Read(log, frames.validLength(), frames.frames().size());
+    }
+
+    /** The valid frames of a file in order and the length of the valid part. */
+    public record Frames(List<CompoundTag> frames, long validLength) {
+    }
+
+    public static Frames readFrames(Path file) throws IOException {
+        byte[] bytes = Files.readAllBytes(file);
         if (bytes.length < HEADER_SIZE || !hasMagic(bytes)) {
             throw new IOException("Not an inventory backup file: " + file);
         }
+        List<CompoundTag> frames = new ArrayList<>();
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.position(HEADER_SIZE);
         long valid = HEADER_SIZE;
-        int frames = 0;
-        boolean first = true;
         while (buffer.remaining() >= 8) {
             int length = buffer.getInt();
             int crc = buffer.getInt();
@@ -87,28 +108,15 @@ public final class LogFile {
             if ((int) checksum.getValue() != crc) {
                 break;
             }
-            CompoundTag frame;
             try {
-                frame = NbtIo.read(new DataInputStream(new ByteArrayInputStream(inflate(payload))), NbtAccounter.unlimitedHeap());
+                frames.add(NbtIo.read(new DataInputStream(new ByteArrayInputStream(inflate(payload))), NbtAccounter.unlimitedHeap()));
             } catch (DataFormatException | IOException e) {
                 InventoryBackups.LOGGER.warn("Ignoring a damaged frame at byte {} of {}", valid, file);
                 break;
             }
-            if (first) {
-                log.setThin(frame.getInt("thin"));
-                first = false;
-            }
-            for (Tag item : frame.getList("p", Tag.TAG_COMPOUND)) {
-                CompoundTag pooled = (CompoundTag) item;
-                log.addToPool(pooled.getLong("h"), pooled.getCompound("i"));
-            }
-            for (Tag entry : frame.getList("e", Tag.TAG_COMPOUND)) {
-                log.addEntry(Entry.load((CompoundTag) entry));
-            }
             valid = buffer.position();
-            frames++;
         }
-        return new Read(log, valid, frames);
+        return new Frames(frames, valid);
     }
 
     /** How far a file is thinned and how many frames it has, read without decoding its entries. */
@@ -149,17 +157,26 @@ public final class LogFile {
     }
 
     /**
-     * Appends a frame with new pool items and entries. Creates the file with its header if needed and cuts off a torn
-     * frame first when {@code validLength} is shorter than the file.
+     * Appends a frame with new pool items and entries.
      *
      * @return the number of bytes written
      */
     public static int append(Path file, long validLength, int thin, List<PoolItem> pool, List<Entry> entries) throws IOException {
+        return appendFrame(file, validLength, frame(thin, pool, entries));
+    }
+
+    /**
+     * Appends one frame. Creates the file with its header if needed and cuts off a torn frame first when
+     * {@code validLength} is shorter than the file.
+     *
+     * @return the number of bytes written
+     */
+    public static int appendFrame(Path file, long validLength, CompoundTag frame) throws IOException {
         Files.createDirectories(file.getParent());
-        byte[] frame = frame(thin, pool, entries);
+        byte[] bytes = encode(frame);
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
             long size = channel.size();
-            int written = frame.length;
+            int written = bytes.length;
             if (size < HEADER_SIZE) {
                 channel.truncate(0);
                 channel.write(ByteBuffer.wrap(header()), 0);
@@ -169,7 +186,7 @@ public final class LogFile {
                 channel.truncate(validLength);
                 size = validLength;
             }
-            channel.write(ByteBuffer.wrap(frame), size);
+            channel.write(ByteBuffer.wrap(bytes), size);
             return written;
         }
     }
@@ -179,7 +196,7 @@ public final class LogFile {
         Files.createDirectories(file.getParent());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         out.write(header());
-        out.write(frame(log.thin(), pool, log.entries()));
+        out.write(encode(frame(log.thin(), pool, log.entries())));
         Path temp = file.resolveSibling(file.getFileName() + ".tmp");
         Files.write(temp, out.toByteArray());
         moveAtomically(temp, file);
@@ -223,7 +240,7 @@ public final class LogFile {
         return true;
     }
 
-    private static byte[] frame(int thin, List<PoolItem> pool, List<Entry> entries) throws IOException {
+    private static CompoundTag frame(int thin, List<PoolItem> pool, List<Entry> entries) {
         CompoundTag frame = new CompoundTag();
         if (thin != 0) {
             frame.putInt("thin", thin);
@@ -243,7 +260,10 @@ public final class LogFile {
             entryTag.add(entry.save());
         }
         frame.put("e", entryTag);
+        return frame;
+    }
 
+    private static byte[] encode(CompoundTag frame) throws IOException {
         ByteArrayOutputStream raw = new ByteArrayOutputStream();
         NbtIo.write(frame, new DataOutputStream(raw));
         byte[] payload = deflate(raw.toByteArray());

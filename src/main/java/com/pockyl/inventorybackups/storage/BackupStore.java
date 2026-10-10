@@ -35,7 +35,8 @@ import java.util.stream.Stream;
  * All stored timelines of one world. Every file access happens on a single background thread: the main thread only
  * hands over {@link Capture}s and receives query results through futures.
  * <p>
- * Layout below the root: {@code players/<uuid>/<yyyy-MM-dd>.ibk} (see {@link LogFile}) and {@code players.dat}.
+ * Layout below the root: {@code players/<uuid>/<yyyy-MM-dd>.ibk} (see {@link LogFile}), {@code flows/<yyyy-MM-dd>.ibk}
+ * (see {@link FlowLog}) and {@code players.dat}.
  */
 public final class BackupStore {
     private static final int CACHED_DAYS = 96;
@@ -47,6 +48,7 @@ public final class BackupStore {
     private final ExecutorService io;
     private final Map<UUID, PlayerLog> logs = new HashMap<>();
     private final PlayerDirectory directory;
+    private final FlowLog flows;
     private final List<Listener> listeners = new ArrayList<>();
     private final LinkedHashMap<Path, CachedDay> cache = new LinkedHashMap<>(CACHED_DAYS, 0.75f, true) {
         @Override
@@ -69,6 +71,10 @@ public final class BackupStore {
          */
         void appended(UUID player, String name, Entry entry, Int2ObjectMap<StackRef> before, Int2ObjectMap<StackRef> after,
                       LongFunction<CompoundTag> items);
+
+        /** Called on the storage thread right before it stops. */
+        default void closing() {
+        }
     }
 
     public BackupStore(Path root, HolderLookup.Provider registries, IntSupplier keyframeInterval) {
@@ -76,6 +82,7 @@ public final class BackupStore {
         this.registries = registries;
         this.keyframeInterval = keyframeInterval;
         this.directory = new PlayerDirectory(root.resolve("players.dat"));
+        this.flows = new FlowLog(root.resolve("flows"));
         this.io = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "Inventory Backups IO");
             thread.setDaemon(true);
@@ -100,6 +107,20 @@ public final class BackupStore {
     /** Queues a capture; returns immediately. */
     public void submit(Capture capture) {
         execute(() -> write(capture));
+    }
+
+    /** Queues item flows; returns immediately. */
+    public void submitFlows(List<FlowDraft> drafts) {
+        if (drafts.isEmpty()) {
+            return;
+        }
+        execute(() -> {
+            try {
+                flows.append(drafts, registries);
+            } catch (IOException e) {
+                InventoryBackups.LOGGER.error("Could not write item flows", e);
+            }
+        });
     }
 
     /** Runs a task on the storage thread; ignored after {@link #close()}. */
@@ -134,7 +155,10 @@ public final class BackupStore {
         if (closed) {
             return;
         }
-        execute(directory::save);
+        execute(() -> {
+            listeners.forEach(Listener::closing);
+            directory.save();
+        });
         closed = true;
         io.shutdown();
         try {
@@ -254,6 +278,15 @@ public final class BackupStore {
 
     void saveDirectory() {
         directory.save();
+    }
+
+    /** Item flows of all players between two times, oldest first. */
+    public List<Flow> flows(long from, long to) {
+        return flows.between(from, to);
+    }
+
+    FlowLog flowLog() {
+        return flows;
     }
 
     /** Days with a stored file for the player, oldest first. */
