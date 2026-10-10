@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
+import com.pockyl.inventorybackups.index.ItemIndex;
 import com.pockyl.inventorybackups.storage.BackupStore;
 import com.pockyl.inventorybackups.storage.LegacyImporter;
 
@@ -24,6 +25,8 @@ public final class BackupService {
     private static BackupStore store;
     @Nullable
     private static MinecraftServer server;
+    @Nullable
+    private static ItemIndex index;
 
     private BackupService() {
     }
@@ -35,6 +38,11 @@ public final class BackupService {
         store = new BackupStore(root, newServer.registryAccess(), Config.KEYFRAME_INTERVAL::get);
         InventoryBackups.LOGGER.info("Inventory backups are stored in {}", root.toAbsolutePath().normalize());
         importLegacyBackups(store, newServer.getServerDirectory().resolve(LEGACY_FOLDER));
+        ItemIndex newIndex = new ItemIndex(root.resolve("index.dat"), newServer.registryAccess());
+        BackupStore opened = store;
+        store.execute(() -> newIndex.loadOrRebuild(opened));
+        store.addListener(newIndex);
+        index = newIndex;
         for (ModConfigSpec.ConfigValue<?> value : Config.DEPRECATED_VALUES) {
             if (!value.get().equals(value.getDefault())) {
                 InventoryBackups.LOGGER.info("Config option {} is no longer used since 3.0 and is ignored",
@@ -60,6 +68,7 @@ public final class BackupService {
             store.close();
             store = null;
         }
+        index = null;
         server = null;
     }
 
@@ -71,6 +80,12 @@ public final class BackupService {
 
     public static Optional<BackupStore> optionalStore() {
         return Optional.ofNullable(store);
+    }
+
+    /** The item index; only to be used on the storage thread. */
+    @Nullable
+    public static ItemIndex index() {
+        return index;
     }
 
     @Nullable

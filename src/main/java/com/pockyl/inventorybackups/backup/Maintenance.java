@@ -7,12 +7,13 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
+import com.pockyl.inventorybackups.index.ItemIndex;
 import com.pockyl.inventorybackups.storage.BackupStore;
 import com.pockyl.inventorybackups.storage.Retention;
 
 /**
- * Background housekeeping: a retention pass when the server has started and then every few minutes, on the storage
- * thread.
+ * Background housekeeping: a retention pass (and pruning of the item index) when the server has started and then every
+ * few minutes, on the storage thread.
  */
 @EventBusSubscriber(modid = InventoryBackups.MOD_ID)
 public final class Maintenance {
@@ -47,9 +48,13 @@ public final class Maintenance {
             return;
         }
         Retention.Policy policy = policy();
+        ItemIndex index = BackupService.index();
         store.execute(() -> {
             long start = System.currentTimeMillis();
             Retention.Result result = Retention.run(store, policy, start);
+            if (index != null) {
+                index.prune(start - policy.daily());
+            }
             if (result.rewritten() + result.deleted() > 0) {
                 InventoryBackups.LOGGER.info("Backup retention: thinned {} files, deleted {}, removed {} entries, freed {} KiB in {} ms",
                         result.rewritten(), result.deleted(), result.entriesRemoved(), result.bytesFreed() / 1024,
