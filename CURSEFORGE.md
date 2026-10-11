@@ -138,6 +138,8 @@ Minecraft 1.20.1 Forge and Fabric versions by DjJewl. Special thanks to PiglinMi
 
 [![Turbo for Distant Horizons](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/more-mods/dhturbo.png)](https://www.curseforge.com/minecraft/mc-mods/turbo-for-distant-horizons) **[Turbo for Distant Horizons](https://www.curseforge.com/minecraft/mc-mods/turbo-for-distant-horizons)** - Distant Horizons terrain generated many times faster
 
+[![Pocky Shaders](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/more-mods/pocky_shaders.png)](https://www.curseforge.com/minecraft/mc-mods/pocky-shaders) **[Pocky Shaders](https://www.curseforge.com/minecraft/mc-mods/pocky-shaders)** - a cosy, natural shader pack that sets itself up
+
 **⚔️ Gear & gameplay**
 
 [![Holy Staff](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/more-mods/holy_staff.png)](https://www.curseforge.com/minecraft/mc-mods/holy-staff) **[Holy Staff](https://www.curseforge.com/minecraft/mc-mods/holy-staff)** - a healing staff with three skills and flying heal numbers
