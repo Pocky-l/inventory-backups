@@ -1,117 +1,44 @@
 # Inventory Backups
 
-Every inventory and ender chest change of every player, with item search, transfer trails and an optional timeline
-screen for admins.
+**Every inventory change of every player, recorded** - roll back any moment with one click, find any item and see who took it, online or offline.
 
-Lost items to a bug, a lag death or a thief? Inventory Backups records every change of every player's inventory and
-ender chest, lets operators scrub through that history, find any item across all players and see how it moved
-from player to player, and put any moment back with one click.
+![The admin screen: timeline, inventory at the selected moment and what changed](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/screenshots/mockup-timeline.png)
 
-## Features
+📦 **Requires** [NeoForge](https://neoforged.net) 1.21.1 · on the server; admins who want the timeline screen also put
+it on their client
 
-- **Every change, recorded cheaply.** Main inventory, armor, offhand, the ender chest and the slots other mods add:
-  [Curios](https://www.curseforge.com/minecraft/mc-mods/curios), [Accessories](https://www.curseforge.com/minecraft/mc-mods/accessories),
-  [Cosmetic Armor Reworked](https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked),
-  [Traveler's Backpack](https://www.curseforge.com/minecraft/mc-mods/travelers-backpack),
-  [Tool Belt](https://www.curseforge.com/minecraft/mc-mods/tool-belt) and [Backpacked](https://www.curseforge.com/minecraft/mc-mods/backpacked).
-  Changes are detected through the slot sync vanilla already runs, so nothing is serialized
-  per tick; bursts are merged into one entry once the inventory is still for 2.5 seconds (at most 30 seconds later).
-  Measured: about 0.005 ms of main-thread time per player and tick, about 100 bytes per recorded change.
-- **Timeline markers with context.** Deaths (with cause and position, recorded before the items drop), joins, quits,
-  container sessions (which chest, where), admin restores and live edits (which admin), snapshots.
-- **Compact, crash-safe storage.** Binary day files per player with keyframes, slot-level deltas, an item pool that
-  stores identical stacks once and compression; written on a background thread, append-only, CRC-checked. A crash
-  loses at most the last few seconds.
-- **Retention that thins instead of cutting.** Every change for 24 hours, then one state per hour for 7 days, one per
-  day for 30 days; deaths and admin actions for 90 days; the newest state of a player is always kept. Disk budgets per
-  player and in total delete the oldest days first.
-- **Item search and transfer trail.** Who has an item now, who had it and when, by item id, custom name, enchantment or
-  the fingerprint of one specific stack (it survives wear). Transfers are linked exactly through drops, death loot and
-  shared containers; timing-based links are marked as probable. "Who took the diamonds from my chest?" is
-  `/invsearch container <pos>`.
-- **Admin screen (optional client mod).** A player browser, a timeline scrubber with markers, zoom, playback, A/B
-  pins and death jumps, the inventory at any moment with changes highlighted, tooltips that tell when and where an
-  item got into its slot, and confirmed actions: restore all or selected slots, give yourself a copy, live edit,
-  undo, snapshot, teleport. The item search with holders and the transfer trail is one tab away.
-- **Offline players too.** Restore, live edit and undo work for players who are not online: the change is written
-  into their save file, mod slots included, and waits for them when they log in.
-- **Works without the client mod.** Clickable chat commands for everything, in English for vanilla clients and in the
-  admin's language with the mod (English and Russian included).
-- **Permissions.** Separate `inventorybackups.view`, `.restore`, `.edit`, `.search` and `.ui` nodes through NeoForge's
-  permission API; operator level 2 without a permission mod.
-- **Imports 2.x backups** once on the first start and keeps reading the 2.x config file.
+## ✨ Features
 
-![Admin screen mockup](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/screenshots/mockup-timeline.png)
+- 📼 **Every change recorded** - inventory, armor, offhand, ender chest and mod slots, merged into one entry per
+  burst; about 100 bytes per change and 0.005 ms per player and tick.
+- 🕒 **A timeline with context** - deaths with cause and place (recorded before the items drop), joins, quits,
+  chests used, restores and edits by admins.
+- ↩️ **Restore in one click** - a whole moment or only some slots, with undo; or give yourself a copy and leave the
+  player's items alone.
+- 🔍 **Find any item** - who has it now, who had it and when, by id, name, enchantment or one exact stack, with its
+  trail through drops, death loot and chests; `/invsearch container` shows who emptied a chest.
+- 🖥️ **Admin screen** - scrub the timeline, play it back, compare two moments, see what changed and where every item
+  came from (`Ctrl+I`, needs the mod on the admin's client).
+- 💤 **Offline players too** - restore and edit players who are not online; the change goes into their save file.
+- 🎒 **Mod slots** - Curios, Accessories, Cosmetic Armor, Traveler's Backpack, Tool Belt and Backpacked are backed up
+  and restored with the rest.
+- 🗜️ **Small and safe storage** - compact day files written in the background, thinned with age instead of cut off,
+  with disk budgets; a crash loses seconds at most.
+- 🔐 **Permissions** - separate view, restore, edit and search nodes for LuckPerms; operators without one. Works for
+  vanilla clients through clickable chat.
 
-## Controls
+## 🎮 Controls
 
-| Key | Action |
-|---|---|
-| `Ctrl+I` (configurable) | Open the admin screen |
-| `←` `→` / `Shift` | Previous / next entry, 10 at a time |
-| `Home` `End` | First / newest entry |
-| `Space` | Play the timeline |
-| `D` | Jump to the previous death |
-| `A` `B` | Pin the entry as A or B; `C` compares with previous, A or B |
-| `Ctrl+F` | Item search |
-| `Ctrl+A` | Select all shown slots |
+`Ctrl+I` opens the admin screen. Without the client mod: `/inventory list <player>` for a clickable timeline,
+`/inventory set|undo|copy|player`, `/enderchest ...` the same for the ender chest, `/invsearch <item>` for the item
+search. All commands are listed in the [README](https://github.com/Pocky-l/inventory-backups#commands).
 
-## Commands
+## ⚙️ Configuration
 
-Each command needs its permission node (default: operator level 2). `/enderchest` has the same sub-commands as
-`/inventory` and works on the ender chest part of the timeline.
+`config/inventory/InventoryBackups.toml` or *Mods > Inventory Backups > Config*: what is recorded, how long it is kept,
+disk budgets, permission level. 2.x configs and backups are taken over on the first start.
 
-| Command | What it does |
-|---|---|
-| `/inventory list <player> [filter] [page]` | Clickable timeline; filters: `2025-03`, `2025-03-15`, `death`, `restore`, `container`, ... |
-| `/inventory view <player> <time>` | Read-only preview of a state |
-| `/inventory set <player> <time>` | Restore a state (the previous one stays recorded) |
-| `/inventory undo <player>` | Undo the last restore |
-| `/inventory copy <player> <time>` | Copy the items of a state into your inventory |
-| `/inventory player <player>` | Edit the live inventory, recorded as one edit |
-| `/inventory snapshot <player>` | Record the current state now |
-| `/inventory stats` | Main-thread cost, bytes per change, entries written |
-| `/inventory ui` | Open the admin screen (client mod) |
-| `/invsearch <item> [player\|*] [since]` | Holders and transfers of an item, `since` like `2h`, `3d` |
-| `/invsearch name <text>` / `ench <id>` / `trace <fingerprint>` | Search by custom name, enchantment or one stack |
-| `/invsearch at <time> <item>` | Who held the item at that time |
-| `/invsearch container <pos> [since]` | Who put items into a container and who took them out |
-
-`<time>` is what the chat buttons fill in, `latest`, or a `yyyy-MM-dd-HH-mm-ss` timestamp (2.x backup names work).
-
-## Configuration
-
-`config/inventory/InventoryBackups.toml` (also in game: Mods -> Inventory Backups -> Config). The 2.x keys stay valid.
-
-| Option | Default | Meaning |
-|---|---|---|
-| `general.tickSaveEnabled` | `true` | Record inventory changes |
-| `general.deadSaveEnabled` / `joinSaveEnabled` / `quitSaveEnabled` | `true` | Record deaths, mark joins and quits |
-| `general.retentionDays` | `30` | Days to keep one state per day |
-| `enderchest.enderChestEnabled` | `true` | Back up ender chests, `/enderchest` |
-| `enderchest.enderChestTickSaveEnabled` | `true` | Record ender chest changes |
-| `capture.settleSeconds` / `maxDelaySeconds` | `2.5` / `30` | Merge bursts of changes |
-| `capture.scanSeconds` | `5` | Full slot comparison for changes no event reports |
-| `capture.containerSessions` | `true` | Record puts and takes at containers |
-| `storage.directory` | empty | Empty: `<world>/inventorybackups`; otherwise a path relative to the server folder |
-| `storage.keyframeInterval` | `64` | Entries between full states |
-| `retention.keepAllHours` / `hourlyDays` / `importantDays` | `24` / `7` / `90` | Thinning by age |
-| `retention.playerBudgetMb` / `totalBudgetMb` | `64` / `4096` | Disk budgets, 0 = no limit |
-| `migration.legacyBackups` | `ARCHIVE` | 2.x JSON backups after import: `KEEP`, `ARCHIVE`, `DELETE` |
-| `permissions.permissionLevel` | `2` | Operator level when no permission mod decides |
-| `search.probableLinkSeconds` / `probableLinkDistance` | `15` / `24` | Window for probable transfers |
-| `search.maxResults` | `500` | Limit per search or request |
-
-`preservationPeriod` and the ender chest death/join/quit/open options are deprecated and ignored. The client config
-(`inventorybackups-client.toml`) sets playback speed, default zoom, 24 hour clock, highlighting and tooltip history.
-
-## Installation
-
-1. Install [NeoForge](https://neoforged.net) 21.1 for Minecraft 1.21.1 on the server and put the mod into `mods`.
-2. Optional: admins who want the timeline screen put the same jar into their client's `mods` folder. Other players
-   do not need it.
-
-## Compatibility
+## 🤝 Compatibility
 
 [![Curios API](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/curios.png)](https://www.curseforge.com/minecraft/mc-mods/curios) ✅ **[Curios API](https://www.curseforge.com/minecraft/mc-mods/curios)** (optional) - every curio slot, cosmetic slots included, is recorded, shown on the Mod slots tab, restored with the inventory and editable live.
 
@@ -127,11 +54,20 @@ Each command needs its permission node (default: operator level 2). `/enderchest
 
 [![LuckPerms](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/luckperms.png)](https://luckperms.net) ✅ **[LuckPerms](https://luckperms.net)** (optional) - grant `inventorybackups.view`, `.restore`, `.edit`, `.search` and `.ui` per group instead of operator status.
 
-## Credits
+## 📸 Screenshots
 
-Made by **Pocky**. Source code: [GitHub](https://github.com/Pocky-l/inventory-backups)
+![Restoring selected slots](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/screenshots/mockup-restore.png)
 
-Minecraft 1.20.1 Forge and Fabric versions by DjJewl. Special thanks to PiglinMine.com.
+*Restoring selected slots*
+
+![Item search with holders and the transfer trail](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/screenshots/mockup-search.png)
+
+*Item search with holders and the transfer trail*
+
+## 💛 Credits
+
+Made by **Pocky** · [source code](https://github.com/Pocky-l/inventory-backups) · Minecraft 1.20.1 Forge and Fabric
+versions by DjJewl · special thanks to PiglinMine.com.
 
 <!-- more-mods:start -->
 ## More mods by Pocky

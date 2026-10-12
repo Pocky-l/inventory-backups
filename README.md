@@ -5,57 +5,40 @@
 <h1 align="center">Inventory Backups</h1>
 
 <p align="center">
-  Every inventory and ender chest change of every player, with item search, transfer trails and an optional
-  timeline screen for admins.
+  <b>Every inventory change of every player, recorded</b> - roll back any moment with one click, find any item and see who took it, online or offline.
 </p>
 
 <p align="center">
   <a href="https://www.curseforge.com/minecraft/mc-mods/inventory-backups"><img alt="CurseForge downloads" src="https://img.shields.io/curseforge/dt/836385?logo=curseforge&label=CurseForge&color=F16436"></a>
-  <img alt="Minecraft 1.21.1" src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A">
+  <a href="https://www.minecraft.net"><img alt="Minecraft 1.21.1" src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A"></a>
   <a href="https://neoforged.net"><img alt="NeoForge" src="https://img.shields.io/badge/Loader-NeoForge-F16436"></a>
   <img alt="Server side" src="https://img.shields.io/badge/Side-Server-7A5CFA">
-  <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue">
+  <a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue"></a>
 </p>
 
-Lost items to a bug, a lag death or a thief? Inventory Backups records every change of every player's inventory and
-ender chest, lets operators scrub through that history, find any item across all players and see how it moved
-from player to player, and put any moment back with one click.
+<p align="center">
+  <img src="docs/screenshots/mockup-timeline.png" alt="The admin screen: timeline, inventory at the selected moment and what changed" width="720">
+</p>
 
 ## Features
 
-- **Every change, recorded cheaply.** Main inventory, armor, offhand, the ender chest and the slots other mods add:
-  [Curios](https://www.curseforge.com/minecraft/mc-mods/curios), [Accessories](https://www.curseforge.com/minecraft/mc-mods/accessories),
-  [Cosmetic Armor Reworked](https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked),
-  [Traveler's Backpack](https://www.curseforge.com/minecraft/mc-mods/travelers-backpack),
-  [Tool Belt](https://www.curseforge.com/minecraft/mc-mods/tool-belt) and [Backpacked](https://www.curseforge.com/minecraft/mc-mods/backpacked).
-  Changes are detected through the slot sync vanilla already runs, so nothing is serialized
-  per tick; bursts are merged into one entry once the inventory is still for 2.5 seconds (at most 30 seconds later).
-  Measured: about 0.005 ms of main-thread time per player and tick, about 100 bytes per recorded change.
-- **Timeline markers with context.** Deaths (with cause and position, recorded before the items drop), joins, quits,
-  container sessions (which chest, where), admin restores and live edits (which admin), snapshots.
-- **Compact, crash-safe storage.** Binary day files per player with keyframes, slot-level deltas, an item pool that
-  stores identical stacks once and compression; written on a background thread, append-only, CRC-checked. A crash
-  loses at most the last few seconds.
-- **Retention that thins instead of cutting.** Every change for 24 hours, then one state per hour for 7 days, one per
-  day for 30 days; deaths and admin actions for 90 days; the newest state of a player is always kept. Disk budgets per
-  player and in total delete the oldest days first.
-- **Item search and transfer trail.** Who has an item now, who had it and when, by item id, custom name, enchantment or
-  the fingerprint of one specific stack (it survives wear). Transfers are linked exactly through drops, death loot and
-  shared containers; timing-based links are marked as probable. "Who took the diamonds from my chest?" is
-  `/invsearch container <pos>`.
-- **Admin screen (optional client mod).** A player browser, a timeline scrubber with markers, zoom, playback, A/B
-  pins and death jumps, the inventory at any moment with changes highlighted, tooltips that tell when and where an
-  item got into its slot, and confirmed actions: restore all or selected slots, give yourself a copy, live edit,
-  undo, snapshot, teleport. The item search with holders and the transfer trail is one tab away.
-- **Offline players too.** Restore, live edit and undo work for players who are not online: the change is written
-  into their save file, mod slots included, and waits for them when they log in.
-- **Works without the client mod.** Clickable chat commands for everything, in English for vanilla clients and in the
-  admin's language with the mod (English and Russian included).
-- **Permissions.** Separate `inventorybackups.view`, `.restore`, `.edit`, `.search` and `.ui` nodes through NeoForge's
-  permission API; operator level 2 without a permission mod.
-- **Imports 2.x backups** once on the first start and keeps reading the 2.x config file.
-
-![Admin screen mockup](docs/screenshots/mockup-timeline.png)
+- 📼 **Every change recorded** - inventory, armor, offhand, ender chest and mod slots, merged into one entry per
+  burst; about 100 bytes per change and 0.005 ms per player and tick.
+- 🕒 **A timeline with context** - deaths with cause and place (recorded before the items drop), joins, quits,
+  chests used, restores and edits by admins.
+- ↩️ **Restore in one click** - a whole moment or only some slots, with undo; or give yourself a copy and leave the
+  player's items alone.
+- 🔍 **Find any item** - who has it now, who had it and when, by id, name, enchantment or one exact stack, with its
+  trail through drops, death loot and chests; `/invsearch container` shows who emptied a chest.
+- 🖥️ **Admin screen** - scrub the timeline, play it back, compare two moments, see what changed and where every item
+  came from (`Ctrl+I`, needs the mod on the admin's client).
+- 💤 **Offline players too** - restore and edit players who are not online; the change goes into their save file.
+- 🎒 **Mod slots** - Curios, Accessories, Cosmetic Armor, Traveler's Backpack, Tool Belt and Backpacked are backed up
+  and restored with the rest.
+- 🗜️ **Small and safe storage** - compact day files written in the background, thinned with age instead of cut off,
+  with disk budgets; a crash loses seconds at most.
+- 🔐 **Permissions** - separate view, restore, edit and search nodes for LuckPerms; operators without one. Works for
+  vanilla clients through clickable chat.
 
 ## Controls
 
