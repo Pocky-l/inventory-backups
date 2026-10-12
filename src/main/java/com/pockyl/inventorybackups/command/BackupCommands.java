@@ -15,6 +15,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -29,6 +30,7 @@ import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.BackupKind;
 import com.pockyl.inventorybackups.backup.BackupService;
 import com.pockyl.inventorybackups.backup.ChangeTracker;
+import com.pockyl.inventorybackups.backup.OfflinePlayers;
 import com.pockyl.inventorybackups.backup.PerfStats;
 import com.pockyl.inventorybackups.backup.Restorer;
 import com.pockyl.inventorybackups.menu.LivePlayerMenu;
@@ -173,13 +175,14 @@ public final class BackupCommands {
 
     private static int restore(CommandContext<CommandSourceStack> context, BackupKind kind) {
         withState(context, kind, (target, state) -> {
-            ServerPlayer player = onlineOrError(context, target, "inventorybackups.error.player_offline_cannot_restore");
+            ServerPlayer player = editable(context, target);
             if (player == null) {
                 return;
             }
             String time = EntrySelector.display(state.entry().time());
             Restorer.restore(player, state, kind == BackupKind.INVENTORY, kind == BackupKind.ENDER_CHEST,
                     context.getSource().getTextName());
+            OfflinePlayers.release(player);
             ChatUI.success(context.getSource(), tr(key(kind, "success.restored"), value(time), value(player.getScoreboardName()))
                     .append(" ")
                     .append(ChatUI.button("[↶]", ChatFormatting.YELLOW, ChatUI.command(kind, "undo " + player.getScoreboardName()),
@@ -221,9 +224,10 @@ public final class BackupCommands {
                 ChatUI.error(context.getSource(), tr("inventorybackups.error.no_undo", value(resolved.name())));
                 return;
             }
-            ServerPlayer player = onlineOrError(context, resolved, "inventorybackups.error.player_offline_cannot_restore");
+            ServerPlayer player = editable(context, resolved);
             if (player != null) {
                 Restorer.restore(player, state.get(), true, Config.ENDER_CHEST_ENABLED.get(), context.getSource().getTextName());
+                OfflinePlayers.release(player);
                 ChatUI.success(context.getSource(), tr("inventorybackups.success.undone", value(player.getScoreboardName()),
                         value(EntrySelector.display(state.get().entry().time()))));
             }
@@ -281,10 +285,11 @@ public final class BackupCommands {
         if (target.isEmpty()) {
             return 0;
         }
-        ServerPlayer player = onlineOrError(context, target.get(), "inventorybackups.error.player_offline_cannot_view");
+        ServerPlayer player = editable(context, target.get());
         if (player == null) {
             return 0;
         }
+        // The menu owns an offline copy from here on and releases it when it closes.
         LivePlayerMenu.open(executor, player, kind == BackupKind.ENDER_CHEST, tr(key(kind, "player.title"), player.getScoreboardName()));
         ChatUI.info(context.getSource(), tr(key(kind, "info.viewing_player"), value(player.getScoreboardName())));
         return 1;
@@ -337,6 +342,24 @@ public final class BackupCommands {
         List<Entry> copy = new ArrayList<>(entries);
         Collections.reverse(copy);
         return copy;
+    }
+
+    /**
+     * The player to change: the online one, or a copy loaded from the save file while they are offline. Release it with
+     * {@link OfflinePlayers#release} after use (nothing to release for online players).
+     */
+    @Nullable
+    private static ServerPlayer editable(CommandContext<CommandSourceStack> context, ResolvedPlayer target) {
+        MinecraftServer server = context.getSource().getServer();
+        ServerPlayer online = server.getPlayerList().getPlayer(target.uuid());
+        if (online != null) {
+            return online;
+        }
+        Optional<ServerPlayer> offline = OfflinePlayers.acquire(server, target.uuid(), target.name());
+        if (offline.isEmpty()) {
+            ChatUI.error(context.getSource(), tr("inventorybackups.error.no_save_file", value(target.name())));
+        }
+        return offline.orElse(null);
     }
 
     @Nullable

@@ -12,6 +12,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 import com.pockyl.inventorybackups.backup.ChangeTracker;
+import com.pockyl.inventorybackups.backup.OfflinePlayers;
 import com.pockyl.inventorybackups.backup.PlayerSlots;
 import com.pockyl.inventorybackups.compat.ModSlots;
 
@@ -26,16 +27,25 @@ import java.util.Map;
  */
 public final class LivePlayerMenu extends ChestMenu {
     private final ServerPlayer target;
+    private final String admin;
 
     private LivePlayerMenu(MenuType<?> type, int containerId, Inventory playerInventory, Container contents, int rows,
-                           ServerPlayer targetPlayer) {
+                           ServerPlayer targetPlayer, String admin) {
         super(type, containerId, playerInventory, contents, rows);
         this.target = targetPlayer;
+        this.admin = admin;
+    }
+
+    /** The player whose inventory is shown; an offline copy for offline players. */
+    public ServerPlayer target() {
+        return target;
     }
 
     /**
      * Opens the live inventory or ender chest of a player for an admin. While it is open the target's changes are held
-     * back, so the whole edit is recorded as one entry naming the admin.
+     * back, so the whole edit is recorded as one entry naming the admin. The target may be an offline copy from
+     * {@link OfflinePlayers#acquire}: the menu then owns that copy, writes every change to the save file and releases
+     * the copy when it closes.
      */
     public static void open(ServerPlayer admin, ServerPlayer target, boolean enderChest, Component title) {
         int rows = enderChest ? 3 : 6;
@@ -45,7 +55,7 @@ public final class LivePlayerMenu extends ChestMenu {
             Container own = enderChest ? target.getEnderChestInventory() : target.getInventory();
             List<String> modSlots = enderChest ? List.of() : modSlots(target, rows * 9 - own.getContainerSize());
             Container contents = new PaddedContainer(own, rows * 9, target, modSlots);
-            return new LivePlayerMenu(type, id, inventory, contents, rows, target);
+            return new LivePlayerMenu(type, id, inventory, contents, rows, target, admin.getScoreboardName());
         }, title));
     }
 
@@ -63,7 +73,9 @@ public final class LivePlayerMenu extends ChestMenu {
     @Override
     public void removed(Player player) {
         super.removed(player);
-        ChangeTracker.endEdit(target);
+        OfflinePlayers.save(target);
+        ChangeTracker.endEdit(target, admin);
+        OfflinePlayers.release(target);
     }
 
     @Override
@@ -81,6 +93,9 @@ public final class LivePlayerMenu extends ChestMenu {
 
     @Override
     public boolean stillValid(Player player) {
+        if (OfflinePlayers.isOffline(target)) {
+            return OfflinePlayers.isValid(target);
+        }
         return !target.isRemoved() && !target.hasDisconnected();
     }
 
@@ -150,7 +165,9 @@ public final class LivePlayerMenu extends ChestMenu {
         @Override
         public ItemStack removeItem(int slot, int amount) {
             if (slot < realSize()) {
-                return delegate.removeItem(slot, amount);
+                ItemStack taken = delegate.removeItem(slot, amount);
+                OfflinePlayers.save(target);
+                return taken;
             }
             String key = modSlot(slot);
             if (key == null) {
@@ -159,26 +176,33 @@ public final class LivePlayerMenu extends ChestMenu {
             // Mods notice their own setters more reliably than a stack shrinking in place.
             ItemStack rest = ModSlots.get(target, key).copy();
             ItemStack taken = rest.split(amount);
-            return ModSlots.set(target, key, rest) ? taken : ItemStack.EMPTY;
+            boolean done = ModSlots.set(target, key, rest);
+            OfflinePlayers.save(target);
+            return done ? taken : ItemStack.EMPTY;
         }
 
         @Override
         public ItemStack removeItemNoUpdate(int slot) {
             if (slot < realSize()) {
-                return delegate.removeItemNoUpdate(slot);
+                ItemStack taken = delegate.removeItemNoUpdate(slot);
+                OfflinePlayers.save(target);
+                return taken;
             }
             String key = modSlot(slot);
             if (key == null) {
                 return ItemStack.EMPTY;
             }
             ItemStack taken = ModSlots.get(target, key).copy();
-            return ModSlots.set(target, key, ItemStack.EMPTY) ? taken : ItemStack.EMPTY;
+            boolean done = ModSlots.set(target, key, ItemStack.EMPTY);
+            OfflinePlayers.save(target);
+            return done ? taken : ItemStack.EMPTY;
         }
 
         @Override
         public void setItem(int slot, ItemStack stack) {
             if (slot < realSize()) {
                 delegate.setItem(slot, stack);
+                OfflinePlayers.save(target);
                 return;
             }
             String key = modSlot(slot);
@@ -186,11 +210,14 @@ public final class LivePlayerMenu extends ChestMenu {
                 // The slot went away while the screen was open: the item goes to the player instead of vanishing.
                 PlayerSlots.give(target, List.of(stack));
             }
+            OfflinePlayers.save(target);
         }
 
         @Override
         public void setChanged() {
             delegate.setChanged();
+            // An offline player's file is kept current after every change; for online players this does nothing.
+            OfflinePlayers.save(target);
         }
 
         @Override

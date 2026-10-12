@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stack, who has it now, who had it at a given time, and the transfer trail through drops, death loot and shared
   containers, with probable links marked as such. `/invsearch container <pos>` shows who put items into a chest and
   who took them out.
+- Offline players can be restored, live edited and undone like online ones, in the admin screen and with
+  `/inventory set|player|undo` and `/enderchest set|player`: the change goes straight into their save file, mod slots
+  included, and is on the timeline naming the admin. When the player logs in, open editors close by themselves.
 - `/inventory undo`, `/inventory snapshot`, `/inventory stats`, and a teleport button on timeline entries.
 - Permission nodes `inventorybackups.view`, `.restore`, `.edit`, `.search` and `.ui` for LuckPerms and other permission
   mods; operator level 2 without one.

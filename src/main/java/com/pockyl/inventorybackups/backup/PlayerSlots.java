@@ -68,9 +68,11 @@ public final class PlayerSlots {
      * Replaces whole sections with a stored state: the inventory (main, armor, offhand and the mod slots) and/or the
      * ender chest. A state without any mod slot leaves the mod slots alone, as in the 2.x releases. Stacks whose slot
      * no longer exists (a mod removed or a slot type shrank) go into the inventory, or drop at the player's feet.
+     *
+     * @return what fit nowhere, see {@link #give}
      */
-    public static void restore(ServerPlayer player, Int2ObjectMap<ItemStack> items, boolean inventory, boolean enderChest,
-                               @Nullable SlotKeys keys) {
+    public static List<ItemStack> restore(ServerPlayer player, Int2ObjectMap<ItemStack> items, boolean inventory, boolean enderChest,
+                                          @Nullable SlotKeys keys) {
         List<ItemStack> homeless = new ArrayList<>();
         if (inventory) {
             Inventory target = player.getInventory();
@@ -102,12 +104,12 @@ public final class PlayerSlots {
             }
         }
         player.inventoryMenu.broadcastChanges();
-        give(player, homeless);
+        return give(player, homeless);
     }
 
     /** Puts the stored stacks back into only the given slots; slots empty in the state become empty. */
-    public static void restoreSlots(ServerPlayer player, Int2ObjectMap<ItemStack> items, IntCollection slots,
-                                    @Nullable SlotKeys keys) {
+    public static List<ItemStack> restoreSlots(ServerPlayer player, Int2ObjectMap<ItemStack> items, IntCollection slots,
+                                               @Nullable SlotKeys keys) {
         List<ItemStack> homeless = new ArrayList<>();
         Int2ObjectMap<ItemStack> extras = new Int2ObjectOpenHashMap<>();
         for (int slot : slots) {
@@ -127,18 +129,34 @@ public final class PlayerSlots {
             unresolved.stream().filter(stack -> !stack.isEmpty()).forEach(homeless::add);
         }
         player.inventoryMenu.broadcastChanges();
-        give(player, homeless);
+        return give(player, homeless);
     }
 
-    /** Gives copies of stacks to a player; what does not fit drops at their feet. */
-    public static void give(ServerPlayer receiver, Iterable<ItemStack> stacks) {
+    /**
+     * Gives copies of stacks to a player; what does not fit drops at their feet. An offline player is not in the world,
+     * so for them the rest goes into their ender chest.
+     *
+     * @return what fits nowhere (only for offline players)
+     */
+    public static List<ItemStack> give(ServerPlayer receiver, Iterable<ItemStack> stacks) {
+        List<ItemStack> left = new ArrayList<>();
+        boolean offline = OfflinePlayers.isOffline(receiver);
         for (ItemStack stack : stacks) {
             // add() shrinks the stack by what fits; the rest drops.
             ItemStack remaining = stack.copy();
-            if (!receiver.getInventory().add(remaining) && !remaining.isEmpty()) {
+            if (receiver.getInventory().add(remaining) || remaining.isEmpty()) {
+                continue;
+            }
+            if (!offline) {
                 receiver.drop(remaining, false);
+                continue;
+            }
+            remaining = receiver.getEnderChestInventory().addItem(remaining);
+            if (!remaining.isEmpty()) {
+                left.add(remaining);
             }
         }
+        return left;
     }
 
     /**

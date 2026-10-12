@@ -47,6 +47,8 @@ from player to player, and put any moment back with one click.
   pins and death jumps, the inventory at any moment with changes highlighted, tooltips that tell when and where an
   item got into its slot, and confirmed actions: restore all or selected slots, give yourself a copy, live edit,
   undo, snapshot, teleport. The item search with holders and the transfer trail is one tab away.
+- **Offline players too.** Restore, live edit and undo work for players who are not online: the change is written
+  into their save file, mod slots included, and waits for them when they log in.
 - **Works without the client mod.** Clickable chat commands for everything, in English for vanilla clients and in the
   admin's language with the mod (English and Russian included).
 - **Permissions.** Separate `inventorybackups.view`, `.restore`, `.edit`, `.search` and `.ui` nodes through NeoForge's

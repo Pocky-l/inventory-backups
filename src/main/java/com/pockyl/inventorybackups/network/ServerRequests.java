@@ -1,5 +1,6 @@
 package com.pockyl.inventorybackups.network;
 
+import com.mojang.authlib.GameProfile;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -17,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.connection.ConnectionType;
@@ -28,6 +30,7 @@ import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.BackupService;
 import com.pockyl.inventorybackups.backup.ChangeTracker;
+import com.pockyl.inventorybackups.backup.OfflinePlayers;
 import com.pockyl.inventorybackups.backup.Restorer;
 import com.pockyl.inventorybackups.backup.Slots;
 import com.pockyl.inventorybackups.command.EntrySelector;
@@ -235,8 +238,9 @@ public final class ServerRequests {
                 if (!check(admin, request.id(), node)) {
                     return;
                 }
-                ServerPlayer player = online(admin, request.id(), target);
+                ServerPlayer player = editable(admin, request.id(), target);
                 if (player != null) {
+                    // The menu owns an offline copy from here on and releases it when it closes.
                     boolean ender = request.action() == Payloads.Action.LIVE_ENDER_CHEST;
                     LivePlayerMenu.open(admin, player, ender, tr(ender ? "inventorybackups.enderchest.player.title"
                             : "inventorybackups.inventory.player.title", player.getScoreboardName()));
@@ -261,11 +265,12 @@ public final class ServerRequests {
                 }
                 return null;
             }, state -> {
-                ServerPlayer player = online(admin, request.id(), target);
+                ServerPlayer player = state == null ? null : editable(admin, request.id(), target);
                 if (state == null) {
                     notice(admin, request.id(), false, tr("inventorybackups.error.no_undo", target.toString()));
                 } else if (player != null) {
                     Restorer.restore(player, state, true, Config.ENDER_CHEST_ENABLED.get(), admin.getScoreboardName());
+                    OfflinePlayers.release(player);
                     notice(admin, request.id(), true, tr("inventorybackups.success.undone", player.getScoreboardName(),
                             EntrySelector.display(state.entry().time())));
                 }
@@ -312,15 +317,15 @@ public final class ServerRequests {
                 notice(admin, request.id(), true, tr("inventorybackups.ui.teleported", ChatPosition.of(context)));
             }
             default -> {
-                ServerPlayer player = online(admin, request.id(), request.player());
+                if (request.action() == Payloads.Action.RESTORE_SLOTS && slots.isEmpty()) {
+                    notice(admin, request.id(), false, tr("inventorybackups.ui.nothing_selected"));
+                    return;
+                }
+                ServerPlayer player = editable(admin, request.id(), request.player());
                 if (player == null) {
                     return;
                 }
                 if (request.action() == Payloads.Action.RESTORE_SLOTS) {
-                    if (slots.isEmpty()) {
-                        notice(admin, request.id(), false, tr("inventorybackups.ui.nothing_selected"));
-                        return;
-                    }
                     Restorer.restoreSlots(player, state, slots, admin.getScoreboardName());
                     notice(admin, request.id(), true, tr("inventorybackups.ui.restored_slots", slots.size(), player.getScoreboardName(),
                             time));
@@ -331,6 +336,7 @@ public final class ServerRequests {
                     notice(admin, request.id(), true, tr("inventorybackups.ui.restored", player.getScoreboardName(), time));
                 }
                 player.sendSystemMessage(tr("inventorybackups.inventory.info.restored", time));
+                OfflinePlayers.release(player);
             }
         }
     }
@@ -409,6 +415,25 @@ public final class ServerRequests {
         }
         notice(admin, id, false, tr("inventorybackups.ui.no_permission", node.getNodeName()));
         return false;
+    }
+
+    /**
+     * The player to change: the online one, or a copy loaded from the save file while they are offline. Release it with
+     * {@link OfflinePlayers#release} after use (nothing to release for online players).
+     */
+    @Nullable
+    private static ServerPlayer editable(ServerPlayer admin, int id, UUID target) {
+        ServerPlayer online = admin.server.getPlayerList().getPlayer(target);
+        if (online != null) {
+            return online;
+        }
+        GameProfileCache cache = admin.server.getProfileCache();
+        String name = cache == null ? target.toString() : cache.get(target).map(GameProfile::getName).orElse(target.toString());
+        Optional<ServerPlayer> offline = OfflinePlayers.acquire(admin.server, target, name);
+        if (offline.isEmpty()) {
+            notice(admin, id, false, tr("inventorybackups.error.no_save_file", name));
+        }
+        return offline.orElse(null);
     }
 
     @Nullable

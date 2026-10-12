@@ -199,7 +199,14 @@ public final class ChangeTracker {
     public static boolean capture(ServerPlayer player, Trigger trigger, EntryContext context) {
         TrackedPlayer tracked = PLAYERS.get(player.getUUID());
         if (tracked == null) {
-            return false;
+            if (!OfflinePlayers.isOffline(player)) {
+                return false;
+            }
+            // No running tracker for an offline copy: a full capture records its whole state, unchanged slots cost nothing.
+            TrackedPlayer once = new TrackedPlayer(player);
+            submit(once.capture(trigger, context, true));
+            once.unbind();
+            return true;
         }
         submit(tracked.capture(trigger, context, false));
         return true;
@@ -213,7 +220,11 @@ public final class ChangeTracker {
         }
     }
 
-    public static void endEdit(ServerPlayer target) {
+    public static void endEdit(ServerPlayer target, String editor) {
+        if (OfflinePlayers.isOffline(target)) {
+            capture(target, Trigger.EDIT, EntryContext.of(target).withActor(editor));
+            return;
+        }
         TrackedPlayer tracked = PLAYERS.get(target.getUUID());
         if (tracked != null) {
             String admin = tracked.endEdit();

@@ -118,15 +118,17 @@ final class DetailsPanel {
                 .selection.size());
         boolean online = screen.model.player != null && screen.model.player.online();
         boolean hasState = state != null;
-        actions.get(0).enabled = screen.canRestore() && online && hasState;
-        actions.get(1).enabled = screen.canRestore() && online && hasState && !screen.inventoryPanel().selection.isEmpty();
+        // Offline players are changed in their save file, so everything but the snapshot works for them too.
+        actions.get(0).enabled = screen.canRestore() && hasState;
+        actions.get(1).enabled = screen.canRestore() && hasState && !screen.inventoryPanel().selection.isEmpty();
         actions.get(2).enabled = screen.canRestore() && hasState && !screen.inventoryPanel().selection.isEmpty();
-        actions.get(3).enabled = screen.canEdit() && online;
+        actions.get(3).enabled = screen.canEdit() && screen.model.player != null;
         for (UiButton action : actions) {
             action.render(g, font, mx, my);
             if (!action.enabled && action.contains(mx, my)) {
-                screen.showTooltip(List.of(Component.translatable(online || action == actions.get(2)
-                        ? "inventorybackups.ui.action.unavailable" : "inventorybackups.ui.offline")), ItemStack.EMPTY);
+                screen.showTooltip(List.of(Component.translatable("inventorybackups.ui.action.unavailable")), ItemStack.EMPTY);
+            } else if (action.enabled && !online && action != actions.get(2) && action.contains(mx, my)) {
+                screen.showTooltip(List.of(Component.translatable("inventorybackups.ui.offline_target")), ItemStack.EMPTY);
             }
         }
     }
@@ -234,7 +236,7 @@ final class DetailsPanel {
             right = link(g, font, right, ey + 2, Component.translatable("inventorybackups.ui.action.snapshot"), mx, my,
                     () -> screen.sendAction(Payloads.Action.SNAPSHOT, new int[0]));
         }
-        if (screen.canRestore() && screen.model.player != null && screen.model.player.online()) {
+        if (screen.canRestore() && screen.model.player != null) {
             link(g, font, right, ey + 2, Component.translatable("inventorybackups.ui.action.undo"), mx, my, this::undo);
         }
         if (row == null) {
@@ -372,15 +374,15 @@ final class DetailsPanel {
         choices.add(new ConfirmDialog.Choice(Component.translatable("inventorybackups.ui.both"), UiButton.Style.PRIMARY,
                 () -> screen.sendAction(Payloads.Action.RESTORE_ALL, new int[0])));
         screen.confirmAction(Component.translatable("inventorybackups.ui.confirm.restore_all.title"),
-                List.of(Component.translatable("inventorybackups.ui.confirm.restore_all", who(), when()),
-                        Component.translatable("inventorybackups.ui.confirm.recorded", screen.mc().getUser().getName())), choices);
+                withOfflineNote(List.of(Component.translatable("inventorybackups.ui.confirm.restore_all", who(), when()),
+                        Component.translatable("inventorybackups.ui.confirm.recorded", screen.mc().getUser().getName()))), choices);
     }
 
     private void restoreSelected() {
         int[] slots = screen.inventoryPanel().selectedSlots();
         screen.confirmAction(Component.translatable("inventorybackups.ui.confirm.restore_selected.title", slots.length),
-                List.of(Component.translatable("inventorybackups.ui.confirm.restore_selected", slots.length, who(), when()),
-                        Component.translatable("inventorybackups.ui.confirm.recorded", screen.mc().getUser().getName())),
+                withOfflineNote(List.of(Component.translatable("inventorybackups.ui.confirm.restore_selected", slots.length, who(), when()),
+                        Component.translatable("inventorybackups.ui.confirm.recorded", screen.mc().getUser().getName()))),
                 List.of(cancel(), new ConfirmDialog.Choice(Component.translatable("inventorybackups.ui.restore"), UiButton.Style.PRIMARY,
                         () -> screen.sendAction(Payloads.Action.RESTORE_SLOTS, slots))));
     }
@@ -397,8 +399,8 @@ final class DetailsPanel {
     private void liveEdit() {
         boolean ender = screen.inventoryPanel().section == InventoryPanel.Section.ENDER_CHEST;
         screen.confirmAction(Component.translatable("inventorybackups.ui.confirm.live.title"),
-                List.of(Component.translatable(ender ? "inventorybackups.ui.confirm.live_ender" : "inventorybackups.ui.confirm.live",
-                        who())),
+                withOfflineNote(List.of(Component.translatable(ender ? "inventorybackups.ui.confirm.live_ender"
+                        : "inventorybackups.ui.confirm.live", who()))),
                 List.of(cancel(), new ConfirmDialog.Choice(Component.translatable("inventorybackups.ui.action.live"),
                         UiButton.Style.PRIMARY,
                         () -> screen.sendAction(ender ? Payloads.Action.LIVE_ENDER_CHEST : Payloads.Action.LIVE_INVENTORY, new int[0]))));
@@ -406,9 +408,19 @@ final class DetailsPanel {
 
     private void undo() {
         screen.confirmAction(Component.translatable("inventorybackups.ui.confirm.undo.title"),
-                List.of(Component.translatable("inventorybackups.ui.confirm.undo", who())),
+                withOfflineNote(List.of(Component.translatable("inventorybackups.ui.confirm.undo", who()))),
                 List.of(cancel(), new ConfirmDialog.Choice(Component.translatable("inventorybackups.ui.action.undo"), UiButton.Style.DANGER,
                         () -> screen.sendAction(Payloads.Action.UNDO, new int[0]))));
+    }
+
+    /** Adds, for an offline player, that the change goes into their save file and applies when they log in. */
+    private List<Component> withOfflineNote(List<Component> body) {
+        if (screen.model.player == null || screen.model.player.online()) {
+            return body;
+        }
+        List<Component> lines = new ArrayList<>(body);
+        lines.add(Component.translatable("inventorybackups.ui.confirm.offline", who()));
+        return lines;
     }
 
     private static ConfirmDialog.Choice cancel() {
