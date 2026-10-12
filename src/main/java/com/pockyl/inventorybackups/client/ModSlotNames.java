@@ -72,6 +72,23 @@ public final class ModSlotNames {
         return Component.translatable("inventorybackups.ui.slot.mod", mod, slotName(parsed));
     }
 
+    /** The group a mod slot is shown in on the admin screen: its mod, or {@code legacy} for 2.x curios. */
+    public static String group(int slot) {
+        if (Slots.isCurio(slot)) {
+            return "legacy";
+        }
+        Parsed parsed = parse(KEYS.get(slot));
+        return parsed == null ? "unknown" : parsed.provider();
+    }
+
+    public static Component groupName(String group) {
+        return switch (group) {
+            case "legacy" -> Component.translatable("inventorybackups.ui.mod.legacy");
+            case "unknown" -> Component.translatable("inventorybackups.ui.mod.unknown");
+            default -> Component.translatableWithFallback("inventorybackups.ui.mod." + group, group);
+        };
+    }
+
     private static Component slotName(Parsed parsed) {
         int number = parsed.index() + 1;
         Component name = switch (parsed.provider()) {

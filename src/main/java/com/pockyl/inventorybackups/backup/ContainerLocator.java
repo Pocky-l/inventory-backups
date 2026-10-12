@@ -11,6 +11,8 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 /**
  * Finds out which container a menu shows. Menus do not expose their block, so this looks at the containers behind the
  * slots and falls back to the block the player just right-clicked (double chests, modded blocks without a block entity
@@ -28,6 +30,20 @@ public final class ContainerLocator {
      * @param pos block position, or the entity position for container entities
      */
     public record Location(String id, BlockPos pos) {
+    }
+
+    /**
+     * Menus of slot mods that only show the player's own inventory with extra slots (Curios, Accessories, Cosmetic
+     * Armor, Tool Belt, Backpacked). Moving items there is equipping, not using a container; the slot changes are
+     * recorded like any other inventory change.
+     */
+    private static final Set<String> INVENTORY_SCREENS = Set.of("curios:curios_container", "accessories:original_menu",
+            "accessories:experimental_menu", "cosmeticarmorreworked:inventorycosarmor", "toolbelt:belt_slot_container",
+            "backpacked:management");
+
+    /** Whether the menu is a slot mod's version of the player's inventory screen. */
+    public static boolean isInventoryScreen(AbstractContainerMenu menu) {
+        return INVENTORY_SCREENS.contains(menuId(menu));
     }
 
     /** Whether the slot belongs to the player (inventory or own ender chest) rather than the opened container. */

@@ -167,6 +167,10 @@ public final class ChangeTracker {
         tracked.watchMenu(menu);
         // Changes made before opening are recorded on their own, so the container entry only shows the session.
         submit(tracked.capture(Trigger.CHANGE, EntryContext.of(player), false));
+        if (ContainerLocator.isInventoryScreen(menu)) {
+            PerfStats.addEvent(System.nanoTime() - start);
+            return;
+        }
         ContainerSessions.open(player, menu, ContainerLocator.locate(player, menu, tracked.clickedBlock(), tracked.clickTick()));
         PerfStats.addEvent(System.nanoTime() - start);
     }

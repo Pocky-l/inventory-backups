@@ -246,11 +246,20 @@ public final class Payloads {
     /**
      * @param previous entry before {@code entry}, null for the oldest one
      * @param since    per slot of {@code items}: when that stack got into the slot, 0 when before the stored history
-     * @param slotKeys the keys of the mod slots in {@code items} and {@code previousItems}, such as {@code curios:ring/0}
+     * @param slotKeys  the keys of the mod slots in {@code items}, {@code previousItems} and {@code liveSlots}, such as
+     *                  {@code curios:ring/0}
+     * @param liveSlots the mod slots the player has right now, empty ones included; empty while the player is offline
      */
     public record StateResponse(int id, UUID player, EntryRow entry, Int2ObjectMap<ItemStack> items, @Nullable EntryRow previous,
-                                Int2ObjectMap<ItemStack> previousItems, Int2LongMap since, Int2ObjectMap<String> slotKeys)
-            implements CustomPacketPayload {
+                                Int2ObjectMap<ItemStack> previousItems, Int2LongMap since, Int2ObjectMap<String> slotKeys,
+                                int[] liveSlots) implements CustomPacketPayload {
+        /** The same state with the player's current mod slots added. */
+        public StateResponse withLiveSlots(Int2ObjectMap<String> keys, int[] slots) {
+            Int2ObjectMap<String> merged = new Int2ObjectOpenHashMap<>(slotKeys);
+            merged.putAll(keys);
+            return new StateResponse(id, player, entry, items, previous, previousItems, since, merged, slots);
+        }
+
         public static final Type<StateResponse> TYPE = Payloads.payloadType("state");
         public static final StreamCodec<RegistryFriendlyByteBuf, StateResponse> STREAM_CODEC = StreamCodec.of(
                 (buf, p) -> {
@@ -273,6 +282,7 @@ public final class Payloads {
                         buf.writeVarInt(e.getIntKey());
                         NetCodecs.writeString(buf, e.getValue());
                     });
+                    buf.writeVarIntArray(p.liveSlots);
                 },
                 buf -> {
                     int id = buf.readVarInt();
@@ -297,7 +307,8 @@ public final class Payloads {
                     for (int i = 0; i < keys; i++) {
                         slotKeys.put(buf.readVarInt(), NetCodecs.readString(buf));
                     }
-                    return new StateResponse(id, player, entry, items, previous, previousItems, since, slotKeys);
+                    int[] liveSlots = buf.readVarIntArray(NetCodecs.MAX_ITEMS * 2);
+                    return new StateResponse(id, player, entry, items, previous, previousItems, since, slotKeys, liveSlots);
                 });
 
         @Override

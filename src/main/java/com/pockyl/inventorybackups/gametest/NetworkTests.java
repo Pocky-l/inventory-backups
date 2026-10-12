@@ -34,6 +34,7 @@ import com.pockyl.inventorybackups.network.ServerRequests;
 import com.pockyl.inventorybackups.storage.Trigger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -62,11 +63,12 @@ public final class NetworkTests {
         Int2ObjectMap<String> keys = new Int2ObjectOpenHashMap<>();
         keys.put(Slots.MOD_START, "curios:ring/0");
         Payloads.StateResponse state = new Payloads.StateResponse(7, UUID.randomUUID(), row, items, null,
-                new Int2ObjectOpenHashMap<>(), since, keys);
+                new Int2ObjectOpenHashMap<>(), since, keys, new int[] {Slots.MOD_START, Slots.MOD_START + 1});
         Payloads.StateResponse back = roundTrip(helper, Payloads.StateResponse.STREAM_CODEC, state);
         helper.assertTrue(back.id() == 7 && back.entry().equals(row) && back.since().get(0) == 123L, "State header changed");
         helper.assertTrue(ItemStack.matches(back.items().get(0), named) && back.items().get(2026).getCount() == 12, "Items changed");
         helper.assertTrue("curios:ring/0".equals(back.slotKeys().get(Slots.MOD_START)), "Slot keys changed");
+        helper.assertTrue(back.liveSlots().length == 2 && back.liveSlots()[1] == Slots.MOD_START + 1, "Live slots changed");
 
         Payloads.ActionRequest action = new Payloads.ActionRequest(3, UUID.randomUUID(), 55, Payloads.Action.RESTORE_SLOTS,
                 new int[] {0, 100, -106});
@@ -86,6 +88,7 @@ public final class NetworkTests {
         });
         admin.getInventory().setItem(0, new ItemStack(Items.EMERALD, 3));
         TestPlayers.syncSlots(admin);
+        ModSlotTests.giveSlots(admin.getUUID(), 2);
         IPayloadContext context = context(admin);
         ServerRequests.timeline(new Payloads.TimelineRequest(1, admin.getUUID(), 0, Long.MAX_VALUE / 2), context);
         helper.assertTrue(received.size() == 1 && received.get(0) instanceof Payloads.Notice notice && !notice.ok(), "Request not denied");
@@ -107,6 +110,9 @@ public final class NetworkTests {
                             "Timeline wrong");
                     Payloads.StateResponse state = find(received, Payloads.StateResponse.class, 3);
                     helper.assertTrue(state.items().get(0).is(Items.EMERALD), "State wrong");
+                    long testSlots = Arrays.stream(state.liveSlots())
+                            .filter(slot -> state.slotKeys().getOrDefault(slot, "").startsWith("test:")).count();
+                    helper.assertTrue(testSlots == 2, "Empty mod slots of an online player not sent");
                     Payloads.Notice invalid = find(received, Payloads.Notice.class, 4);
                     helper.assertTrue(!invalid.ok(), "Reversed time range accepted");
                     Payloads.Notice copied = find(received, Payloads.Notice.class, 5);

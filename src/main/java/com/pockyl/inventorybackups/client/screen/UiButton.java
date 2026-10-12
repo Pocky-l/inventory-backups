@@ -3,6 +3,7 @@ package com.pockyl.inventorybackups.client.screen;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -89,7 +90,9 @@ final class UiButton {
         }
         Theme.box(g, x, y, w, h, fill, border);
         int color = enabled ? textColor : Theme.FAINT;
-        Theme.textCentered(g, font, label, x + w / 2, y + (h - 8) / 2, color);
+        // Labels that do not fit (long translations, narrow windows) are cut instead of running over the border.
+        FormattedCharSequence shown = Theme.ellipsize(font, label, w - 6);
+        g.drawString(font, shown, x + (w - font.width(shown)) / 2, y + (h - 8) / 2, color, false);
     }
 
     private static int brighter(int color) {

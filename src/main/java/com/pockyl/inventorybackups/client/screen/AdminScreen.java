@@ -575,7 +575,8 @@ public final class AdminScreen extends Screen {
         if (tab == Tab.SEARCH) {
             return search.mouseScrolled(mx, my, scrollY);
         }
-        return players.mouseScrolled(mx, my, scrollY) || timeline.mouseScrolled(mx, my, scrollY) || details.mouseScrolled(mx, my, scrollY);
+        return players.mouseScrolled(mx, my, scrollY) || timeline.mouseScrolled(mx, my, scrollY)
+                || inventory.mouseScrolled(mx, my, scrollY) || details.mouseScrolled(mx, my, scrollY);
     }
 
     @Override

@@ -31,6 +31,7 @@ import com.pockyl.inventorybackups.backup.ChangeTracker;
 import com.pockyl.inventorybackups.backup.Restorer;
 import com.pockyl.inventorybackups.backup.Slots;
 import com.pockyl.inventorybackups.command.EntrySelector;
+import com.pockyl.inventorybackups.compat.ModSlots;
 import com.pockyl.inventorybackups.index.ItemIndex;
 import com.pockyl.inventorybackups.index.SearchQuery;
 import com.pockyl.inventorybackups.index.SearchResult;
@@ -186,14 +187,33 @@ public final class ServerRequests {
                 });
             }
             return new Payloads.StateResponse(request.id(), request.player(), EntryRow.of(state.entry()), items,
-                    state.previous() == null ? null : EntryRow.of(state.previous()), previous, since, slotKeys);
+                    state.previous() == null ? null : EntryRow.of(state.previous()), previous, since, slotKeys, new int[0]);
         }, response -> {
             if (response == null) {
                 notice(admin, request.id(), false, tr("inventorybackups.error.backup_not_found", EntrySelector.display(request.time())));
             } else {
-                send(admin, response);
+                send(admin, withLiveSlots(admin, response));
             }
         });
+    }
+
+    /** Adds the mod slots the player has now (read on the main thread), so the screen can show empty ones too. */
+    private static Payloads.StateResponse withLiveSlots(ServerPlayer admin, Payloads.StateResponse response) {
+        ServerPlayer player = admin.server.getPlayerList().getPlayer(response.player());
+        BackupStore store = BackupService.store();
+        if (player == null || store == null || !ModSlots.any()) {
+            return response;
+        }
+        Int2ObjectMap<String> keys = new Int2ObjectOpenHashMap<>();
+        IntArrayList slots = new IntArrayList();
+        for (String key : ModSlots.read(player).keySet()) {
+            int number = store.slotKeys().number(key);
+            if (number >= 0) {
+                keys.put(number, key);
+                slots.add(number);
+            }
+        }
+        return response.withLiveSlots(keys, slots.toIntArray());
     }
 
     public static void action(Payloads.ActionRequest request, IPayloadContext context) {

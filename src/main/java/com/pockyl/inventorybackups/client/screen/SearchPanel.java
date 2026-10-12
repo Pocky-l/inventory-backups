@@ -170,7 +170,7 @@ final class SearchPanel {
         Component who = onlyCurrentPlayer && screen.model.player != null
                 ? Component.translatable("inventorybackups.ui.search.player", screen.model.player.name())
                 : Component.translatable("inventorybackups.ui.search.anyone");
-        chip(g, font, cx, y + 8, who, onlyCurrentPlayer);
+        chip(g, font, cx, y + 8, who, onlyCurrentPlayer, vw - 8 - cx);
         Theme.text(g, font, summary(), 8, y + 29, vw - 16, Theme.FAINT);
 
         int columnTop = y + BAR;
@@ -215,9 +215,17 @@ final class SearchPanel {
     }
 
     private int chip(GuiGraphics g, Font font, int cx, int cy, Component label, boolean on) {
-        int w = font.width(label) + 10;
+        return chip(g, font, cx, cy, label, on, Integer.MAX_VALUE);
+    }
+
+    /** A toggle chip; one wider than {@code maxWidth} (the last one on a narrow screen) gets its label cut. */
+    private int chip(GuiGraphics g, Font font, int cx, int cy, Component label, boolean on, int maxWidth) {
+        int w = Math.min(maxWidth, font.width(label) + 10);
+        if (w < 16) {
+            return 0;
+        }
         Theme.box(g, cx, cy, w, 13, on ? Theme.ACCENT_DIM : Theme.PANEL_2, on ? Theme.ACCENT : Theme.LINE);
-        Theme.text(g, font, label, cx + 5, cy + 3, on ? Theme.TEXT : Theme.MUTED);
+        Theme.text(g, font, label, cx + 5, cy + 3, w - 8, on ? Theme.TEXT : Theme.MUTED);
         return w;
     }
 
@@ -290,7 +298,7 @@ final class SearchPanel {
             if (holder.holdsNow() && !headerNow || !holder.holdsNow() && !headerBefore) {
                 Theme.text(g, font, Component.translatable(holder.holdsNow() ? "inventorybackups.ui.search.now"
                         : "inventorybackups.ui.search.before"),
-                        x + 8, ry + 4, Theme.FAINT);
+                        x + 8, ry + 4, w - 16, Theme.FAINT);
                 ry += 14;
                 headerNow |= holder.holdsNow();
                 headerBefore |= !holder.holdsNow();
@@ -303,9 +311,10 @@ final class SearchPanel {
             Theme.text(g, font, Component.literal(holder.name()), x + 28, ry + 4, 90, Theme.TEXT);
             Component sub = holder.holdsNow() ? Component.translatable("inventorybackups.ui.search.since", Formats.time(holder.first()))
                     : Component.translatable("inventorybackups.ui.search.until", Formats.time(holder.last()));
-            Theme.text(g, font, sub, x + 28 + Math.min(90, font.width(holder.name())) + 5, ry + 4, w - 150, Theme.FAINT);
             Component count = holder.holdsNow() ? Component.literal("×" + holder.count())
                     : Component.translatable("inventorybackups.ui.search.max", holder.max());
+            int subX = x + 28 + Math.min(90, font.width(holder.name())) + 5;
+            Theme.text(g, font, sub, subX, ry + 4, x + w - 8 - font.width(count) - 6 - subX, Theme.FAINT);
             Theme.textRight(g, font, count, x + w - 8, ry + 4, holder.holdsNow() ? Theme.TEXT : Theme.FAINT);
             int barX = x + 28;
             int barW = w - 36;

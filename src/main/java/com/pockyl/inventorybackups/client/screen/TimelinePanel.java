@@ -123,8 +123,18 @@ final class TimelinePanel {
             zoom.render(g, font, mx, my);
         }
         Component range = Component.literal(Formats.time(model.from) + " - " + Formats.time(model.to));
-        Theme.textCentered(g, font, range, x + w / 2, y + 7, Theme.MUTED);
-        renderLegend(g, font);
+        // The range sits in the middle; on narrow screens next to the zoom buttons, and the legend goes when it would cover it.
+        int zoomsRight = zooms.isEmpty() ? x + 8 : zooms.get(zooms.size() - 1).x + zooms.get(zooms.size() - 1).w;
+        int legendLeft = x + w - 8 - legendWidth(font);
+        int rangeWidth = font.width(range);
+        int rangeX = Math.max(zoomsRight + 10, x + w / 2 - rangeWidth / 2);
+        if (rangeX + rangeWidth + 10 > legendLeft) {
+            rangeX = zoomsRight + 10;
+        }
+        Theme.text(g, font, range, rangeX, y + 7, Theme.MUTED);
+        if (rangeX + rangeWidth + 10 <= legendLeft) {
+            renderLegend(g, font);
+        }
 
         Theme.box(g, trackX, trackY, trackW, 16, Theme.FIELD, Theme.LINE_2);
         g.enableScissor(sc(trackX + 1), sc(trackY - 10), sc(trackX + trackW - 1), sc(trackY + 16));
@@ -198,10 +208,19 @@ final class TimelinePanel {
         }
     }
 
+    private static final Trigger[] LEGEND = {Trigger.RESTORE, Trigger.CONTAINER, Trigger.DEATH, Trigger.CHANGE};
+
+    private static int legendWidth(Font font) {
+        int width = 0;
+        for (Trigger trigger : LEGEND) {
+            width += font.width(Component.translatable("inventorybackups.ui.legend." + trigger.key())) + 13;
+        }
+        return width;
+    }
+
     private void renderLegend(GuiGraphics g, Font font) {
         int lx = x + w - 8;
-        Trigger[] shown = {Trigger.RESTORE, Trigger.CONTAINER, Trigger.DEATH, Trigger.CHANGE};
-        for (Trigger trigger : shown) {
+        for (Trigger trigger : LEGEND) {
             Component label = Component.translatable("inventorybackups.ui.legend." + trigger.key());
             lx -= font.width(label);
             Theme.text(g, font, label, lx, y + 7, Theme.FAINT);

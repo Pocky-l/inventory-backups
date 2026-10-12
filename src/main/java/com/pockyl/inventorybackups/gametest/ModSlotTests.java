@@ -56,6 +56,11 @@ public final class ModSlotTests {
     private ModSlotTests() {
     }
 
+    /** Gives a test player this many empty test mod slots, for tests of other classes. */
+    static void giveSlots(UUID player, int count) {
+        SLOTS.give(player, count);
+    }
+
     /** A slot keeps its number for the world, also after a restart, and numbers are never handed out twice. */
     @GameTest(template = "empty")
     public static void slotNumbersAreStable(GameTestHelper helper) {

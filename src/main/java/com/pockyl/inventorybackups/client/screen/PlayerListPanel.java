@@ -7,6 +7,7 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -125,12 +126,18 @@ final class PlayerListPanel {
         field.render(g, mx, my, 0);
 
         int cx = 6;
+        int[] widths = filterWidths();
         for (Filter option : Filter.values()) {
-            Component label = Component.translatable("inventorybackups.ui.players.filter." + option.name().toLowerCase(Locale.ROOT));
-            int w = screen.mc().font.width(label) + 10;
+            Component label = filterLabel(option);
+            int w = widths[option.ordinal()];
             boolean on = filter == option;
+            boolean hover = mx >= cx && mx < cx + w && my >= y + 26 && my < y + 39;
             Theme.box(g, cx, y + 26, w, 13, on ? Theme.ACCENT_DIM : Theme.PANEL_2, on ? Theme.ACCENT : Theme.LINE);
-            Theme.text(g, screen.mc().font, label, cx + 5, y + 29, on ? Theme.TEXT : Theme.MUTED);
+            Theme.text(g, screen.mc().font, label, cx + 5, y + 29, w - 8, on || hover ? Theme.TEXT : Theme.MUTED);
+            if (hover && option == Filter.DIED) {
+                screen.showTooltip(List.of(Component.translatable("inventorybackups.ui.players.filter.died.hint")),
+                        ItemStack.EMPTY);
+            }
             cx += w + 3;
         }
 
@@ -169,6 +176,20 @@ final class PlayerListPanel {
         g.disableScissor();
     }
 
+    private static Component filterLabel(Filter option) {
+        return Component.translatable("inventorybackups.ui.players.filter." + option.name().toLowerCase(Locale.ROOT));
+    }
+
+    /** Widths of the quick filter buttons, shrunk to the width of the search field when the labels are long. */
+    private int[] filterWidths() {
+        Filter[] options = Filter.values();
+        int[] widths = new int[options.length];
+        for (int i = 0; i < options.length; i++) {
+            widths[i] = screen.mc().font.width(filterLabel(options[i])) + 10;
+        }
+        return Theme.fit(widths, 144 - 3 * (options.length - 1));
+    }
+
     /** Draws the face of a player: their real skin when they are online, the default skin for their UUID otherwise. */
     void face(GuiGraphics g, UUID uuid, int x, int y) {
         ClientPacketListener connection = screen.mc().getConnection();
@@ -194,9 +215,9 @@ final class PlayerListPanel {
         field.setFocused(false);
         if (my >= y + 26 && my < y + 39) {
             int cx = 6;
+            int[] widths = filterWidths();
             for (Filter option : Filter.values()) {
-                int w = screen.mc().font.width(Component.translatable("inventorybackups.ui.players.filter."
-                        + option.name().toLowerCase(Locale.ROOT))) + 10;
+                int w = widths[option.ordinal()];
                 if (mx >= cx && mx < cx + w) {
                     filter = option;
                     scroll = 0;

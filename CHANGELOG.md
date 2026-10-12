@@ -14,8 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   timeline scrubber with zoom, playback, A/B pins and death jumps, the inventory at any moment with changes
   highlighted, slot history in tooltips, and confirmed restore, copy, live edit, undo, snapshot and teleport actions.
 - Support for the slots of more mods: Curios (now with cosmetic slots), Accessories, Cosmetic Armor Reworked,
-  Traveler's Backpack, Tool Belt and Backpacked. They are shown with their names on the Mod slots tab of the admin
-  screen and after the offhand in chat previews, restored with the inventory, and editable in `/inventory player`.
+  Traveler's Backpack, Tool Belt and Backpacked. They are shown grouped by mod with their names on the Mod slots tab
+  of the admin screen (with the empty slots of online players, to restore into) and after the offhand in chat
+  previews, restored with the inventory, and editable in `/inventory player`. Opening the inventory screens of these
+  mods is not recorded as a container session.
   A slot keeps its place in old backups when mods add or remove slots; an item whose slot is gone goes into the
   inventory on restore instead of being lost.
 - Death entries show the slots as they were at the moment of death, even when a grave or backpack mod moves the items

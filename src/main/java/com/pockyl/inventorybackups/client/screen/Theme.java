@@ -5,9 +5,12 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 
 import com.pockyl.inventorybackups.storage.Trigger;
+
+import java.util.List;
 
 /**
  * Colors and drawing helpers of the admin screen. The values are the ones of the HTML mockup in docs/ui-mockup.
@@ -84,6 +87,40 @@ final class Theme {
     /** Text cut to the width, with an ellipsis when it does not fit. */
     static void text(GuiGraphics g, Font font, Component text, int x, int y, int width, int color) {
         g.drawString(font, ellipsize(font, text, width), x, y, color, false);
+    }
+
+    /**
+     * Text wrapped to the width, at most {@code maxLines} lines (the last one cut with an ellipsis).
+     *
+     * @return the number of lines drawn
+     */
+    static int wrapped(GuiGraphics g, Font font, Component text, int x, int y, int width, int maxLines, int color) {
+        List<FormattedText> lines = font.getSplitter().splitLines(text, width, Style.EMPTY);
+        int count = Math.min(lines.size(), maxLines);
+        for (int i = 0; i < count; i++) {
+            boolean cut = i == count - 1 && lines.size() > count;
+            FormattedCharSequence line = cut
+                    ? ellipsize(font, Component.literal(lines.get(i).getString() + " " + lines.get(i + 1).getString()), width)
+                    : Language.getInstance().getVisualOrder(lines.get(i));
+            g.drawString(font, line, x, y + i * 10, color, false);
+        }
+        return count;
+    }
+
+    /** Widths that fit {@code available}: the wanted ones when they fit, otherwise each cut by the same share. */
+    static int[] fit(int[] wanted, int available) {
+        int total = 0;
+        for (int w : wanted) {
+            total += w;
+        }
+        if (total <= available) {
+            return wanted;
+        }
+        int[] fitted = new int[wanted.length];
+        for (int i = 0; i < wanted.length; i++) {
+            fitted[i] = Math.max(12, wanted[i] * available / total);
+        }
+        return fitted;
     }
 
     static void textRight(GuiGraphics g, Font font, Component text, int right, int y, int color) {

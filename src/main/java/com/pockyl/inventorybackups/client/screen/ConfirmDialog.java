@@ -39,9 +39,14 @@ final class ConfirmDialog {
         x = (screen.vw - WIDTH) / 2;
         y = (screen.vh - h) / 2;
         int bx = x + WIDTH - 8;
+        int[] widths = new int[choices.size()];
+        for (int i = 0; i < choices.size(); i++) {
+            widths[i] = font.width(choices.get(i).label()) + 14;
+        }
+        widths = Theme.fit(widths, WIDTH - 16 - 4 * (choices.size() - 1));
         for (int i = choices.size() - 1; i >= 0; i--) {
             Choice choice = choices.get(i);
-            int bw = font.width(choice.label()) + 14;
+            int bw = widths[i];
             bx -= bw;
             buttons.add(0, new UiButton(bx, y + h - 22, bw, 15, choice.label(), choice.style(), () -> choose(choice)));
             bx -= 4;
@@ -62,7 +67,7 @@ final class ConfirmDialog {
         g.fill(0, 0, screen.vw, screen.vh, Theme.SHADE);
         Theme.box(g, x, y, WIDTH, h, Theme.PANEL, Theme.LINE_2);
         Theme.outline(g, x - 1, y - 1, WIDTH + 2, h + 2, 0xFF000000);
-        Theme.text(g, font, title.copy().withStyle(style -> style.withBold(true)), x + 8, y + 8, Theme.TEXT);
+        Theme.text(g, font, title.copy().withStyle(style -> style.withBold(true)), x + 8, y + 8, WIDTH - 16, Theme.TEXT);
         int ly = y + 22;
         for (FormattedCharSequence line : lines) {
             g.drawString(font, line, x + 8, ly, Theme.MUTED, false);

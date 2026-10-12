@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 
 import com.pockyl.inventorybackups.backup.Slots;
 import com.pockyl.inventorybackups.client.Formats;
+import com.pockyl.inventorybackups.client.ModSlotNames;
 import com.pockyl.inventorybackups.network.EntryRow;
 import com.pockyl.inventorybackups.network.Payloads;
 import com.pockyl.inventorybackups.storage.Trigger;
@@ -164,7 +165,11 @@ final class DetailsPanel {
         IntOpenHashSet slots = new IntOpenHashSet(state.items().keySet());
         slots.addAll(base.keySet());
         IntArrayList sorted = new IntArrayList(slots);
-        sorted.sort((a, b) -> Integer.compare(order(a), order(b)));
+        sorted.sort((a, b) -> {
+            int order = Integer.compare(order(a), order(b));
+            // Mod slots in the order of the mod slots tab: by mod, slot type and index.
+            return order == 0 && Slots.isExtra(a) && Slots.isExtra(b) ? ModSlotNames.ORDER.compare(a, b) : order;
+        });
         for (int slot : sorted) {
             ItemStack now = state.items().getOrDefault(slot, ItemStack.EMPTY);
             ItemStack before = base.getOrDefault(slot, ItemStack.EMPTY);
@@ -181,10 +186,9 @@ final class DetailsPanel {
             case MAIN -> slot;
             case ARMOR -> 100 + slot;
             case OFFHAND -> 300;
-            case CURIOS -> 1000 + slot;
-            case MOD -> 2_000_000 + slot;
-            case ENDER_CHEST -> 3_000_000 + slot;
-            case UNKNOWN -> 4_000_000 + slot;
+            case CURIOS, MOD -> 1000;
+            case ENDER_CHEST -> 3000 + slot;
+            case UNKNOWN -> 10_000;
         };
     }
 
@@ -214,9 +218,10 @@ final class DetailsPanel {
                     .append(change.now().getHoverName().copy().withStyle(style -> style.withColor(Theme.TEXT)));
         }
         Component where = InventoryPanel.slotName(change.slot());
-        int whereWidth = font.width(where);
-        Theme.text(g, font, text, rx + 20, ry + 5, rw - 26 - whereWidth, Theme.TEXT);
-        Theme.textRight(g, font, where, rx + rw, ry + 5, Theme.FAINT);
+        // The slot name (long for mod slots) gets at most half the row, the item the rest.
+        int whereWidth = Math.min(font.width(where), (rw - 26) / 2);
+        Theme.text(g, font, text, rx + 20, ry + 5, rw - 26 - whereWidth - 6, Theme.TEXT);
+        Theme.text(g, font, where, rx + rw - whereWidth, ry + 5, whereWidth, Theme.FAINT);
     }
 
     private void renderEntry(GuiGraphics g, Font font, int ex, int ey, int ew, int mx, int my) {
@@ -236,7 +241,7 @@ final class DetailsPanel {
             return;
         }
         int ly = ey + 18;
-        int labelWidth = 52;
+        int labelWidth = labelWidth(font);
         ly = contextLine(g, font, ex, ly, labelWidth, ew, Component.translatable("inventorybackups.ui.ctx.trigger"),
                 Component.literal("■ ").append(Component.translatable("inventorybackups.trigger." + row.trigger().key()))
                         .withStyle(style -> style.withColor(Theme.color(row.trigger()))));
@@ -280,6 +285,15 @@ final class DetailsPanel {
         }
         contextLine(g, font, ex, ly, labelWidth, ew, Component.translatable("inventorybackups.ui.ctx.changed"),
                 Component.translatable("inventorybackups.entry.changed", row.changed()));
+    }
+
+    /** Width of the label column: the longest label of the entry details in the current language, plus a gap. */
+    private static int labelWidth(Font font) {
+        int width = 0;
+        for (String key : List.of("trigger", "time", "where", "cause", "container", "restored", "note", "admin", "changed")) {
+            width = Math.max(width, font.width(Component.translatable("inventorybackups.ui.ctx." + key)));
+        }
+        return width + 8;
     }
 
     private int contextLine(GuiGraphics g, Font font, int lx, int ly, int labelWidth, int width, Component label, Component value) {
