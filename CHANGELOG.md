@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/inventory` and `/enderchest` work on the same timeline; `/enderchest` shows and restores the ender chest part.
 - Admins without the mod see the chat in English instead of translation keys; with it, in their own language.
 - `/inventory player` edits the live inventory and records the edit as one entry naming the admin.
-- Previews show armor, offhand and curios in fixed places; restores are written to the server log.
+- Previews show armor, offhand and mod slots in fixed places; restores are written to the server log.
 - `preservationPeriod` and the ender chest death, join, quit and open options are no longer used.
 - The mod is now under the MIT license.
 
