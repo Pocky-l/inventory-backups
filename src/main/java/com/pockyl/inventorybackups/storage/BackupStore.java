@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  * hands over {@link Capture}s and receives query results through futures.
  * <p>
  * Layout below the root: {@code players/<uuid>/<yyyy-MM-dd>.ibk} (see {@link LogFile}), {@code flows/<yyyy-MM-dd>.ibk}
- * (see {@link FlowLog}) and {@code players.dat}.
+ * (see {@link FlowLog}), {@code players.dat} and {@code slots.txt} (see {@link SlotKeys}).
  */
 public final class BackupStore {
     private static final int CACHED_DAYS = 96;
@@ -51,6 +51,7 @@ public final class BackupStore {
     private final Map<UUID, PlayerLog> logs = new HashMap<>();
     private final PlayerDirectory directory;
     private final FlowLog flows;
+    private final SlotKeys slotKeys;
     private final List<Listener> listeners = new ArrayList<>();
     private final LinkedHashMap<Path, CachedDay> cache = new LinkedHashMap<>(CACHED_DAYS, 0.75f, true) {
         @Override
@@ -85,6 +86,8 @@ public final class BackupStore {
         this.keyframeInterval = keyframeInterval;
         this.directory = new PlayerDirectory(root.resolve("players.dat"));
         this.flows = new FlowLog(root.resolve("flows"));
+        // Read right away: the main thread numbers mod slots while it records changes.
+        this.slotKeys = new SlotKeys(root.resolve("slots.txt"));
         this.io = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "Inventory Backups IO");
             thread.setDaemon(true);
@@ -100,6 +103,11 @@ public final class BackupStore {
 
     public HolderLookup.Provider registries() {
         return registries;
+    }
+
+    /** Numbers of the slots of other mods; safe to use from any thread. */
+    public SlotKeys slotKeys() {
+        return slotKeys;
     }
 
     public void addListener(Listener listener) {

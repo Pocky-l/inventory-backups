@@ -161,12 +161,7 @@ public final class BackupCommands {
         withState(context, kind, (target, state) -> {
             int size = kind.previewRows() * 9;
             Container preview = new SimpleContainer(size);
-            state.items().int2ObjectEntrySet().forEach(slot -> {
-                int chestSlot = kind.chestSlot(slot.getIntKey());
-                if (chestSlot >= 0) {
-                    preview.setItem(chestSlot, slot.getValue());
-                }
-            });
+            kind.preview(state.items()).int2ObjectEntrySet().forEach(slot -> preview.setItem(slot.getIntKey(), slot.getValue()));
             String time = EntrySelector.display(state.entry().time());
             Component title = tr(key(kind, "preview.title"), target.name(), time);
             executor.openMenu(new SimpleMenuProvider((id, inventory, player) ->

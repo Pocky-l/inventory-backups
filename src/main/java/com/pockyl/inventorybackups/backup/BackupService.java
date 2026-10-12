@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
+import com.pockyl.inventorybackups.compat.ModSlots;
 import com.pockyl.inventorybackups.index.ItemIndex;
 import com.pockyl.inventorybackups.storage.BackupStore;
 import com.pockyl.inventorybackups.storage.LegacyImporter;
@@ -37,6 +38,9 @@ public final class BackupService {
         Path root = root(newServer);
         store = new BackupStore(root, newServer.registryAccess(), Config.KEYFRAME_INTERVAL::get);
         InventoryBackups.LOGGER.info("Inventory backups are stored in {}", root.toAbsolutePath().normalize());
+        if (ModSlots.any()) {
+            InventoryBackups.LOGGER.info("Backing up the slots of {}", String.join(", ", ModSlots.installed()));
+        }
         importLegacyBackups(store, newServer.getServerDirectory().resolve(LEGACY_FOLDER));
         ItemIndex newIndex = new ItemIndex(root.resolve("index.dat"), newServer.registryAccess());
         BackupStore opened = store;

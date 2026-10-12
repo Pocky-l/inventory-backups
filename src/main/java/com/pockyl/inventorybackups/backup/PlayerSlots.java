@@ -7,8 +7,16 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
-import com.pockyl.inventorybackups.compat.CuriosCompat;
+import com.pockyl.inventorybackups.InventoryBackups;
+import com.pockyl.inventorybackups.compat.ModSlots;
+import com.pockyl.inventorybackups.storage.SlotKeys;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Reads and writes the slots a state covers, see {@link Slots} for the numbering.
@@ -17,20 +25,11 @@ public final class PlayerSlots {
     private PlayerSlots() {
     }
 
-    /** The live stack in a slot, not a copy; empty for slots the player does not have. */
-    public static ItemStack get(ServerPlayer player, int slot) {
-        int vanilla = Slots.vanillaIndex(slot);
-        if (vanilla >= 0) {
-            return player.getInventory().getItem(vanilla);
-        }
-        if (Slots.isEnderChest(slot)) {
-            return player.getEnderChestInventory().getItem(slot - Slots.ENDER_START);
-        }
-        return ItemStack.EMPTY;
-    }
-
-    /** Copies of every non-empty slot. */
-    public static Int2ObjectMap<ItemStack> collect(ServerPlayer player, boolean enderChest) {
+    /**
+     * The live stacks (not copies) of every non-empty slot: inventory, armor, offhand, the ender chest when asked for,
+     * and the slots of other mods when {@code keys} is given, numbering new mod slots on the way.
+     */
+    public static Int2ObjectMap<ItemStack> live(ServerPlayer player, boolean enderChest, @Nullable SlotKeys keys) {
         Int2ObjectMap<ItemStack> slots = new Int2ObjectOpenHashMap<>();
         Inventory inventory = player.getInventory();
         for (int i = 0; i < Slots.MAIN_SIZE + Slots.ARMOR_SIZE + 1; i++) {
@@ -42,28 +41,58 @@ public final class PlayerSlots {
                 putIfPresent(slots, Slots.ENDER_START + i, ender.getItem(i));
             }
         }
-        slots.putAll(CuriosCompat.collect(player));
+        if (keys != null) {
+            slots.putAll(modSlots(player, keys));
+        }
+        return slots;
+    }
+
+    /** The live stacks of the non-empty mod slots, by number; new slots get their number here. */
+    public static Int2ObjectMap<ItemStack> modSlots(ServerPlayer player, SlotKeys keys) {
+        Int2ObjectMap<ItemStack> slots = new Int2ObjectOpenHashMap<>();
+        if (!ModSlots.any()) {
+            return slots;
+        }
+        for (Map.Entry<String, ItemStack> slot : ModSlots.read(player).entrySet()) {
+            if (!slot.getValue().isEmpty()) {
+                int number = keys.number(slot.getKey());
+                if (number >= 0) {
+                    slots.put(number, slot.getValue());
+                }
+            }
+        }
         return slots;
     }
 
     /**
-     * Replaces whole sections with a stored state: the inventory (main, armor, offhand and, when the state has any,
-     * curios) and/or the ender chest. A state without curios leaves the curio slots alone, as in the 2.x releases.
+     * Replaces whole sections with a stored state: the inventory (main, armor, offhand and the mod slots) and/or the
+     * ender chest. A state without any mod slot leaves the mod slots alone, as in the 2.x releases. Stacks whose slot
+     * no longer exists (a mod removed or a slot type shrank) go into the inventory, or drop at the player's feet.
      */
-    public static void restore(ServerPlayer player, Int2ObjectMap<ItemStack> items, boolean inventory, boolean enderChest) {
+    public static void restore(ServerPlayer player, Int2ObjectMap<ItemStack> items, boolean inventory, boolean enderChest,
+                               @Nullable SlotKeys keys) {
+        List<ItemStack> homeless = new ArrayList<>();
         if (inventory) {
             Inventory target = player.getInventory();
             for (int i = 0; i < Slots.MAIN_SIZE + Slots.ARMOR_SIZE + 1; i++) {
                 target.setItem(i, copyOf(items.get(Slots.fromVanillaIndex(i))));
             }
-            Int2ObjectMap<ItemStack> curios = new Int2ObjectOpenHashMap<>();
+            Int2ObjectMap<ItemStack> extras = new Int2ObjectOpenHashMap<>();
             items.int2ObjectEntrySet().forEach(e -> {
-                if (Slots.isCurio(e.getIntKey())) {
-                    curios.put(e.getIntKey(), e.getValue());
+                if (Slots.isExtra(e.getIntKey())) {
+                    extras.put(e.getIntKey(), e.getValue());
                 }
             });
-            if (!curios.isEmpty()) {
-                CuriosCompat.restore(player, curios);
+            if (!extras.isEmpty()) {
+                Map<String, ItemStack> wanted = resolve(player, extras, keys, homeless);
+                for (Map.Entry<String, ItemStack> slot : ModSlots.read(player).entrySet()) {
+                    ItemStack stack = wanted.remove(slot.getKey());
+                    if (stack == null && slot.getValue().isEmpty()) {
+                        continue;
+                    }
+                    putModSlot(player, slot.getKey(), stack, homeless);
+                }
+                homeless.addAll(wanted.values());
             }
         }
         if (enderChest) {
@@ -73,34 +102,96 @@ public final class PlayerSlots {
             }
         }
         player.inventoryMenu.broadcastChanges();
+        give(player, homeless);
     }
 
     /** Puts the stored stacks back into only the given slots; slots empty in the state become empty. */
-    public static void restoreSlots(ServerPlayer player, Int2ObjectMap<ItemStack> items, IntCollection slots) {
-        Int2ObjectMap<ItemStack> curios = new Int2ObjectOpenHashMap<>();
+    public static void restoreSlots(ServerPlayer player, Int2ObjectMap<ItemStack> items, IntCollection slots,
+                                    @Nullable SlotKeys keys) {
+        List<ItemStack> homeless = new ArrayList<>();
+        Int2ObjectMap<ItemStack> extras = new Int2ObjectOpenHashMap<>();
         for (int slot : slots) {
             int vanilla = Slots.vanillaIndex(slot);
             if (vanilla >= 0) {
                 player.getInventory().setItem(vanilla, copyOf(items.get(slot)));
             } else if (Slots.isEnderChest(slot)) {
                 player.getEnderChestInventory().setItem(slot - Slots.ENDER_START, copyOf(items.get(slot)));
-            } else if (Slots.isCurio(slot)) {
-                curios.put(slot, copyOf(items.get(slot)));
+            } else if (Slots.isExtra(slot)) {
+                extras.put(slot, items.getOrDefault(slot, ItemStack.EMPTY));
             }
         }
-        if (!curios.isEmpty()) {
-            CuriosCompat.restoreSlots(player, curios);
+        if (!extras.isEmpty()) {
+            List<ItemStack> unresolved = new ArrayList<>();
+            Map<String, ItemStack> wanted = resolve(player, extras, keys, unresolved);
+            wanted.forEach((key, stack) -> putModSlot(player, key, stack, homeless));
+            unresolved.stream().filter(stack -> !stack.isEmpty()).forEach(homeless::add);
         }
         player.inventoryMenu.broadcastChanges();
+        give(player, homeless);
     }
 
-    private static ItemStack copyOf(ItemStack stack) {
+    /** Gives copies of stacks to a player; what does not fit drops at their feet. */
+    public static void give(ServerPlayer receiver, Iterable<ItemStack> stacks) {
+        for (ItemStack stack : stacks) {
+            // add() shrinks the stack by what fits; the rest drops.
+            ItemStack remaining = stack.copy();
+            if (!receiver.getInventory().add(remaining) && !remaining.isEmpty()) {
+                receiver.drop(remaining, false);
+            }
+        }
+    }
+
+    /**
+     * Turns stored mod slot numbers into the keys of the player's current slots. Stacks of unknown numbers, and 2.x
+     * curios beyond the player's current curio slots, go to {@code homeless}.
+     */
+    private static Map<String, ItemStack> resolve(ServerPlayer player, Int2ObjectMap<ItemStack> extras, @Nullable SlotKeys keys,
+                                                  List<ItemStack> homeless) {
+        Map<String, ItemStack> wanted = new HashMap<>();
+        List<String> legacy = null;
+        for (Int2ObjectMap.Entry<ItemStack> slot : extras.int2ObjectEntrySet()) {
+            String key = null;
+            if (Slots.isModSlot(slot.getIntKey())) {
+                key = keys == null ? null : keys.key(slot.getIntKey());
+            } else {
+                if (legacy == null) {
+                    legacy = ModSlots.legacyCurioKeys(player);
+                }
+                int index = slot.getIntKey() - Slots.CURIOS_START;
+                key = index < legacy.size() ? legacy.get(index) : null;
+            }
+            if (key == null) {
+                homeless.add(slot.getValue());
+            } else {
+                wanted.put(key, slot.getValue());
+            }
+        }
+        return wanted;
+    }
+
+    private static void putModSlot(ServerPlayer player, String key, @Nullable ItemStack stack, List<ItemStack> homeless) {
+        ItemStack target = copyOf(stack);
+        ItemStack current = ModSlots.get(player, key);
+        if (ItemStack.matches(current, target)) {
+            return;
+        }
+        if (!ModSlots.set(player, key, target)) {
+            // The slot refused: keep what is there and hand the stored stack over instead.
+            InventoryBackups.LOGGER.info("Slot {} of {} did not take the restored item, it goes into the inventory", key,
+                    player.getScoreboardName());
+            if (!target.isEmpty()) {
+                homeless.add(target);
+            }
+        }
+    }
+
+    private static ItemStack copyOf(@Nullable ItemStack stack) {
         return stack == null ? ItemStack.EMPTY : stack.copy();
     }
 
     private static void putIfPresent(Int2ObjectMap<ItemStack> slots, int index, ItemStack stack) {
         if (!stack.isEmpty()) {
-            slots.put(index, stack.copy());
+            slots.put(index, stack);
         }
     }
 }

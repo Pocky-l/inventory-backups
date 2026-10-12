@@ -113,7 +113,20 @@ public final class ChangeTracker {
         }
     }
 
-    // Lowest priority and not for canceled events: only real deaths, and still before the items drop.
+    // First of all handlers: mods may move items out of their slots on death (Traveler's Backpack, grave mods).
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void beforeDeath(LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            TrackedPlayer tracked = PLAYERS.get(player.getUUID());
+            if (tracked != null) {
+                long start = System.nanoTime();
+                tracked.freeze();
+                PerfStats.addEvent(System.nanoTime() - start);
+            }
+        }
+    }
+
+    // Lowest priority and not for canceled events: only real deaths, recorded with the slots frozen before.
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {

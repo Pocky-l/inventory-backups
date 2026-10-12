@@ -1,9 +1,13 @@
 package com.pockyl.inventorybackups.gametest;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -62,7 +66,7 @@ public final class ModGameTests {
         helper.succeed();
     }
 
-    /** The chest preview reads like the player screen: main rows, hotbar, armor from the helmet down, offhand, curios. */
+    /** The chest preview reads like the player screen: main rows, hotbar, armor from the helmet down, offhand, mod slots. */
     @GameTest(template = "empty")
     public static void previewLayout(GameTestHelper helper) {
         BackupKind inventory = BackupKind.INVENTORY;
@@ -71,8 +75,16 @@ public final class ModGameTests {
         helper.assertTrue(inventory.chestSlot(Slots.ARMOR_START + 3) == 36, "Helmet misplaced");
         helper.assertTrue(inventory.chestSlot(Slots.ARMOR_START) == 39, "Boots misplaced");
         helper.assertTrue(inventory.chestSlot(Slots.OFFHAND) == 40, "Offhand misplaced");
-        helper.assertTrue(inventory.chestSlot(Slots.CURIOS_START) == 41, "First curio misplaced");
-        helper.assertTrue(inventory.chestSlot(Slots.CURIOS_START + 13) == -1, "Overflowing curio not dropped");
+        Int2ObjectMap<ItemStack> items = new Int2ObjectOpenHashMap<>();
+        items.put(Slots.MOD_START + 7, new ItemStack(Items.EMERALD));
+        items.put(Slots.CURIOS_START, new ItemStack(Items.DIAMOND));
+        for (int i = 0; i < 20; i++) {
+            items.put(Slots.MOD_START + 100 + i, new ItemStack(Items.STICK));
+        }
+        Int2ObjectMap<ItemStack> chest = inventory.preview(items);
+        helper.assertTrue(chest.get(41).is(Items.DIAMOND), "2.x curio not first among the mod slots");
+        helper.assertTrue(chest.get(42).is(Items.EMERALD), "Mod slots not in slot order");
+        helper.assertTrue(chest.size() == 13 && !chest.containsKey(54), "Overflowing mod slots not dropped");
         helper.assertTrue(inventory.chestSlot(Slots.ENDER_START) == -1, "Ender chest shown in the inventory");
         helper.assertTrue(BackupKind.ENDER_CHEST.chestSlot(Slots.ENDER_START + 26) == 26, "Ender chest misplaced");
         helper.assertTrue(BackupKind.ENDER_CHEST.chestSlot(5) == -1, "Inventory shown in the ender chest");

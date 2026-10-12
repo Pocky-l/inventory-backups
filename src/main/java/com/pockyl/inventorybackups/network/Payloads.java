@@ -3,6 +3,7 @@ package com.pockyl.inventorybackups.network;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentSerialization;
@@ -245,9 +246,11 @@ public final class Payloads {
     /**
      * @param previous entry before {@code entry}, null for the oldest one
      * @param since    per slot of {@code items}: when that stack got into the slot, 0 when before the stored history
+     * @param slotKeys the keys of the mod slots in {@code items} and {@code previousItems}, such as {@code curios:ring/0}
      */
     public record StateResponse(int id, UUID player, EntryRow entry, Int2ObjectMap<ItemStack> items, @Nullable EntryRow previous,
-                                Int2ObjectMap<ItemStack> previousItems, Int2LongMap since) implements CustomPacketPayload {
+                                Int2ObjectMap<ItemStack> previousItems, Int2LongMap since, Int2ObjectMap<String> slotKeys)
+            implements CustomPacketPayload {
         public static final Type<StateResponse> TYPE = Payloads.payloadType("state");
         public static final StreamCodec<RegistryFriendlyByteBuf, StateResponse> STREAM_CODEC = StreamCodec.of(
                 (buf, p) -> {
@@ -265,6 +268,11 @@ public final class Payloads {
                         buf.writeVarInt(e.getIntKey());
                         buf.writeLong(e.getLongValue());
                     });
+                    buf.writeVarInt(p.slotKeys.size());
+                    p.slotKeys.int2ObjectEntrySet().forEach(e -> {
+                        buf.writeVarInt(e.getIntKey());
+                        NetCodecs.writeString(buf, e.getValue());
+                    });
                 },
                 buf -> {
                     int id = buf.readVarInt();
@@ -281,7 +289,15 @@ public final class Payloads {
                     for (int i = 0; i < size; i++) {
                         since.put(buf.readVarInt(), buf.readLong());
                     }
-                    return new StateResponse(id, player, entry, items, previous, previousItems, since);
+                    int keys = buf.readVarInt();
+                    if (keys < 0 || keys > NetCodecs.MAX_ITEMS * 2) {
+                        throw new IllegalArgumentException("Too many slot keys: " + keys);
+                    }
+                    Int2ObjectMap<String> slotKeys = new Int2ObjectOpenHashMap<>(keys);
+                    for (int i = 0; i < keys; i++) {
+                        slotKeys.put(buf.readVarInt(), NetCodecs.readString(buf));
+                    }
+                    return new StateResponse(id, player, entry, items, previous, previousItems, since, slotKeys);
                 });
 
         @Override

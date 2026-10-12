@@ -14,9 +14,11 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.Config;
-import com.pockyl.inventorybackups.compat.CuriosCompat;
+import com.pockyl.inventorybackups.compat.ModSlots;
+import com.pockyl.inventorybackups.storage.BackupStore;
 import com.pockyl.inventorybackups.storage.Capture;
 import com.pockyl.inventorybackups.storage.EntryContext;
+import com.pockyl.inventorybackups.storage.SlotKeys;
 import com.pockyl.inventorybackups.storage.Trigger;
 
 /**
@@ -40,6 +42,8 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
     @Nullable
     private BlockPos clickedBlock;
     private long clickTick;
+    @Nullable
+    private Int2ObjectMap<ItemStack> frozen;
 
     TrackedPlayer(ServerPlayer player) {
         this.player = player;
@@ -151,6 +155,8 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
      */
     @Nullable
     Capture tick(long now, long settle, long maxDelay, long scan) {
+        // Deaths happen inside the tick, so a state still frozen here belongs to a death that was canceled.
+        frozen = null;
         int changed = player.getInventory().getTimesChanged();
         if (changed != timesChanged) {
             timesChanged = changed;
@@ -178,9 +184,9 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
     }
 
     /**
-     * Compares every slot with the last recorded copies. Catches what the listeners miss: Curios, which has no change
-     * events, mods that edit inventories directly while another menu is open, and the inventory of a player whose open
-     * menu has no player slots.
+     * Compares every slot with the last recorded copies. Catches what the listeners miss: the slots of other mods, which
+     * have no change events, mods that edit inventories directly while another menu is open, and the inventory of a
+     * player whose open menu has no player slots.
      */
     private boolean scanFindsChanges() {
         Inventory inventory = player.getInventory();
@@ -199,7 +205,7 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
                 }
             }
         }
-        return CuriosCompat.isLoaded() && curiosChanged();
+        return Config.TICK_SAVE_ENABLED.get() && modSlotsChanged();
     }
 
     private boolean differs(int slot, ItemStack current) {
@@ -207,15 +213,19 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
         return previous == null ? !current.isEmpty() : !ItemStack.matches(previous, current);
     }
 
-    private boolean curiosChanged() {
-        Int2ObjectMap<ItemStack> curios = CuriosCompat.collect(player);
-        for (Int2ObjectMap.Entry<ItemStack> slot : curios.int2ObjectEntrySet()) {
+    private boolean modSlotsChanged() {
+        SlotKeys keys = slotKeys();
+        if (keys == null || !ModSlots.any()) {
+            return false;
+        }
+        Int2ObjectMap<ItemStack> mods = PlayerSlots.modSlots(player, keys);
+        for (Int2ObjectMap.Entry<ItemStack> slot : mods.int2ObjectEntrySet()) {
             if (differs(slot.getIntKey(), slot.getValue())) {
                 return true;
             }
         }
         for (int slot : last.keySet()) {
-            if (Slots.isCurio(slot) && !curios.containsKey(slot)) {
+            if (Slots.isModSlot(slot) && !mods.containsKey(slot)) {
                 return true;
             }
         }
@@ -223,41 +233,56 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
     }
 
     /**
-     * Compares the live slots with the last recorded copies and returns the differences.
+     * Keeps copies of every slot as they are now, for the next capture. A death is recorded once it is certain (no mod
+     * canceled it), but by then mods like Traveler's Backpack or grave mods may already have moved items out of their
+     * slots; the death entry shows the slots as they were when the player died.
+     */
+    void freeze() {
+        Int2ObjectMap<ItemStack> copies = new Int2ObjectOpenHashMap<>();
+        PlayerSlots.live(player, Config.ENDER_CHEST_ENABLED.get(), slotKeys()).int2ObjectEntrySet()
+                .forEach(e -> copies.put(e.getIntKey(), e.getValue().copy()));
+        frozen = copies;
+    }
+
+    /**
+     * Compares the live slots (or the frozen ones, see {@link #freeze()}) with the last recorded copies and returns the
+     * differences.
      *
      * @param full whether the capture lists every slot (the first capture of a session)
      */
     Capture capture(Trigger trigger, EntryContext context, boolean full) {
         long start = System.nanoTime();
         dirty = false;
-        Int2ObjectMap<ItemStack> changes = new Int2ObjectOpenHashMap<>();
-        Inventory inventory = player.getInventory();
-        for (int i = 0; i < Slots.MAIN_SIZE + Slots.ARMOR_SIZE + 1; i++) {
-            diff(changes, Slots.fromVanillaIndex(i), inventory.getItem(i), true);
-        }
         boolean ender = Config.ENDER_CHEST_ENABLED.get();
-        if (ender) {
-            SimpleContainer chest = player.getEnderChestInventory();
-            for (int i = 0; i < Math.min(chest.getContainerSize(), Slots.ENDER_SIZE); i++) {
-                diff(changes, Slots.ENDER_START + i, chest.getItem(i), true);
+        Int2ObjectMap<ItemStack> source = frozen;
+        boolean copy = source == null;
+        if (source == null) {
+            source = PlayerSlots.live(player, ender, slotKeys());
+        }
+        frozen = null;
+        Int2ObjectMap<ItemStack> changes = new Int2ObjectOpenHashMap<>();
+        IntArrayList removed = new IntArrayList();
+        for (int slot : last.keySet()) {
+            // Without the ender chest in the capture its slots stay as they were last recorded.
+            if (!source.containsKey(slot) && (ender || !Slots.isEnderChest(slot))) {
+                removed.add(slot);
             }
         }
-        if (CuriosCompat.isLoaded()) {
-            Int2ObjectMap<ItemStack> curios = CuriosCompat.collect(player);
-            IntArrayList removed = new IntArrayList();
-            for (int slot : last.keySet()) {
-                if (Slots.isCurio(slot) && !curios.containsKey(slot)) {
-                    removed.add(slot);
-                }
-            }
-            removed.forEach(slot -> diff(changes, slot, ItemStack.EMPTY, false));
-            curios.int2ObjectEntrySet().forEach(e -> diff(changes, e.getIntKey(), e.getValue(), false));
+        removed.forEach(slot -> diff(changes, slot, ItemStack.EMPTY, false));
+        for (Int2ObjectMap.Entry<ItemStack> slot : source.int2ObjectEntrySet()) {
+            diff(changes, slot.getIntKey(), slot.getValue(), copy);
         }
         Int2ObjectMap<ItemStack> handed = full ? new Int2ObjectOpenHashMap<>(last) : changes;
         Capture capture = new Capture(player.getUUID(), player.getScoreboardName(), System.currentTimeMillis(), trigger, context,
                 full, ender, handed);
         PerfStats.addCapture(System.nanoTime() - start);
         return capture;
+    }
+
+    @Nullable
+    private static SlotKeys slotKeys() {
+        BackupStore store = BackupService.store();
+        return store == null ? null : store.slotKeys();
     }
 
     private void diff(Int2ObjectMap<ItemStack> changes, int slot, ItemStack current, boolean copy) {

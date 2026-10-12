@@ -27,6 +27,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
+import com.pockyl.inventorybackups.backup.Slots;
 import com.pockyl.inventorybackups.network.EntryRow;
 import com.pockyl.inventorybackups.network.Payloads;
 import com.pockyl.inventorybackups.network.ServerRequests;
@@ -57,11 +58,15 @@ public final class NetworkTests {
         Int2LongOpenHashMap since = new Int2LongOpenHashMap();
         since.put(0, 123L);
         EntryRow row = new EntryRow(1000, Trigger.DEATH, 3, "minecraft:overworld", new BlockPos(1, 2, 3), "fell", "", null);
+        items.put(Slots.MOD_START, new ItemStack(Items.GOLD_NUGGET));
+        Int2ObjectMap<String> keys = new Int2ObjectOpenHashMap<>();
+        keys.put(Slots.MOD_START, "curios:ring/0");
         Payloads.StateResponse state = new Payloads.StateResponse(7, UUID.randomUUID(), row, items, null,
-                new Int2ObjectOpenHashMap<>(), since);
+                new Int2ObjectOpenHashMap<>(), since, keys);
         Payloads.StateResponse back = roundTrip(helper, Payloads.StateResponse.STREAM_CODEC, state);
         helper.assertTrue(back.id() == 7 && back.entry().equals(row) && back.since().get(0) == 123L, "State header changed");
         helper.assertTrue(ItemStack.matches(back.items().get(0), named) && back.items().get(2026).getCount() == 12, "Items changed");
+        helper.assertTrue("curios:ring/0".equals(back.slotKeys().get(Slots.MOD_START)), "Slot keys changed");
 
         Payloads.ActionRequest action = new Payloads.ActionRequest(3, UUID.randomUUID(), 55, Payloads.Action.RESTORE_SLOTS,
                 new int[] {0, 100, -106});

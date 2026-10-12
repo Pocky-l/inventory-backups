@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.0.0] - Unreleased
 
 ### Added
-- Every inventory, armor, offhand, Curios and ender chest change is recorded, merged into one entry per burst of
+- Every inventory, armor, offhand, ender chest and mod slot change is recorded, merged into one entry per burst of
   changes, instead of a save every 10 minutes. Deaths, joins, quits, container sessions, restores, live edits and
   snapshots are marked on the timeline with position, death cause, container and admin.
 - An admin screen for admins who also install the mod on their client (`Ctrl+I` or `/inventory ui`): player browser,
   timeline scrubber with zoom, playback, A/B pins and death jumps, the inventory at any moment with changes
   highlighted, slot history in tooltips, and confirmed restore, copy, live edit, undo, snapshot and teleport actions.
+- Support for the slots of more mods: Curios (now with cosmetic slots), Accessories, Cosmetic Armor Reworked,
+  Traveler's Backpack, Tool Belt and Backpacked. They are shown with their names on the Mod slots tab of the admin
+  screen and after the offhand in chat previews, restored with the inventory, and editable in `/inventory player`.
+  A slot keeps its place in old backups when mods add or remove slots; an item whose slot is gone goes into the
+  inventory on restore instead of being lost.
+- Death entries show the slots as they were at the moment of death, even when a grave or backpack mod moves the items
+  away first.
 - Item search across all players, online and offline: `/invsearch` by item, custom name, enchantment or one specific
   stack, who has it now, who had it at a given time, and the transfer trail through drops, death loot and shared
   containers, with probable links marked as such. `/invsearch container <pos>` shows who put items into a chest and

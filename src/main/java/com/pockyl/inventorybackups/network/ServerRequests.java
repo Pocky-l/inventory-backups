@@ -176,8 +176,17 @@ public final class ServerRequests {
             Int2LongMap since = store.since(request.player(), state.entry().time(), SINCE_LOOK_BACK_DAYS);
             Int2ObjectMap<ItemStack> items = fit(state.items(), registries, ITEM_BUDGET / 2);
             Int2ObjectMap<ItemStack> previous = fit(state.previousItems(), registries, ITEM_BUDGET / 2);
+            Int2ObjectMap<String> slotKeys = new Int2ObjectOpenHashMap<>();
+            for (Int2ObjectMap<ItemStack> part : List.of(items, previous)) {
+                part.keySet().forEach((int slot) -> {
+                    String key = Slots.isModSlot(slot) ? store.slotKeys().key(slot) : null;
+                    if (key != null) {
+                        slotKeys.put(slot, key);
+                    }
+                });
+            }
             return new Payloads.StateResponse(request.id(), request.player(), EntryRow.of(state.entry()), items,
-                    state.previous() == null ? null : EntryRow.of(state.previous()), previous, since);
+                    state.previous() == null ? null : EntryRow.of(state.previous()), previous, since, slotKeys);
         }, response -> {
             if (response == null) {
                 notice(admin, request.id(), false, tr("inventorybackups.error.backup_not_found", EntrySelector.display(request.time())));

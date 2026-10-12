@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import com.pockyl.inventorybackups.backup.Slots;
 import com.pockyl.inventorybackups.client.ClientConfig;
 import com.pockyl.inventorybackups.client.Formats;
+import com.pockyl.inventorybackups.client.ModSlotNames;
 import com.pockyl.inventorybackups.network.EntryRow;
 import com.pockyl.inventorybackups.network.Payloads;
 
@@ -21,15 +22,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The inventory at the selected moment in the layout of the player screen, with the ender chest and curios on their own
- * tabs. Slots are colored by how they differ from the compared state: green added, red removed (the removed item shown
- * faded), yellow with a badge for count changes. Clicking selects slots for restoring or copying them.
+ * The inventory at the selected moment in the layout of the player screen, with the ender chest and the slots of other
+ * mods (Curios, Accessories, ...) on their own tabs. Slots are colored by how they differ from the compared state: green
+ * added, red removed (the removed item shown faded), yellow with a badge for count changes. Clicking selects slots for restoring or copying them.
  */
 final class InventoryPanel {
     static final int WIDTH = 190;
 
     enum Section {
-        INVENTORY, ENDER_CHEST, CURIOS
+        INVENTORY, ENDER_CHEST, MOD_SLOTS
     }
 
     /** A slot on screen. */
@@ -76,9 +77,9 @@ final class InventoryPanel {
                     cells.add(new Cell(Slots.ENDER_START + i, left + (i % 9) * 18, y + 36 + (i / 9) * 18, null));
                 }
             }
-            case CURIOS -> {
+            case MOD_SLOTS -> {
                 int index = 0;
-                for (int slot : curioSlots(state)) {
+                for (int slot : modSlots(state)) {
                     if (index >= 36) {
                         break;
                     }
@@ -90,30 +91,30 @@ final class InventoryPanel {
         return cells;
     }
 
-    private IntList curioSlots(@Nullable Payloads.StateResponse state) {
+    private IntList modSlots(@Nullable Payloads.StateResponse state) {
         IntLinkedOpenHashSet slots = new IntLinkedOpenHashSet();
         if (state != null) {
             state.items().keySet().forEach((int slot) -> {
-                if (Slots.isCurio(slot)) {
+                if (Slots.isExtra(slot)) {
                     slots.add(slot);
                 }
             });
             Int2ObjectMap<ItemStack> base = screen.model.baseItems();
             if (base != null) {
                 base.keySet().forEach((int slot) -> {
-                    if (Slots.isCurio(slot)) {
+                    if (Slots.isExtra(slot)) {
                         slots.add(slot);
                     }
                 });
             }
         }
         IntArrayList sorted = new IntArrayList(slots);
-        sorted.sort(null);
+        sorted.sort(ModSlotNames.ORDER);
         return sorted;
     }
 
     void clearSelectionIfSectionMissing() {
-        if (section == Section.CURIOS && curioSlots(screen.model.current()).isEmpty()) {
+        if (section == Section.MOD_SLOTS && modSlots(screen.model.current()).isEmpty()) {
             section = Section.INVENTORY;
         }
     }
@@ -166,14 +167,14 @@ final class InventoryPanel {
             if (option == Section.ENDER_CHEST && !screen.enderChest()) {
                 continue;
             }
-            int curios = curioSlots(state).size();
-            if (option == Section.CURIOS && curios == 0) {
+            int mods = modSlots(state).size();
+            if (option == Section.MOD_SLOTS && mods == 0) {
                 continue;
             }
             Component label = switch (option) {
                 case INVENTORY -> Component.translatable("inventorybackups.ui.inventory");
                 case ENDER_CHEST -> Component.translatable("inventorybackups.ui.ender_chest");
-                case CURIOS -> Component.translatable("inventorybackups.ui.curios", curios);
+                case MOD_SLOTS -> Component.translatable("inventorybackups.ui.mod_slots", mods);
             };
             int w = font.width(label) + 10;
             boolean on = section == option;
@@ -338,7 +339,7 @@ final class InventoryPanel {
                     : Component.translatable("inventorybackups.ui.slot.main", slot - 8);
             case ARMOR -> Component.translatable("inventorybackups.ui.slot.armor." + (slot - Slots.ARMOR_START));
             case OFFHAND -> Component.translatable("inventorybackups.ui.slot.offhand");
-            case CURIOS -> Component.translatable("inventorybackups.ui.slot.curio", slot - Slots.CURIOS_START + 1);
+            case CURIOS, MOD -> ModSlotNames.name(slot);
             case ENDER_CHEST -> Component.translatable("inventorybackups.ui.slot.ender", slot - Slots.ENDER_START + 1);
             case UNKNOWN -> Component.literal(Integer.toString(slot));
         };
@@ -353,13 +354,13 @@ final class InventoryPanel {
         if (my >= y + 5 && my < y + 20) {
             int tx = x + 6;
             for (Section option : Section.values()) {
-                if (option == Section.ENDER_CHEST && !screen.enderChest() || option == Section.CURIOS && curioSlots(state).isEmpty()) {
+                if (option == Section.ENDER_CHEST && !screen.enderChest() || option == Section.MOD_SLOTS && modSlots(state).isEmpty()) {
                     continue;
                 }
                 Component label = switch (option) {
                     case INVENTORY -> Component.translatable("inventorybackups.ui.inventory");
                     case ENDER_CHEST -> Component.translatable("inventorybackups.ui.ender_chest");
-                    case CURIOS -> Component.translatable("inventorybackups.ui.curios", curioSlots(state).size());
+                    case MOD_SLOTS -> Component.translatable("inventorybackups.ui.mod_slots", modSlots(state).size());
                 };
                 int w = font.width(label) + 10;
                 if (mx >= tx && mx < tx + w) {

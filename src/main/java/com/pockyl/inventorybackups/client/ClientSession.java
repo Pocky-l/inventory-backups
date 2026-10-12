@@ -90,6 +90,9 @@ public final class ClientSession {
             }
             return;
         }
+        if (payload instanceof Payloads.StateResponse state) {
+            ModSlotNames.remember(state.slotKeys());
+        }
         int id = switch (payload) {
             case Payloads.Notice notice -> notice.id();
             case Payloads.PlayersResponse response -> response.id();
@@ -114,5 +117,6 @@ public final class ClientSession {
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         PENDING.clear();
         hello = null;
+        ModSlotNames.forget();
     }
 }

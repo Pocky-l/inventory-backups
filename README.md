@@ -23,8 +23,12 @@ from player to player, and put any moment back with one click.
 
 ## Features
 
-- **Every change, recorded cheaply.** Main inventory, armor, offhand, [Curios](https://www.curseforge.com/minecraft/mc-mods/curios)
-  slots and the ender chest. Changes are detected through the slot sync vanilla already runs, so nothing is serialized
+- **Every change, recorded cheaply.** Main inventory, armor, offhand, the ender chest and the slots other mods add:
+  [Curios](https://www.curseforge.com/minecraft/mc-mods/curios), [Accessories](https://www.curseforge.com/minecraft/mc-mods/accessories),
+  [Cosmetic Armor Reworked](https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked),
+  [Traveler's Backpack](https://www.curseforge.com/minecraft/mc-mods/travelers-backpack),
+  [Tool Belt](https://www.curseforge.com/minecraft/mc-mods/tool-belt) and [Backpacked](https://www.curseforge.com/minecraft/mc-mods/backpacked).
+  Changes are detected through the slot sync vanilla already runs, so nothing is serialized
   per tick; bursts are merged into one entry once the inventory is still for 2.5 seconds (at most 30 seconds later).
   Measured: about 0.005 ms of main-thread time per player and tick, about 100 bytes per recorded change.
 - **Timeline markers with context.** Deaths (with cause and position, recorded before the items drop), joins, quits,
@@ -121,7 +125,17 @@ Each command needs its permission node (default: operator level 2). `/enderchest
 
 ## Compatibility
 
-[![Curios API](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/curios.png)](https://www.curseforge.com/minecraft/mc-mods/curios) ✅ **[Curios API](https://www.curseforge.com/minecraft/mc-mods/curios)** (optional) - curio slots are recorded, shown on their own tab and restored with the inventory.
+[![Curios API](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/curios.png)](https://www.curseforge.com/minecraft/mc-mods/curios) ✅ **[Curios API](https://www.curseforge.com/minecraft/mc-mods/curios)** (optional) - every curio slot, cosmetic slots included, is recorded, shown on the Mod slots tab, restored with the inventory and editable live.
+
+[![Accessories](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/accessories.png)](https://www.curseforge.com/minecraft/mc-mods/accessories) ✅ **[Accessories](https://www.curseforge.com/minecraft/mc-mods/accessories)** (optional) - accessory and cosmetic slots are recorded and restored the same way; with the Curios compatibility layer each slot is recorded once.
+
+[![Cosmetic Armor Reworked](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/cosmetic-armor-reworked.png)](https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked) ✅ **[Cosmetic Armor Reworked](https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked)** (optional) - the cosmetic armor slots are recorded and restored.
+
+[![Traveler's Backpack](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/travelers-backpack.png)](https://www.curseforge.com/minecraft/mc-mods/travelers-backpack) ✅ **[Traveler's Backpack](https://www.curseforge.com/minecraft/mc-mods/travelers-backpack)** (optional) - the worn backpack and everything in it is recorded and restored, also when it is placed on the ground at death.
+
+[![Tool Belt](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/tool-belt.png)](https://www.curseforge.com/minecraft/mc-mods/tool-belt) ✅ **[Tool Belt](https://www.curseforge.com/minecraft/mc-mods/tool-belt)** (optional) - the belt slot and the tools on the belt are recorded and restored.
+
+[![Backpacked](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/backpacked.png)](https://www.curseforge.com/minecraft/mc-mods/backpacked) ✅ **[Backpacked](https://www.curseforge.com/minecraft/mc-mods/backpacked)** (optional) - the equipped backpacks and their contents are recorded and restored.
 
 [![LuckPerms](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/luckperms.png)](https://luckperms.net) ✅ **[LuckPerms](https://luckperms.net)** (optional) - grant `inventorybackups.view`, `.restore`, `.edit`, `.search` and `.ui` per group instead of operator status.
 

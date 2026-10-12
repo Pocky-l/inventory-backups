@@ -3,9 +3,12 @@ package com.pockyl.inventorybackups.backup;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.InventoryBackups;
+import com.pockyl.inventorybackups.storage.BackupStore;
 import com.pockyl.inventorybackups.storage.EntryContext;
+import com.pockyl.inventorybackups.storage.SlotKeys;
 import com.pockyl.inventorybackups.storage.StateView;
 import com.pockyl.inventorybackups.storage.Trigger;
 
@@ -19,7 +22,7 @@ public final class Restorer {
 
     public static void restore(ServerPlayer target, StateView state, boolean inventory, boolean enderChest, String admin) {
         ChangeTracker.capture(target, Trigger.CHANGE, EntryContext.of(target));
-        PlayerSlots.restore(target, state.items(), inventory, enderChest);
+        PlayerSlots.restore(target, state.items(), inventory, enderChest, slotKeys());
         record(target, state, admin);
         InventoryBackups.LOGGER.info("{} restored the {}{} of {} to the state of {}", admin, inventory ? "inventory" : "",
                 enderChest ? (inventory ? " and ender chest" : "ender chest") : "", target.getScoreboardName(), state.entry().time());
@@ -27,7 +30,7 @@ public final class Restorer {
 
     public static void restoreSlots(ServerPlayer target, StateView state, IntCollection slots, String admin) {
         ChangeTracker.capture(target, Trigger.CHANGE, EntryContext.of(target));
-        PlayerSlots.restoreSlots(target, state.items(), slots);
+        PlayerSlots.restoreSlots(target, state.items(), slots, slotKeys());
         record(target, state, admin);
         InventoryBackups.LOGGER.info("{} restored {} slots of {} to the state of {}", admin, slots.size(), target.getScoreboardName(),
                 state.entry().time());
@@ -35,13 +38,13 @@ public final class Restorer {
 
     /** Gives copies of stacks to a player; what does not fit drops at their feet. */
     public static void give(ServerPlayer receiver, Iterable<ItemStack> stacks) {
-        for (ItemStack stack : stacks) {
-            // add() shrinks the stack by what fits; the rest drops.
-            ItemStack remaining = stack.copy();
-            if (!receiver.getInventory().add(remaining) && !remaining.isEmpty()) {
-                receiver.drop(remaining, false);
-            }
-        }
+        PlayerSlots.give(receiver, stacks);
+    }
+
+    @Nullable
+    private static SlotKeys slotKeys() {
+        BackupStore store = BackupService.store();
+        return store == null ? null : store.slotKeys();
     }
 
     private static void record(ServerPlayer target, StateView state, String admin) {

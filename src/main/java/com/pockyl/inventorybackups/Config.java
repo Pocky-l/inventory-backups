@@ -91,8 +91,8 @@ public final class Config {
             .translation(key("maxDelaySeconds"))
             .defineInRange("maxDelaySeconds", 30.0, 1.0, 600.0);
     public static final ModConfigSpec.DoubleValue SCAN_SECONDS = BUILDER
-            .comment("Seconds between full comparisons of all slots, for changes no event reports (Curios slots, mods that edit",
-                    "inventories directly). Cheap: a few dozen stack comparisons per player.")
+            .comment("Seconds between full comparisons of all slots, for changes no event reports (slots of Curios, Accessories and",
+                    "other mods, mods that edit inventories directly). Cheap: a few dozen stack comparisons per player.")
             .translation(key("scanSeconds"))
             .defineInRange("scanSeconds", 5.0, 0.5, 300.0);
     public static final ModConfigSpec.BooleanValue CONTAINER_SESSIONS = BUILDER

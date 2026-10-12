@@ -175,15 +175,16 @@ final class DetailsPanel {
         return changes;
     }
 
-    /** Sort order: hotbar and main inventory, armor, offhand, curios, ender chest. */
+    /** Sort order: hotbar and main inventory, armor, offhand, mod slots, ender chest. */
     private static int order(int slot) {
         return switch (Slots.section(slot)) {
             case MAIN -> slot;
             case ARMOR -> 100 + slot;
             case OFFHAND -> 300;
             case CURIOS -> 1000 + slot;
-            case ENDER_CHEST -> 5000 + slot;
-            case UNKNOWN -> 10_000 + slot;
+            case MOD -> 2_000_000 + slot;
+            case ENDER_CHEST -> 3_000_000 + slot;
+            case UNKNOWN -> 4_000_000 + slot;
         };
     }
 
