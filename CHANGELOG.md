@@ -4,7 +4,7 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.0] - Unreleased
+## [3.1.0] - 2026-10-13
 ### Added
 - Commands suggest offline players: `/inventory`, `/enderchest` and `/invsearch` complete the names of players with
   backups who are not online, the most recently seen first, with the time they were last seen in the tooltip. A
