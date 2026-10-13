@@ -212,8 +212,15 @@ public final class BackupStore {
         return players;
     }
 
+    /** Every player with backups; safe to call from any thread. */
     public List<PlayerInfo> playerInfos() {
         return directory.all();
+    }
+
+    /** The player with backups whose last known name is {@code name} (any case); safe to call from any thread. */
+    public Optional<PlayerInfo> playerByName(String name) {
+        return directory.all().stream().filter(info -> info.name().equalsIgnoreCase(name))
+                .max(Comparator.comparingLong(PlayerInfo::lastSeen));
     }
 
     @Nullable

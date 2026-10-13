@@ -368,5 +368,6 @@
   "inventorybackups.ui.search.link.probable": "вероятно · разница %s с",
   "inventorybackups.error.no_save_file": "У игрока %s нет сохранения на этом сервере",
   "inventorybackups.ui.offline_target": "Игрок не в сети: изменение запишется в его сохранение",
-  "inventorybackups.ui.confirm.offline": "%s не в сети: изменение запишется в его сохранение и будет у него при входе."
+  "inventorybackups.ui.confirm.offline": "%s не в сети: изменение запишется в его сохранение и будет у него при входе.",
+  "inventorybackups.suggest.offline": "Не в сети, был в игре %s"
 }

@@ -33,6 +33,7 @@
 - 🖥️ **Admin screen** - scrub the timeline, play it back, compare two moments, see what changed and where every item
   came from (`Ctrl+I`, needs the mod on the admin's client).
 - 💤 **Offline players too** - restore and edit players who are not online; the change goes into their save file.
+  Commands suggest their names too.
 - 🎒 **Mod slots** - Curios, Accessories, Cosmetic Armor, Traveler's Backpack, Tool Belt and Backpacked are backed up
   and restored with the rest.
 - 🗜️ **Small and safe storage** - compact day files written in the background, thinned with age instead of cut off,

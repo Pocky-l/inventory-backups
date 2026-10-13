@@ -6,6 +6,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
 import org.jetbrains.annotations.Nullable;
 
+import com.pockyl.inventorybackups.backup.BackupService;
+import com.pockyl.inventorybackups.storage.BackupStore;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,10 +46,14 @@ public final class PlayerResolver {
             return Optional.of(new ResolvedPlayer(online.getUUID(), online.getScoreboardName(), online));
         }
         GameProfileCache cache = server.getProfileCache();
-        if (cache == null) {
-            return Optional.empty();
+        Optional<ResolvedPlayer> cached = cache == null ? Optional.empty() : cache.get(name).map(PlayerResolver::offline);
+        if (cached.isPresent()) {
+            return cached;
         }
-        return cache.get(name).map(PlayerResolver::offline);
+        // Names the server forgot (the profile cache keeps only recent players) are still in the backups.
+        BackupStore store = BackupService.store();
+        return store == null ? Optional.empty()
+                : store.playerByName(name).map(info -> new ResolvedPlayer(info.uuid(), info.name(), null));
     }
 
     @Nullable

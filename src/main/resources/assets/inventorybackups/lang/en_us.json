@@ -368,5 +368,6 @@
   "inventorybackups.ui.search.link.probable": "probable · %s s apart",
   "inventorybackups.error.no_save_file": "%s has no save file on this server",
   "inventorybackups.ui.offline_target": "The player is offline: the change goes into their save file",
-  "inventorybackups.ui.confirm.offline": "%s is offline: the change is written to their save file and applies when they log in."
+  "inventorybackups.ui.confirm.offline": "%s is offline: the change is written to their save file and applies when they log in.",
+  "inventorybackups.suggest.offline": "Offline, last seen %s"
 }

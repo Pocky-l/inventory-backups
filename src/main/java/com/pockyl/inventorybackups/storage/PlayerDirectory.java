@@ -15,14 +15,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Name, last activity and last death of every player with backups, so the player browser and searches can show offline
- * players without reading their files. Owned by the storage thread; saved to {@code players.dat}.
+ * players without reading their files. Written by the storage thread; saved to {@code players.dat}. Other threads may
+ * read it (command suggestions, name lookups): the map is concurrent.
  */
 final class PlayerDirectory {
     private final Path file;
-    private final Map<UUID, PlayerInfo> players = new HashMap<>();
+    private final Map<UUID, PlayerInfo> players = new ConcurrentHashMap<>();
     private boolean dirty;
 
     PlayerDirectory(Path file) {

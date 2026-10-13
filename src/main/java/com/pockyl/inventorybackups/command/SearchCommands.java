@@ -30,8 +30,6 @@ import com.pockyl.inventorybackups.ui.ChatUI;
 import com.pockyl.inventorybackups.ui.SearchChat;
 import com.pockyl.inventorybackups.util.PlayerResolver;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -82,8 +80,7 @@ public final class SearchCommands {
                 .then(item()
                         .executes(context -> searchItem(context, ALL_PLAYERS, ""))
                         .then(Commands.argument("player", StringArgumentType.string())
-                                .suggests((context, builder) -> SharedSuggestionProvider.suggest(
-                                        withAll(context.getSource().getOnlinePlayerNames()), builder))
+                                .suggests((context, builder) -> PlayerSuggestions.playersOr(ALL_PLAYERS, context, builder))
                                 .executes(context -> searchItem(context, StringArgumentType.getString(context, "player"), ""))
                                 .then(Commands.argument("since", StringArgumentType.word())
                                         .executes(context -> searchItem(context, StringArgumentType.getString(context, "player"),
@@ -92,13 +89,6 @@ public final class SearchCommands {
 
     private static RequiredArgumentBuilder<CommandSourceStack, ResourceLocation> item() {
         return Commands.argument("item", ResourceLocationArgument.id()).suggests(SearchCommands::suggestItems);
-    }
-
-    private static Iterable<String> withAll(Iterable<String> names) {
-        List<String> all = new ArrayList<>();
-        all.add(ALL_PLAYERS);
-        names.forEach(all::add);
-        return all;
     }
 
     /** Items that were ever stored first, then every registered item. */

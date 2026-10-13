@@ -76,6 +76,22 @@ public final class StorageTests {
     }
 
     @GameTest(template = "empty")
+    public static void playersAreFoundByTheirName(GameTestHelper helper) {
+        BackupStore store = TestStores.create(helper);
+        try {
+            UUID player = UUID.randomUUID();
+            store.submit(capture(player, T0, Trigger.JOIN, true, slots(0, new ItemStack(Items.BREAD, 5))));
+            store.awaitIdle();
+            helper.assertTrue(store.playerByName("TESTER").map(info -> info.uuid().equals(player)).orElse(false),
+                    "an offline player with backups is found by name, in any case");
+            helper.assertTrue(store.playerByName("nobody").isEmpty(), "unknown names are not found");
+            helper.succeed();
+        } finally {
+            TestStores.delete(store);
+        }
+    }
+
+    @GameTest(template = "empty")
     public static void unchangedStatesAreNotDuplicated(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {

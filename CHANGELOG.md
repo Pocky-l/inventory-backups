@@ -4,6 +4,13 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - Unreleased
+### Added
+- Commands suggest offline players: `/inventory`, `/enderchest` and `/invsearch` complete the names of players with
+  backups who are not online, the most recently seen first, with the time they were last seen in the tooltip. A
+  player who left can be found by the first letters of the name.
+- Players the server's name cache no longer knows are still found by name in the backups.
+
 ## [3.0.0] - 2026-10-12
 ### Added
 - Every inventory, armor, offhand, ender chest and mod slot change is recorded, merged into one entry per burst of

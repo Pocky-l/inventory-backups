@@ -7,13 +7,11 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -67,8 +65,6 @@ import static com.pockyl.inventorybackups.ui.Texts.tr;
  */
 public final class BackupCommands {
     private static final int SUGGESTED_ENTRIES = 30;
-    private static final SuggestionProvider<CommandSourceStack> PLAYERS =
-            (context, builder) -> SharedSuggestionProvider.suggest(context.getSource().getOnlinePlayerNames(), builder);
 
     private BackupCommands() {
     }
@@ -119,7 +115,7 @@ public final class BackupCommands {
     }
 
     private static RequiredArgumentBuilder<CommandSourceStack, String> target() {
-        return Commands.argument("target", StringArgumentType.string()).suggests(PLAYERS);
+        return Commands.argument("target", StringArgumentType.string()).suggests(PlayerSuggestions::players);
     }
 
     private static RequiredArgumentBuilder<CommandSourceStack, String> backup() {
