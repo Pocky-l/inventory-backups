@@ -199,6 +199,15 @@ screen is in `docs/ui-mockup` (open `index.html` in a browser).
   </tr>
 </table>
 
+**🔮 Magic**
+
+<table>
+  <tr>
+    <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/hextale"><img src="docs/more-mods/hextale.png" width="48" alt="HexTale"></a></td>
+    <td><a href="https://www.curseforge.com/minecraft/mc-mods/hextale"><b>HexTale</b></a> - hextech magic to research, distil and bind with runes, inspired by Arcane and Thaumcraft (<a href="https://github.com/Pocky-l/HexTale">source</a>)</td>
+  </tr>
+</table>
+
 **⚡ Tech & energy**
 
 <table>
