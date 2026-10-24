@@ -41,6 +41,10 @@ public final class Config {
             .comment("Mark quits on the timeline.")
             .translation(key("quitSaveEnabled"))
             .define("quitSaveEnabled", true);
+    public static final ModConfigSpec.BooleanValue DEATH_ALERTS = BUILDER
+            .comment("Tell online admins in chat when a player dies with items, with buttons to preview, restore and teleport.")
+            .translation(key("deathAlerts"))
+            .define("deathAlerts", false);
     public static final ModConfigSpec.IntValue RETENTION_DAYS = BUILDER
             .comment("Days to keep one state per day. Older states are deleted, except deaths and admin actions (see retention).")
             .translation(key("retentionDays"))

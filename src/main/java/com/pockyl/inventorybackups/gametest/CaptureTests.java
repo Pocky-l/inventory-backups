@@ -5,9 +5,11 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameRules;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -18,8 +20,11 @@ import com.pockyl.inventorybackups.storage.BackupStore;
 import com.pockyl.inventorybackups.storage.Entry;
 import com.pockyl.inventorybackups.storage.StateView;
 import com.pockyl.inventorybackups.storage.Trigger;
+import com.pockyl.inventorybackups.ui.DeathAlerts;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -114,6 +119,42 @@ public final class CaptureTests {
                     helper.assertTrue(state.items().get(Slots.ARMOR_START + 3).is(Items.DIAMOND_HELMET), "Helmet missing");
                     helper.assertTrue(death.context().detail() != null, "Death cause missing");
                     helper.assertTrue(!death.context().dimension().isEmpty(), "Death position missing");
+                })
+                .thenExecute(() -> TestPlayers.leave(helper, player))
+                .thenSucceed();
+    }
+
+    /** The death alert's restore button names the entry recorded for the death. */
+    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    public static void deathAlertsRestoreTheDeathEntry(GameTestHelper helper) {
+        ServerPlayer player = TestPlayers.join(helper);
+        UUID uuid = player.getUUID();
+        helper.assertFalse(DeathAlerts.worthTelling(player), "An empty inventory loses nothing");
+        player.getInventory().setItem(0, new ItemStack(Items.DIAMOND, 5));
+        helper.assertTrue(DeathAlerts.worthTelling(player), "Items would drop");
+        GameRules.BooleanValue keep = helper.getLevel().getGameRules().getRule(GameRules.RULE_KEEPINVENTORY);
+        boolean before = keep.get();
+        keep.set(true, helper.getLevel().getServer());
+        boolean kept = DeathAlerts.worthTelling(player);
+        keep.set(before, helper.getLevel().getServer());
+        helper.assertFalse(kept, "keepInventory loses nothing");
+        player.kill();
+        helper.startSequence()
+                .thenWaitUntil(() -> {
+                    Entry death = TestPlayers.entries(uuid).stream().filter(e -> e.trigger() == Trigger.DEATH).findFirst()
+                            .orElseThrow(() -> new GameTestAssertException("No death entry"));
+                    List<String> commands = new ArrayList<>();
+                    DeathAlerts.line(player, "test", death.time(), death.context(), true, true).visit((style, text) -> {
+                        if (style.getClickEvent() != null) {
+                            commands.add(style.getClickEvent().getValue());
+                        }
+                        return Optional.empty();
+                    }, Style.EMPTY);
+                    String restore = "/inventory set " + player.getScoreboardName() + " " + death.time();
+                    helper.assertTrue(commands.contains(restore), "Restore button missing: " + commands);
+                    helper.assertTrue(commands.size() == 3, "Expected view, restore and teleport buttons: " + commands);
+                    helper.assertTrue(DeathAlerts.line(player, "test", death.time(), death.context(), true, false).getString()
+                            .indexOf('↻') < 0, "No restore button without the restore permission");
                 })
                 .thenExecute(() -> TestPlayers.leave(helper, player))
                 .thenSucceed();

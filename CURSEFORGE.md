@@ -12,7 +12,8 @@ it on their client
 - 📼 **Every change recorded** - inventory, armor, offhand, ender chest and mod slots, merged into one entry per
   burst; about 100 bytes per change and 0.005 ms per player and tick.
 - 🕒 **A timeline with context** - deaths with cause and place (recorded before the items drop), joins, quits,
-  chests used, restores and edits by admins.
+  chests used, restores and edits by admins. Optional death alerts in the admins' chat with preview, restore and
+  teleport buttons.
 - ↩️ **Restore in one click** - a whole moment or only some slots, with undo; or give yourself a copy and leave the
   player's items alone.
 - 🔍 **Find any item** - who has it now, who had it and when, by id, name, enchantment or one exact stack, with its

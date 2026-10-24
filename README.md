@@ -25,7 +25,8 @@
 - 📼 **Every change recorded** - inventory, armor, offhand, ender chest and mod slots, merged into one entry per
   burst; about 100 bytes per change and 0.005 ms per player and tick.
 - 🕒 **A timeline with context** - deaths with cause and place (recorded before the items drop), joins, quits,
-  chests used, restores and edits by admins.
+  chests used, restores and edits by admins. Optional death alerts in the admins' chat with preview, restore and
+  teleport buttons.
 - ↩️ **Restore in one click** - a whole moment or only some slots, with undo; or give yourself a copy and leave the
   player's items alone.
 - 🔍 **Find any item** - who has it now, who had it and when, by id, name, enchantment or one exact stack, with its
@@ -85,6 +86,7 @@ Each command needs its permission node (default: operator level 2). `/enderchest
 |---|---|---|
 | `general.tickSaveEnabled` | `true` | Record inventory changes |
 | `general.deadSaveEnabled` / `joinSaveEnabled` / `quitSaveEnabled` | `true` | Record deaths, mark joins and quits |
+| `general.deathAlerts` | `false` | Tell online admins in chat when a player dies with items, with preview, restore and teleport buttons |
 | `general.retentionDays` | `30` | Days to keep one state per day |
 | `enderchest.enderChestEnabled` | `true` | Back up ender chests, `/enderchest` |
 | `enderchest.enderChestTickSaveEnabled` | `true` | Record ender chest changes |

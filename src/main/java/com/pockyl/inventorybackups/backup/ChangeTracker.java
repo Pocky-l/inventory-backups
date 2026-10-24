@@ -20,6 +20,7 @@ import com.pockyl.inventorybackups.storage.BackupStore;
 import com.pockyl.inventorybackups.storage.Capture;
 import com.pockyl.inventorybackups.storage.EntryContext;
 import com.pockyl.inventorybackups.storage.Trigger;
+import com.pockyl.inventorybackups.ui.DeathAlerts;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -139,7 +140,9 @@ public final class ChangeTracker {
         long start = System.nanoTime();
         Trigger trigger = Config.DEAD_SAVE_ENABLED.get() ? Trigger.DEATH : Trigger.CHANGE;
         String cause = event.getSource().getLocalizedDeathMessage(player).getString();
-        submit(tracked.capture(trigger, EntryContext.of(player).withDetail(cause), false));
+        Capture capture = tracked.capture(trigger, EntryContext.of(player).withDetail(cause), false);
+        submit(capture);
+        DeathAlerts.send(player, cause, capture.time(), capture.context());
         PerfStats.addEvent(System.nanoTime() - start);
     }
 

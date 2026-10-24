@@ -4,6 +4,13 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - Unreleased
+### Added
+- Death alerts for admins (option `general.deathAlerts`, off by default): when a player dies with items, online
+  admins get a chat line with the cause and buttons to preview the inventory from just before the death, restore it
+  and teleport to the place. The buttons follow the admin's permissions; the player who died is not told anything.
+  Deaths with keepInventory or an empty inventory are not reported.
+
 ## [3.1.0] - 2026-10-13
 ### Added
 - Commands suggest offline players: `/inventory`, `/enderchest` and `/invsearch` complete the names of players with
