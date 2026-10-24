@@ -4,7 +4,7 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.2.0] - Unreleased
+## [3.2.0] - 2026-10-24
 ### Added
 - Death alerts for admins (option `general.deathAlerts`, off by default): when a player dies with items, online
   admins get a chat line with the cause and buttons to preview the inventory from just before the death, restore it
