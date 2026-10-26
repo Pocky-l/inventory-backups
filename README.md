@@ -107,7 +107,8 @@ Each command needs its permission node (default: operator level 2). `/enderchest
 
 ## Installation
 
-1. Install [NeoForge](https://neoforged.net) 21.1 for Minecraft 1.21.1 on the server and put the mod into `mods`.
+1. Install [NeoForge](https://neoforged.net) 21.1 for Minecraft 1.21.1, or [Forge](https://files.minecraftforge.net) 47
+   for Minecraft 1.20.1 (files marked `+1.20.1`), on the server and put the mod into `mods`.
 2. Optional: admins who want the timeline screen put the same jar into their client's `mods` folder. Other players
    do not need it.
 
@@ -139,7 +140,7 @@ screen is in `docs/ui-mockup` (open `index.html` in a browser).
 ## Credits
 
 - Author: **Pocky**.
-- DjJewl - the Minecraft 1.20.1 Forge and Fabric versions.
+- DjJewl - the earlier Minecraft 1.20.1 Forge and Fabric versions (2.0).
 - Special thanks to PiglinMine.com.
 
 <!-- more-mods:start -->

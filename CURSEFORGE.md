@@ -4,7 +4,7 @@
 
 ![The admin screen: timeline, inventory at the selected moment and what changed](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/screenshots/mockup-timeline.png)
 
-📦 **Requires** [NeoForge](https://neoforged.net) 1.21.1 · on the server; admins who want the timeline screen also put
+📦 **Requires** [NeoForge](https://neoforged.net) 1.21.1 or [Forge](https://files.minecraftforge.net) 1.20.1 · on the server; admins who want the timeline screen also put
 it on their client
 
 ## ✨ Features
@@ -68,8 +68,8 @@ disk budgets, permission level. 2.x configs and backups are taken over on the fi
 
 ## 💛 Credits
 
-Made by **Pocky** · [source code](https://github.com/Pocky-l/inventory-backups) · Minecraft 1.20.1 Forge and Fabric
-versions by DjJewl · special thanks to PiglinMine.com.
+Made by **Pocky** · [source code](https://github.com/Pocky-l/inventory-backups) · the earlier Minecraft 1.20.1 Forge and
+Fabric versions (2.0) by DjJewl · special thanks to PiglinMine.com.
 
 <!-- more-mods:start -->
 ## More mods by Pocky
