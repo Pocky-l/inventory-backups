@@ -194,7 +194,7 @@ final class PlayerListPanel {
     void face(GuiGraphics g, UUID uuid, int x, int y) {
         ClientPacketListener connection = screen.mc().getConnection();
         PlayerInfo info = connection == null ? null : connection.getPlayerInfo(uuid);
-        PlayerFaceRenderer.draw(g, info != null ? info.getSkin() : DefaultPlayerSkin.get(uuid), x, y, 16);
+        PlayerFaceRenderer.draw(g, info != null ? info.getSkinLocation() : DefaultPlayerSkin.getDefaultSkin(uuid), x, y, 16);
     }
 
     private int sc(int virtual) {

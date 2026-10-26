@@ -4,10 +4,10 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
-import net.neoforged.neoforge.server.permission.PermissionAPI;
-import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.server.permission.PermissionAPI;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;

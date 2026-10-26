@@ -1,6 +1,5 @@
 package com.pockyl.inventorybackups.gametest;
 
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -10,8 +9,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameRules;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.Restorer;
@@ -105,7 +104,7 @@ public final class CaptureTests {
         ServerPlayer player = TestPlayers.join(helper);
         UUID uuid = player.getUUID();
         ItemStack sword = new ItemStack(Items.NETHERITE_SWORD);
-        sword.set(DataComponents.CUSTOM_NAME, Component.literal("Last Words"));
+        sword.setHoverName(Component.literal("Last Words"));
         player.getInventory().setItem(4, sword.copy());
         player.getInventory().armor.set(3, new ItemStack(Items.DIAMOND_HELMET));
         player.kill();

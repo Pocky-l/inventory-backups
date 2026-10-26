@@ -7,7 +7,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -333,7 +332,7 @@ public final class AdminScreen extends Screen {
         selectPlayer(row, time);
     }
 
-    private void handleNotice(CustomPacketPayload payload) {
+    private void handleNotice(Payloads.Payload payload) {
         if (payload instanceof Payloads.Notice notice) {
             toast(notice.message(), notice.ok());
         }
@@ -421,7 +420,7 @@ public final class AdminScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    public void renderBackground(GuiGraphics g) {
         // The screen covers everything with its own background.
     }
 
@@ -566,7 +565,7 @@ public final class AdminScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
         double mx = mouseX / scale;
         double my = mouseY / scale;
         if (dialog != null) {

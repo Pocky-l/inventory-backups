@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Item counts regardless of slots: identical items (same item and components) are added up.
+ * Item counts regardless of slots: identical items (same item and tag) are added up.
  */
 final class ItemTally {
     private final List<ItemStack> prototypes = new ArrayList<>();
@@ -17,7 +17,7 @@ final class ItemTally {
             return;
         }
         for (int i = 0; i < prototypes.size(); i++) {
-            if (ItemStack.isSameItemSameComponents(prototypes.get(i), stack)) {
+            if (ItemStack.isSameItemSameTags(prototypes.get(i), stack)) {
                 counts.set(i, counts.get(i) + stack.getCount());
                 return;
             }
@@ -28,7 +28,7 @@ final class ItemTally {
 
     int count(ItemStack prototype) {
         for (int i = 0; i < prototypes.size(); i++) {
-            if (ItemStack.isSameItemSameComponents(prototypes.get(i), prototype)) {
+            if (ItemStack.isSameItemSameTags(prototypes.get(i), prototype)) {
                 return counts.get(i);
             }
         }

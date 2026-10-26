@@ -2,16 +2,15 @@ package com.pockyl.inventorybackups.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.client.screen.AdminScreen;
+import com.pockyl.inventorybackups.network.Network;
 import com.pockyl.inventorybackups.network.Payloads;
 
 import java.util.HashMap;
@@ -25,9 +24,9 @@ import java.util.function.IntFunction;
  * callback of its request. A notice for a request goes to that request's callback too, so a screen can show errors
  * where the admin is looking.
  */
-@EventBusSubscriber(modid = InventoryBackups.MOD_ID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = InventoryBackups.MOD_ID, value = Dist.CLIENT)
 public final class ClientSession {
-    private static final Map<Integer, Consumer<CustomPacketPayload>> PENDING = new HashMap<>();
+    private static final Map<Integer, Consumer<Payloads.Payload>> PENDING = new HashMap<>();
     private static int nextId = 1;
     @Nullable
     private static Payloads.Hello hello;
@@ -40,10 +39,10 @@ public final class ClientSession {
     /** Asks the server to open the screen; false when the server does not have the mod. */
     public static boolean requestOpen() {
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
-        if (connection == null || !connection.hasChannel(Payloads.OpenRequest.TYPE)) {
+        if (connection == null || !Network.present(connection.getConnection())) {
             return false;
         }
-        PacketDistributor.sendToServer(new Payloads.OpenRequest());
+        Network.sendToServer(new Payloads.OpenRequest());
         return true;
     }
 
@@ -52,15 +51,15 @@ public final class ClientSession {
      *
      * @return the id, or -1 when the server cannot receive it
      */
-    public static int send(IntFunction<CustomPacketPayload> request, Consumer<CustomPacketPayload> callback) {
+    public static int send(IntFunction<Payloads.Payload> request, Consumer<Payloads.Payload> callback) {
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
         int id = nextId++;
-        CustomPacketPayload payload = request.apply(id);
-        if (connection == null || !connection.hasChannel(payload)) {
+        Payloads.Payload payload = request.apply(id);
+        if (connection == null || !Network.present(connection.getConnection())) {
             return -1;
         }
         PENDING.put(id, callback);
-        PacketDistributor.sendToServer(payload);
+        Network.sendToServer(payload);
         return id;
     }
 
@@ -79,7 +78,7 @@ public final class ClientSession {
     }
 
     /** Called on the client thread for every payload from the server. */
-    static void receive(CustomPacketPayload payload) {
+    static void receive(Payloads.Payload payload) {
         Minecraft minecraft = Minecraft.getInstance();
         if (payload instanceof Payloads.Hello newHello) {
             hello = newHello;
@@ -93,15 +92,19 @@ public final class ClientSession {
         if (payload instanceof Payloads.StateResponse state) {
             ModSlotNames.remember(state.slotKeys());
         }
-        int id = switch (payload) {
-            case Payloads.Notice notice -> notice.id();
-            case Payloads.PlayersResponse response -> response.id();
-            case Payloads.TimelineResponse response -> response.id();
-            case Payloads.StateResponse response -> response.id();
-            case Payloads.SearchResponse response -> response.id();
-            default -> -1;
-        };
-        Consumer<CustomPacketPayload> callback = PENDING.remove(id);
+        int id = -1;
+        if (payload instanceof Payloads.Notice notice) {
+            id = notice.id();
+        } else if (payload instanceof Payloads.PlayersResponse response) {
+            id = response.id();
+        } else if (payload instanceof Payloads.TimelineResponse response) {
+            id = response.id();
+        } else if (payload instanceof Payloads.StateResponse response) {
+            id = response.id();
+        } else if (payload instanceof Payloads.SearchResponse response) {
+            id = response.id();
+        }
+        Consumer<Payloads.Payload> callback = PENDING.remove(id);
         if (callback != null) {
             callback.accept(payload);
         } else if (payload instanceof Payloads.Notice notice) {

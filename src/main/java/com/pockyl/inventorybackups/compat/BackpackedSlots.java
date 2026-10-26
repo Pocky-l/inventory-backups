@@ -4,7 +4,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.fml.ModList;
+import net.minecraftforge.fml.ModList;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;

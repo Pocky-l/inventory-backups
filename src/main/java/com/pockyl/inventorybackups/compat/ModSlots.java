@@ -11,8 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The slots other mods add to players: Curios, Accessories, Cosmetic Armor Reworked, Traveler's Backpack, Tool Belt

@@ -40,7 +40,11 @@ public final class LogFile {
     public static final String EXTENSION = ".ibk";
 
     private static final byte[] MAGIC = "IBK3".getBytes(StandardCharsets.US_ASCII);
-    private static final int VERSION = 1;
+    /**
+     * 1 on Minecraft 1.21 (items as data components), 2 on 1.20.1 (items as {@link net.minecraft.world.item.ItemStack#save}
+     * NBT). Frames and entries are the same, so a newer version can tell the item format from the header alone.
+     */
+    private static final int VERSION = 2;
     private static final int HEADER_SIZE = 8;
     private static final int MAX_FRAME = 64 * 1024 * 1024;
     /**
@@ -109,7 +113,7 @@ public final class LogFile {
                 break;
             }
             try {
-                frames.add(NbtIo.read(new DataInputStream(new ByteArrayInputStream(inflate(payload))), NbtAccounter.unlimitedHeap()));
+                frames.add(NbtIo.read(new DataInputStream(new ByteArrayInputStream(inflate(payload))), NbtAccounter.UNLIMITED));
             } catch (DataFormatException | IOException e) {
                 InventoryBackups.LOGGER.warn("Ignoring a damaged frame at byte {} of {}", valid, file);
                 break;
@@ -143,7 +147,7 @@ public final class LogFile {
                     channel.read(payload, position + 8);
                     try {
                         CompoundTag frame = NbtIo.read(new DataInputStream(new ByteArrayInputStream(inflate(payload.array()))),
-                                NbtAccounter.unlimitedHeap());
+                                NbtAccounter.UNLIMITED);
                         thin = frame.getInt("thin");
                     } catch (DataFormatException e) {
                         break;
@@ -207,12 +211,12 @@ public final class LogFile {
     public static void writeCompound(Path file, CompoundTag tag) throws IOException {
         Files.createDirectories(file.getParent());
         Path temp = file.resolveSibling(file.getFileName() + ".tmp");
-        NbtIo.writeCompressed(tag, temp);
+        NbtIo.writeCompressed(tag, temp.toFile());
         moveAtomically(temp, file);
     }
 
     public static CompoundTag readCompound(Path file) throws IOException {
-        return NbtIo.readCompressed(file, NbtAccounter.unlimitedHeap());
+        return NbtIo.readCompressed(file.toFile());
     }
 
     /** An item of a frame's pool. */

@@ -2,8 +2,8 @@ package com.pockyl.inventorybackups.compat;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
@@ -11,7 +11,7 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 /**
- * Cosmetic Armor Reworked: {@code armor/<index>}, 0 boots to 3 helmet like the armor slots. Its inventory is a NeoForge
+ * Cosmetic Armor Reworked: {@code armor/<index>}, 0 boots to 3 helmet like the armor slots. Its inventory is a Forge
  * {@link ItemStackHandler}, so only finding it needs reflection.
  */
 final class CosmeticArmorSlots implements SlotProvider {

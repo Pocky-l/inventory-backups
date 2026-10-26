@@ -3,7 +3,7 @@ package com.pockyl.inventorybackups.network;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,16 +25,16 @@ public final class NetCodecs {
     private NetCodecs() {
     }
 
-    public static String readString(RegistryFriendlyByteBuf buf) {
+    public static String readString(FriendlyByteBuf buf) {
         return buf.readUtf(MAX_STRING);
     }
 
-    public static void writeString(RegistryFriendlyByteBuf buf, @Nullable String value) {
+    public static void writeString(FriendlyByteBuf buf, @Nullable String value) {
         String text = value == null ? "" : value;
         buf.writeUtf(text.length() > MAX_STRING ? text.substring(0, MAX_STRING) : text, MAX_STRING);
     }
 
-    public static <T> List<T> readList(RegistryFriendlyByteBuf buf, Function<RegistryFriendlyByteBuf, T> reader) {
+    public static <T> List<T> readList(FriendlyByteBuf buf, Function<FriendlyByteBuf, T> reader) {
         int size = buf.readVarInt();
         if (size < 0 || size > MAX_LIST) {
             throw new IllegalArgumentException("List too long: " + size);
@@ -46,14 +46,14 @@ public final class NetCodecs {
         return list;
     }
 
-    public static <T> void writeList(RegistryFriendlyByteBuf buf, List<T> list, BiConsumer<RegistryFriendlyByteBuf, T> writer) {
+    public static <T> void writeList(FriendlyByteBuf buf, List<T> list, BiConsumer<FriendlyByteBuf, T> writer) {
         buf.writeVarInt(list.size());
         for (T element : list) {
             writer.accept(buf, element);
         }
     }
 
-    public static Int2ObjectMap<ItemStack> readItems(RegistryFriendlyByteBuf buf) {
+    public static Int2ObjectMap<ItemStack> readItems(FriendlyByteBuf buf) {
         int size = buf.readVarInt();
         if (size < 0 || size > MAX_ITEMS) {
             throw new IllegalArgumentException("Too many items: " + size);
@@ -61,25 +61,25 @@ public final class NetCodecs {
         Int2ObjectMap<ItemStack> items = new Int2ObjectOpenHashMap<>(size);
         for (int i = 0; i < size; i++) {
             int slot = buf.readVarInt();
-            items.put(slot, ItemStack.OPTIONAL_STREAM_CODEC.decode(buf));
+            items.put(slot, buf.readItem());
         }
         return items;
     }
 
-    public static void writeItems(RegistryFriendlyByteBuf buf, Int2ObjectMap<ItemStack> items) {
+    public static void writeItems(FriendlyByteBuf buf, Int2ObjectMap<ItemStack> items) {
         buf.writeVarInt(items.size());
         for (Int2ObjectMap.Entry<ItemStack> entry : items.int2ObjectEntrySet()) {
             buf.writeVarInt(entry.getIntKey());
-            ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, entry.getValue());
+            buf.writeItem(entry.getValue());
         }
     }
 
     @Nullable
-    public static UUID readOptionalUuid(RegistryFriendlyByteBuf buf) {
+    public static UUID readOptionalUuid(FriendlyByteBuf buf) {
         return buf.readBoolean() ? buf.readUUID() : null;
     }
 
-    public static void writeOptionalUuid(RegistryFriendlyByteBuf buf, @Nullable UUID uuid) {
+    public static void writeOptionalUuid(FriendlyByteBuf buf, @Nullable UUID uuid) {
         buf.writeBoolean(uuid != null);
         if (uuid != null) {
             buf.writeUUID(uuid);
@@ -87,11 +87,11 @@ public final class NetCodecs {
     }
 
     @Nullable
-    public static BlockPos readOptionalPos(RegistryFriendlyByteBuf buf) {
+    public static BlockPos readOptionalPos(FriendlyByteBuf buf) {
         return buf.readBoolean() ? buf.readBlockPos() : null;
     }
 
-    public static void writeOptionalPos(RegistryFriendlyByteBuf buf, @Nullable BlockPos pos) {
+    public static void writeOptionalPos(FriendlyByteBuf buf, @Nullable BlockPos pos) {
         buf.writeBoolean(pos != null);
         if (pos != null) {
             buf.writeBlockPos(pos);

@@ -383,7 +383,7 @@ final class InventoryPanel {
         if (now.isEmpty()) {
             return Diff.REMOVED;
         }
-        if (ItemStack.isSameItemSameComponents(now, before)) {
+        if (ItemStack.isSameItemSameTags(now, before)) {
             return now.getCount() == before.getCount() ? Diff.SAME : Diff.COUNT;
         }
         return Diff.REPLACED;
@@ -476,7 +476,7 @@ final class InventoryPanel {
                     lines.add(Component.translatable("inventorybackups.ui.tooltip.long_ago")
                             .withStyle(style -> style.withColor(Theme.MUTED)));
                 }
-                if (!before.isEmpty() && ItemStack.isSameItemSameComponents(now, before) && before.getCount() != now.getCount()) {
+                if (!before.isEmpty() && ItemStack.isSameItemSameTags(now, before) && before.getCount() != now.getCount()) {
                     lines.add(Component.translatable("inventorybackups.ui.tooltip.count", before.getCount(), now.getCount())
                             .withStyle(style -> style.withColor(Theme.CHANGED)));
                 }

@@ -20,7 +20,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.Config;

@@ -1,17 +1,13 @@
 package com.pockyl.inventorybackups.gametest;
 
-import net.minecraft.core.Holder;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.index.ItemIndex;
@@ -143,11 +139,9 @@ public final class IndexTests {
 
     private static ItemStack blade(GameTestHelper helper, int damage) {
         ItemStack blade = new ItemStack(Items.DIAMOND_SWORD);
-        blade.set(DataComponents.CUSTOM_NAME, Component.literal("Backup Blade"));
+        blade.setHoverName(Component.literal("Backup Blade"));
         blade.setDamageValue(damage);
-        Holder<Enchantment> sharpness = helper.getLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT)
-                .getOrThrow(Enchantments.SHARPNESS);
-        blade.enchant(sharpness, 5);
+        blade.enchant(Enchantments.SHARPNESS, 5);
         return blade;
     }
 }

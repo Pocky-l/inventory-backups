@@ -7,11 +7,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.BackupKind;
@@ -46,7 +46,7 @@ public final class ModSlotTests {
     static {
         ModSlots.addProvider(SLOTS);
         // Stands in for mods that take items out of their slots when the player dies, before the drops.
-        NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, LivingDeathEvent.class, event -> {
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, LivingDeathEvent.class, event -> {
             if (SLOTS.clearOnDeath.contains(event.getEntity().getUUID())) {
                 SLOTS.players.getOrDefault(event.getEntity().getUUID(), Map.of()).replaceAll((slot, stack) -> ItemStack.EMPTY);
             }

@@ -1,8 +1,8 @@
 package com.pockyl.inventorybackups.event;
 
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.command.BackupCommands;
@@ -11,7 +11,7 @@ import com.pockyl.inventorybackups.command.SearchCommands;
 /**
  * Registers the chat commands.
  */
-@EventBusSubscriber(modid = InventoryBackups.MOD_ID)
+@Mod.EventBusSubscriber(modid = InventoryBackups.MOD_ID)
 public final class ServerEvents {
     private ServerEvents() {
     }

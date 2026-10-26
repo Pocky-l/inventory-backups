@@ -2,14 +2,13 @@ package com.pockyl.inventorybackups.gametest;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.command.SearchCommands;
@@ -73,9 +72,9 @@ public final class SearchTests {
             UUID carol = UUID.randomUUID();
             UUID dave = UUID.randomUUID();
             ItemStack crown = new ItemStack(Items.GOLDEN_HELMET);
-            crown.set(DataComponents.CUSTOM_NAME, Component.literal("Crown of Spawn"));
+            crown.setHoverName(Component.literal("Crown of Spawn"));
             ItemStack relic = new ItemStack(Items.TOTEM_OF_UNDYING);
-            relic.set(DataComponents.CUSTOM_NAME, Component.literal("Relic"));
+            relic.setHoverName(Component.literal("Relic"));
 
             // Alice puts the crown into a chest, Bob takes it out.
             store.submit(capture(alice, "Alice", T0, Trigger.JOIN, true, new BlockPos(0, 64, 0), slots(0, crown)));

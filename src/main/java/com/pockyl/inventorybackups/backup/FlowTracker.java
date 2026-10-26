@@ -3,13 +3,13 @@ package com.pockyl.inventorybackups.backup;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
-import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
-import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
-import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.event.entity.item.ItemTossEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.storage.BackupStore;
@@ -26,7 +26,7 @@ import java.util.UUID;
  * Records items leaving and reaching players through the world: drops, death drops and pickups. Dropped item entities
  * are remembered for a while, so a pickup names the player who dropped the items: an exact link in the transfer trail.
  */
-@EventBusSubscriber(modid = InventoryBackups.MOD_ID)
+@Mod.EventBusSubscriber(modid = InventoryBackups.MOD_ID)
 public final class FlowTracker {
     /** Item entities despawn after five minutes; remembering them a bit longer covers items kept alive by mods. */
     private static final long REMEMBER_MILLIS = 15 * 60_000L;
@@ -61,21 +61,22 @@ public final class FlowTracker {
     }
 
     @SubscribeEvent
-    public static void onPickup(ItemEntityPickupEvent.Post event) {
-        if (!(event.getPlayer() instanceof ServerPlayer player)) {
+    public static void onPickup(PlayerEvent.ItemPickupEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        int picked = event.getOriginalStack().getCount() - event.getCurrentStack().getCount();
+        // The stack of the event is a copy holding what was picked up.
+        int picked = event.getStack().getCount();
         if (picked <= 0) {
             return;
         }
         long now = System.currentTimeMillis();
-        Dropper dropper = DROPPED.get(event.getItemEntity().getUUID());
+        Dropper dropper = DROPPED.get(event.getOriginalEntity().getUUID());
         if (dropper != null && now - dropper.time() > REMEMBER_MILLIS) {
             dropper = null;
         }
         submit(List.of(new FlowDraft(now, FlowType.PICKUP, player.getUUID(), player.getScoreboardName(),
-                event.getOriginalStack().copyWithCount(picked), dimension(player), event.getItemEntity().blockPosition(),
+                event.getStack().copy(), dimension(player), event.getOriginalEntity().blockPosition(),
                 dropper == null ? null : dropper.player(), dropper == null ? null : dropper.name(), null, null)));
     }
 

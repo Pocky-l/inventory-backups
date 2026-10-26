@@ -3,8 +3,8 @@ package com.pockyl.inventorybackups.gametest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
@@ -38,12 +38,12 @@ public final class MigrationTests {
             UUID player = UUID.randomUUID();
             Path legacy = store.root().resolve("InventoryLog");
             write(legacy.resolve("inventory").resolve(player.toString()).resolve("2025-01-15-18-30-45-join.json"),
-                    "{\"data\":[{\"index\":0,\"nbt\":\"{count:5,id:\\\"minecraft:bread\\\"}\"},"
-                            + "{\"index\":103,\"nbt\":\"{count:1,id:\\\"minecraft:iron_helmet\\\"}\"}]}");
+                    "{\"data\":[{\"index\":0,\"nbt\":\"{Count:5b,id:\\\"minecraft:bread\\\"}\"},"
+                            + "{\"index\":103,\"nbt\":\"{Count:1b,id:\\\"minecraft:iron_helmet\\\"}\"}]}");
             write(legacy.resolve("enderchest").resolve(player.toString()).resolve("2025-01-15-18-31-00.json"),
-                    "{\"data\":[{\"index\":26,\"nbt\":\"{count:12,id:\\\"minecraft:diamond\\\"}\"}]}");
+                    "{\"data\":[{\"index\":26,\"nbt\":\"{Count:12b,id:\\\"minecraft:diamond\\\"}\"}]}");
             write(legacy.resolve("inventory").resolve(player.toString()).resolve("2025-01-15-18-40-00-death.json"),
-                    "{\"data\":[{\"index\":0,\"nbt\":\"{count:2,id:\\\"minecraft:bread\\\"}\"},{\"index\":7,\"nbt\":\"broken{\"}]}");
+                    "{\"data\":[{\"index\":0,\"nbt\":\"{Count:2b,id:\\\"minecraft:bread\\\"}\"},{\"index\":7,\"nbt\":\"broken{\"}]}");
             write(legacy.resolve("inventory").resolve(player.toString()).resolve("2025-01-15-19-00-00.json"), "not json");
 
             LegacyImporter.Result result = store.call(() -> LegacyImporter.run(store, legacy, Config.LegacyAction.ARCHIVE)).join();

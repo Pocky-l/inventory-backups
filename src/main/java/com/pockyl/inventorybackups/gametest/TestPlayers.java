@@ -1,7 +1,13 @@
 package com.pockyl.inventorybackups.gametest;
 
+import com.mojang.authlib.GameProfile;
+import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.Connection;
+import net.minecraft.network.ConnectionProtocol;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import com.pockyl.inventorybackups.backup.BackupService;
@@ -18,9 +24,28 @@ final class TestPlayers {
     private TestPlayers() {
     }
 
-    @SuppressWarnings("removal")
+    /**
+     * A creative mock player that has logged in. Vanilla's mock player has a connection without a channel on 1.20.1,
+     * which Forge's login code cannot handle; this one is connected to an in-memory channel, as on newer versions.
+     */
     static ServerPlayer join(GameTestHelper helper) {
-        return helper.makeMockServerPlayerInLevel();
+        ServerLevel level = helper.getLevel();
+        ServerPlayer player = new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), "test-mock-player")) {
+            @Override
+            public boolean isSpectator() {
+                return false;
+            }
+
+            @Override
+            public boolean isCreative() {
+                return true;
+            }
+        };
+        Connection connection = new Connection(PacketFlow.SERVERBOUND);
+        EmbeddedChannel channel = new EmbeddedChannel(connection);
+        channel.attr(Connection.ATTRIBUTE_PROTOCOL).set(ConnectionProtocol.PLAY);
+        level.getServer().getPlayerList().placeNewPlayer(connection, player);
+        return player;
     }
 
     static BackupStore store() {

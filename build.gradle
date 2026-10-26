@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'idea'
-    id 'net.neoforged.moddev' version '2.0.148'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.148'
     id 'me.modmuss50.mod-publish-plugin' version '2.2.1'
 }
 
@@ -9,10 +9,10 @@ version = mod_version
 group = mod_group_id
 
 base {
-    archivesName = "${mod_id}-neoforge-${minecraft_version}"
+    archivesName = "${mod_id}-forge-${minecraft_version}"
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 sourceSets.main.resources {
     srcDir('src/generated/resources')
@@ -23,8 +23,8 @@ sourceSets.main.resources {
 repositories {
 }
 
-neoForge {
-    version = project.neo_version
+legacyForge {
+    version = "${minecraft_version}-${forge_version}"
 
     parchment {
         mappingsVersion = project.parchment_mappings_version
@@ -34,7 +34,7 @@ neoForge {
     runs {
         client {
             client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
         }
 
         server {
@@ -42,12 +42,14 @@ neoForge {
             // Separate directory, so a dedicated server can run next to the dev client.
             gameDirectory = project.file('run-server')
             programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
         }
 
         gameTestServer {
             type = 'gameTestServer'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            // Own directory: in run/ it would test inside the dev client's world instead of a fresh flat one.
+            gameDirectory = project.file('run/gametest')
+            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
         }
 
         data {
@@ -78,11 +80,26 @@ configurations {
 dependencies {
 }
 
+// Forge 1.20.1 runs the game tests on a dedicated server, in a world made from server.properties: a flat one, so the
+// tests do not meet hills, oceans and caves around their small areas.
+var prepareGameTestServer = tasks.register('prepareGameTestServer') {
+    var dir = project.file('run/gametest')
+    outputs.file(new File(dir, 'server.properties'))
+    doLast {
+        dir.mkdirs()
+        new File(dir, 'server.properties').text = [
+                'level-type=minecraft:flat', 'generate-structures=false', 'spawn-protection=0'
+        ].join(System.lineSeparator()) + System.lineSeparator()
+    }
+}
+tasks.named('runGameTestServer') { dependsOn prepareGameTestServer }
+
 var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
+            forge_version          : forge_version,
+            forge_version_range    : forge_version_range,
             loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
@@ -98,7 +115,7 @@ var generateModMetadata = tasks.register('generateModMetadata', ProcessResources
     into 'build/generated/sources/modMetadata'
 }
 sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
+legacyForge.ideSyncTask generateModMetadata
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -139,9 +156,11 @@ static String extractChangelog(String changelog, String version) {
     return body ?: null
 }
 
+// Releases of this branch are listed in the changelog as "<mod_version>+<minecraft_version>".
+def releaseVersion = "${mod_version}+${minecraft_version}".toString()
 def releaseNotes = extractChangelog(
         providers.fileContents(layout.projectDirectory.file('CHANGELOG.md')).asText.getOrElse(''),
-        mod_version)
+        releaseVersion)
 def curseforgeToken = providers.gradleProperty('curseforge_token')
         .orElse(providers.environmentVariable('CURSEFORGE_TOKEN'))
 
@@ -151,7 +170,7 @@ var releaseNotesTask = tasks.register('releaseNotes') {
     description = 'Validates release metadata and writes notes for the current version.'
 
     def notes = releaseNotes
-    def version = mod_version
+    def version = releaseVersion
     def projectId = curseforge_project_id
     def output = layout.buildDirectory.file('release-notes.md')
     inputs.property('notes', notes ?: '')
@@ -170,18 +189,19 @@ var releaseNotesTask = tasks.register('releaseNotes') {
 }
 
 publishMods {
-    file = tasks.named('jar', Jar).flatMap { it.archiveFile }
+    // The SRG-mapped jar: the plain jar task output only runs in the development environment.
+    file = tasks.named('reobfJar', Jar).flatMap { it.archiveFile }
     changelog = releaseNotes ?: ''
     type = STABLE
-    displayName = "${mod_name} ${mod_version}"
-    modLoaders.add('neoforge')
+    displayName = "${mod_name} ${releaseVersion}"
+    modLoaders.add('forge')
     dryRun = providers.gradleProperty('dryRun').map { it != 'false' }.orElse(false)
 
     curseforge {
         projectId = curseforge_project_id
         accessToken = curseforgeToken
         minecraftVersions.add(minecraft_version)
-        javaVersions.add(JavaVersion.VERSION_21)
+        javaVersions.add(JavaVersion.VERSION_17)
         client = curseforge_client.toBoolean()
         server = curseforge_server.toBoolean()
         curseforge_requires.split(',')*.trim().findAll().each { requires(it) }

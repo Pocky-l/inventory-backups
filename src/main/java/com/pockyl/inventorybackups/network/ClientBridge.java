@@ -1,8 +1,5 @@
 package com.pockyl.inventorybackups.network;
 
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-
 import java.util.function.Consumer;
 
 /**
@@ -11,17 +8,18 @@ import java.util.function.Consumer;
  * installed and nothing arrives.
  */
 public final class ClientBridge {
-    private static volatile Consumer<CustomPacketPayload> receiver = payload -> {
+    private static volatile Consumer<Payloads.Payload> receiver = payload -> {
     };
 
     private ClientBridge() {
     }
 
-    public static void install(Consumer<CustomPacketPayload> clientReceiver) {
+    public static void install(Consumer<Payloads.Payload> clientReceiver) {
         receiver = clientReceiver;
     }
 
-    static void receive(CustomPacketPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> receiver.accept(payload));
+    /** Called on the client thread. */
+    static void receive(Payloads.Payload payload) {
+        receiver.accept(payload);
     }
 }

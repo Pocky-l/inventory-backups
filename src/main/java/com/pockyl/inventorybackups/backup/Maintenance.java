@@ -1,9 +1,9 @@
 package com.pockyl.inventorybackups.backup;
 
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
@@ -15,7 +15,7 @@ import com.pockyl.inventorybackups.storage.Retention;
  * Background housekeeping: a retention pass (and pruning of the item index) when the server has started and then every
  * few minutes, on the storage thread.
  */
-@EventBusSubscriber(modid = InventoryBackups.MOD_ID)
+@Mod.EventBusSubscriber(modid = InventoryBackups.MOD_ID)
 public final class Maintenance {
     private static long nextRun;
 
@@ -29,8 +29,8 @@ public final class Maintenance {
     }
 
     @SubscribeEvent
-    public static void onServerTick(ServerTickEvent.Post event) {
-        if (event.getServer().getTickCount() >= nextRun) {
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && event.getServer().getTickCount() >= nextRun) {
             nextRun = event.getServer().getTickCount() + intervalTicks();
             runRetention();
         }

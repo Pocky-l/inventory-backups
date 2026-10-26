@@ -2,16 +2,16 @@ package com.pockyl.inventorybackups.backup;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.event.server.ServerStartingEvent;
-import net.neoforged.neoforge.event.server.ServerStoppedEvent;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.Config;
@@ -30,7 +30,7 @@ import java.util.UUID;
  * Records every inventory and ender chest change of online players, coalesced into one entry per burst, plus deaths,
  * joins, quits and container sessions as timeline markers.
  */
-@EventBusSubscriber(modid = InventoryBackups.MOD_ID)
+@Mod.EventBusSubscriber(modid = InventoryBackups.MOD_ID)
 public final class ChangeTracker {
     private static final Map<UUID, TrackedPlayer> PLAYERS = new HashMap<>();
 
@@ -54,8 +54,8 @@ public final class ChangeTracker {
     }
 
     @SubscribeEvent
-    public static void onServerTick(ServerTickEvent.Post event) {
-        if (PLAYERS.isEmpty()) {
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || PLAYERS.isEmpty()) {
             return;
         }
         long start = System.nanoTime();

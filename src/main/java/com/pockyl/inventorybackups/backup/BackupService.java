@@ -2,7 +2,7 @@ package com.pockyl.inventorybackups.backup;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.Config;
@@ -41,13 +41,13 @@ public final class BackupService {
         if (ModSlots.any()) {
             InventoryBackups.LOGGER.info("Backing up the slots of {}", String.join(", ", ModSlots.installed()));
         }
-        importLegacyBackups(store, newServer.getServerDirectory().resolve(LEGACY_FOLDER));
+        importLegacyBackups(store, newServer.getServerDirectory().toPath().resolve(LEGACY_FOLDER));
         ItemIndex newIndex = new ItemIndex(root.resolve("index.dat"), newServer.registryAccess());
         BackupStore opened = store;
         store.execute(() -> newIndex.loadOrRebuild(opened));
         store.addListener(newIndex);
         index = newIndex;
-        for (ModConfigSpec.ConfigValue<?> value : Config.DEPRECATED_VALUES) {
+        for (ForgeConfigSpec.ConfigValue<?> value : Config.DEPRECATED_VALUES) {
             if (!value.get().equals(value.getDefault())) {
                 InventoryBackups.LOGGER.info("Config option {} is no longer used since 3.0 and is ignored",
                         String.join(".", value.getPath()));
@@ -102,6 +102,6 @@ public final class BackupService {
         if (configured.isEmpty()) {
             return server.getWorldPath(LevelResource.ROOT).resolve(InventoryBackups.MOD_ID).normalize();
         }
-        return server.getServerDirectory().resolve(configured).normalize();
+        return server.getServerDirectory().toPath().resolve(configured).normalize();
     }
 }

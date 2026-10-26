@@ -1,13 +1,12 @@
 package com.pockyl.inventorybackups.gametest;
 
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraftforge.gametest.GameTestHolder;
+import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.Slots;
@@ -45,7 +44,7 @@ public final class StorageTests {
         try {
             UUID player = UUID.randomUUID();
             ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
-            sword.set(DataComponents.CUSTOM_NAME, Component.literal("Backup Blade"));
+            sword.setHoverName(Component.literal("Backup Blade"));
             sword.setDamageValue(42);
             store.submit(capture(player, T0, Trigger.JOIN, true, slots(5, sword, 35, new ItemStack(Items.COBBLESTONE, 37),
                     Slots.OFFHAND, new ItemStack(Items.SHIELD), Slots.ENDER_START + 26, new ItemStack(Items.DIAMOND, 12))));

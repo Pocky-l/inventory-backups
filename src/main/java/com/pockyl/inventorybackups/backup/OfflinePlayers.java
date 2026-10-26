@@ -4,7 +4,6 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.Util;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -12,13 +11,13 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.common.util.FakePlayer;
-import net.neoforged.neoforge.event.EventHooks;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.InventoryBackups;
@@ -41,7 +40,7 @@ import java.util.UUID;
  * closes the admin screens that still show the offline copy. All admins share one copy per player, so two admins
  * editing the same offline player never overwrite each other.
  */
-@EventBusSubscriber(modid = InventoryBackups.MOD_ID)
+@Mod.EventBusSubscriber(modid = InventoryBackups.MOD_ID)
 public final class OfflinePlayers {
     /** Keys taken from the file as it was: the copy never moves, and it never rides what the player rode. */
     private static final String[] KEPT_KEYS = {"Pos", "Motion", "Rotation", "Dimension", "RootVehicle"};
@@ -123,9 +122,9 @@ public final class OfflinePlayers {
             }
             // The same steps as vanilla's player saving, so the old file stays as .dat_old and mods save their part.
             Path temp = Files.createTempFile(dir, uuid + "-", ".dat");
-            NbtIo.writeCompressed(tag, temp);
-            Util.safeReplaceFile(dir.resolve(uuid + ".dat"), temp, dir.resolve(uuid + ".dat_old"));
-            EventHooks.firePlayerSavingEvent(player, dir.toFile(), uuid);
+            NbtIo.writeCompressed(tag, temp.toFile());
+            Util.safeReplaceFile(dir.resolve(uuid + ".dat").toFile(), temp.toFile(), dir.resolve(uuid + ".dat_old").toFile());
+            ForgeEventFactory.firePlayerSavingEvent(player, dir.toFile(), uuid);
         } catch (IOException | RuntimeException e) {
             InventoryBackups.LOGGER.error("Could not save the offline player {}", player.getScoreboardName(), e);
         }
@@ -140,7 +139,7 @@ public final class OfflinePlayers {
         // The copy is made in the player's dimension, so saving it keeps them where they logged out.
         ServerLevel level = server.overworld();
         try {
-            CompoundTag raw = NbtIo.readCompressed(file, NbtAccounter.unlimitedHeap());
+            CompoundTag raw = NbtIo.readCompressed(file.toFile());
             ResourceLocation dimension = ResourceLocation.tryParse(raw.getString("Dimension"));
             if (dimension != null) {
                 ServerLevel found = server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
@@ -152,11 +151,11 @@ public final class OfflinePlayers {
         }
         GameProfile profile = server.getProfileCache() == null ? null : server.getProfileCache().get(uuid).orElse(null);
         FakePlayer player = new FakePlayer(level, profile != null ? profile : new GameProfile(uuid, name));
-        Optional<CompoundTag> loaded = server.getPlayerList().load(player);
-        if (loaded.isEmpty()) {
+        CompoundTag loaded = server.getPlayerList().load(player);
+        if (loaded == null) {
             return null;
         }
-        return new Handle(player, loaded.get());
+        return new Handle(player, loaded);
     }
 
     private static Path dataFile(MinecraftServer server, UUID uuid) {

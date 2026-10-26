@@ -1,7 +1,7 @@
 package com.pockyl.inventorybackups.network;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,16 +20,16 @@ public final class SearchRows {
      * @param fingerprint hex fingerprint for distinctive stacks, empty for item ids
      */
     public record ItemRow(String itemId, String fingerprint, String name, ItemStack sample) {
-        public static ItemRow read(RegistryFriendlyByteBuf buf) {
+        public static ItemRow read(FriendlyByteBuf buf) {
             return new ItemRow(NetCodecs.readString(buf), NetCodecs.readString(buf), NetCodecs.readString(buf),
-                    ItemStack.OPTIONAL_STREAM_CODEC.decode(buf));
+                    buf.readItem());
         }
 
-        public static void write(RegistryFriendlyByteBuf buf, ItemRow row) {
+        public static void write(FriendlyByteBuf buf, ItemRow row) {
             NetCodecs.writeString(buf, row.itemId);
             NetCodecs.writeString(buf, row.fingerprint);
             NetCodecs.writeString(buf, row.name);
-            ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, row.sample);
+            buf.writeItem(row.sample);
         }
     }
 
@@ -45,7 +45,7 @@ public final class SearchRows {
                     holder.ranges());
         }
 
-        public static HolderRow read(RegistryFriendlyByteBuf buf) {
+        public static HolderRow read(FriendlyByteBuf buf) {
             UUID player = buf.readUUID();
             String name = NetCodecs.readString(buf);
             int count = buf.readVarInt();
@@ -63,7 +63,7 @@ public final class SearchRows {
             return new HolderRow(player, name, count, max, first, last, ranges);
         }
 
-        public static void write(RegistryFriendlyByteBuf buf, HolderRow row) {
+        public static void write(FriendlyByteBuf buf, HolderRow row) {
             buf.writeUUID(row.player);
             NetCodecs.writeString(buf, row.name);
             buf.writeVarInt(row.count);
@@ -85,13 +85,13 @@ public final class SearchRows {
                     link.dimension(), link.pos(), link.container() == null ? "" : link.container(), link.containerPos(), link.gapMillis());
         }
 
-        public static LinkRow read(RegistryFriendlyByteBuf buf) {
+        public static LinkRow read(FriendlyByteBuf buf) {
             return new LinkRow(buf.readLong(), buf.readEnum(SearchResult.LinkKind.class), NetCodecs.readOptionalUuid(buf),
                     NetCodecs.readString(buf), buf.readUUID(), NetCodecs.readString(buf), buf.readVarInt(), NetCodecs.readString(buf),
                     buf.readBlockPos(), NetCodecs.readString(buf), NetCodecs.readOptionalPos(buf), buf.readLong());
         }
 
-        public static void write(RegistryFriendlyByteBuf buf, LinkRow row) {
+        public static void write(FriendlyByteBuf buf, LinkRow row) {
             buf.writeLong(row.time);
             buf.writeEnum(row.kind);
             NetCodecs.writeOptionalUuid(buf, row.from);

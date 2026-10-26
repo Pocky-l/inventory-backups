@@ -3,12 +3,12 @@ package com.pockyl.inventorybackups.permission;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.server.permission.PermissionAPI;
-import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
-import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
-import net.neoforged.neoforge.server.permission.nodes.PermissionTypes;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.server.permission.PermissionAPI;
+import net.minecraftforge.server.permission.events.PermissionGatherEvent;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
+import net.minecraftforge.server.permission.nodes.PermissionTypes;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
@@ -19,7 +19,7 @@ import java.util.List;
  * Permission nodes, resolved through NeoForge's PermissionAPI so permission mods such as LuckPerms can grant them one by
  * one. Without a permission mod every node falls back to the operator level from the config (default 2).
  */
-@EventBusSubscriber(modid = InventoryBackups.MOD_ID)
+@Mod.EventBusSubscriber(modid = InventoryBackups.MOD_ID)
 public final class Permissions {
     /** Browse timelines, preview states, take snapshots, see stats. */
     public static final PermissionNode<Boolean> VIEW = node("view");

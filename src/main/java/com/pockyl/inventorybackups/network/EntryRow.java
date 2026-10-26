@@ -1,7 +1,7 @@
 package com.pockyl.inventorybackups.network;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.storage.Entry;
@@ -22,12 +22,12 @@ public record EntryRow(long time, Trigger trigger, int changed, String dimension
                 context.detail() == null ? "" : context.detail(), context.actor() == null ? "" : context.actor(), context.containerPos());
     }
 
-    public static EntryRow read(RegistryFriendlyByteBuf buf) {
+    public static EntryRow read(FriendlyByteBuf buf) {
         return new EntryRow(buf.readLong(), Trigger.byId(buf.readByte()), buf.readVarInt(), NetCodecs.readString(buf), buf.readBlockPos(),
                 NetCodecs.readString(buf), NetCodecs.readString(buf), NetCodecs.readOptionalPos(buf));
     }
 
-    public static void write(RegistryFriendlyByteBuf buf, EntryRow row) {
+    public static void write(FriendlyByteBuf buf, EntryRow row) {
         buf.writeLong(row.time);
         buf.writeByte(row.trigger.id());
         buf.writeVarInt(row.changed);

@@ -8,11 +8,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -20,10 +18,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.connection.ConnectionType;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.Config;
@@ -78,15 +73,15 @@ public final class ServerRequests {
     private static final int ITEM_BUDGET = 600 * 1024;
     private static final Map<UUID, Integer> IN_FLIGHT = new HashMap<>();
     private static final Sender NETWORK = (player, payload) -> {
-        if (player.connection.hasChannel(payload)) {
-            PacketDistributor.sendToPlayer(player, payload);
+        if (Network.present(player.connection.connection)) {
+            Network.sendToPlayer(player, payload);
         }
     };
     private static Sender sender = NETWORK;
 
     /** Where answers go; replaced by game tests, whose mock players have no network channel. */
     public interface Sender {
-        void send(ServerPlayer player, CustomPacketPayload payload);
+        void send(ServerPlayer player, Payloads.Payload payload);
     }
 
     public static void setSender(@Nullable Sender testSender) {
@@ -98,7 +93,7 @@ public final class ServerRequests {
 
     /** Whether the player's client has the screen. */
     public static boolean hasScreen(ServerPlayer player) {
-        return player.connection.hasChannel(Payloads.Hello.TYPE);
+        return Network.present(player.connection.connection);
     }
 
     /** Opens the screen on the player's client. */
@@ -113,8 +108,7 @@ public final class ServerRequests {
                 Config.ENDER_CHEST_ENABLED.get()));
     }
 
-    public static void open(Payloads.OpenRequest request, IPayloadContext context) {
-        ServerPlayer player = (ServerPlayer) context.player();
+    public static void open(Payloads.OpenRequest request, ServerPlayer player) {
         if (!Permissions.has(player, Permissions.UI)) {
             notice(player, -1, false, tr("inventorybackups.ui.denied"));
             return;
@@ -122,8 +116,7 @@ public final class ServerRequests {
         sendHello(player);
     }
 
-    public static void players(Payloads.PlayersRequest request, IPayloadContext context) {
-        ServerPlayer admin = (ServerPlayer) context.player();
+    public static void players(Payloads.PlayersRequest request, ServerPlayer admin) {
         String filter = request.filter().toLowerCase(Locale.ROOT).trim();
         int max = Config.MAX_RESULTS.get();
         query(admin, request.id(), Permissions.VIEW, BackupStore::playerInfos, infos -> {
@@ -146,8 +139,7 @@ public final class ServerRequests {
         });
     }
 
-    public static void timeline(Payloads.TimelineRequest request, IPayloadContext context) {
-        ServerPlayer admin = (ServerPlayer) context.player();
+    public static void timeline(Payloads.TimelineRequest request, ServerPlayer admin) {
         long from = Math.max(0, request.from());
         long to = request.to();
         if (to < from || to - from > MAX_TIMELINE_SPAN) {
@@ -168,8 +160,7 @@ public final class ServerRequests {
         }, response -> send(admin, response));
     }
 
-    public static void state(Payloads.StateRequest request, IPayloadContext context) {
-        ServerPlayer admin = (ServerPlayer) context.player();
+    public static void state(Payloads.StateRequest request, ServerPlayer admin) {
         RegistryAccess registries = admin.server.registryAccess();
         query(admin, request.id(), Permissions.VIEW, store -> {
             Optional<StateView> found = store.stateAt(request.player(), request.time());
@@ -219,8 +210,7 @@ public final class ServerRequests {
         return response.withLiveSlots(keys, slots.toIntArray());
     }
 
-    public static void action(Payloads.ActionRequest request, IPayloadContext context) {
-        ServerPlayer admin = (ServerPlayer) context.player();
+    public static void action(Payloads.ActionRequest request, ServerPlayer admin) {
         PermissionNode<Boolean> node = switch (request.action()) {
             case RESTORE_ALL, RESTORE_INVENTORY, RESTORE_ENDER_CHEST, RESTORE_SLOTS, GIVE_COPY, UNDO -> Permissions.RESTORE;
             case LIVE_INVENTORY, LIVE_ENDER_CHEST, TELEPORT -> Permissions.EDIT;
@@ -341,8 +331,7 @@ public final class ServerRequests {
         }
     }
 
-    public static void search(Payloads.SearchRequest request, IPayloadContext context) {
-        ServerPlayer admin = (ServerPlayer) context.player();
+    public static void search(Payloads.SearchRequest request, ServerPlayer admin) {
         SearchQuery query = SearchQuery.parse(request.query());
         if (query == null) {
             notice(admin, request.id(), false, tr("inventorybackups.error.bad_query"));
@@ -449,7 +438,7 @@ public final class ServerRequests {
         send(player, new Payloads.Notice(id, ok, message));
     }
 
-    private static void send(ServerPlayer player, CustomPacketPayload payload) {
+    private static void send(ServerPlayer player, Payloads.Payload payload) {
         sender.send(player, payload);
     }
 
@@ -524,14 +513,14 @@ public final class ServerRequests {
             return stack;
         }
         ItemStack plain = new ItemStack(stack.getItem(), stack.getCount());
-        plain.set(DataComponents.CUSTOM_NAME, tr("inventorybackups.ui.too_large", stack.getHoverName()));
+        plain.setHoverName(tr("inventorybackups.ui.too_large", stack.getHoverName()));
         return plain;
     }
 
     private static int size(ItemStack stack, RegistryAccess registries) {
-        RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), registries, ConnectionType.NEOFORGE);
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         try {
-            ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, stack);
+            buf.writeItem(stack);
             return buf.readableBytes();
         } finally {
             buf.release();
