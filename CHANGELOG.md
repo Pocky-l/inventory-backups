@@ -4,7 +4,7 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.2.0+1.20.1] - Unreleased
+## [3.2.0+1.20.1] - 2026-10-26
 ### Changed
 - Inventory Backups 3.2 comes to Minecraft 1.20.1 ([Forge](https://files.minecraftforge.net) 47; NeoForge for 1.20.1
   works too) with everything of 3.2.0 for Minecraft 1.21.1 listed below: every inventory, armor, offhand, ender chest
