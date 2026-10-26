@@ -155,8 +155,9 @@ public final class Config {
     }
 
     public static final ForgeConfigSpec.EnumValue<LegacyAction> LEGACY_BACKUPS = BUILDER
-            .comment("What happens to the 2.x JSON backups in InventoryLog/ after they were imported once:",
-                    "KEEP leaves them, ARCHIVE renames the folder to InventoryLog-2.x, DELETE removes them.")
+            .comment("What happens to the backups of older versions after they were imported once (1.2.x in InventoryLog/,",
+                    "2.0.x in invbackup/): KEEP leaves them, ARCHIVE renames the folders to InventoryLog-1.2.x and",
+                    "invbackup-2.0.x, DELETE removes them.")
             .translation(key("legacyBackups"))
             .defineEnum("legacyBackups", LegacyAction.ARCHIVE);
 

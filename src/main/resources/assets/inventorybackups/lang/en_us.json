@@ -149,7 +149,7 @@
   "inventorybackups.configuration.totalBudgetMb": "Total disk budget (MB)",
   "inventorybackups.configuration.cleanupIntervalMinutes": "Minutes between cleanups",
   "inventorybackups.configuration.migration": "Migration",
-  "inventorybackups.configuration.legacyBackups": "2.x backups after import",
+  "inventorybackups.configuration.legacyBackups": "Old backups after import",
   "inventorybackups.configuration.permissions": "Permissions",
   "inventorybackups.configuration.permissionLevel": "Operator level",
   "inventorybackups.configuration.search": "Search",

@@ -149,7 +149,7 @@
   "inventorybackups.configuration.totalBudgetMb": "Общий лимит диска (МБ)",
   "inventorybackups.configuration.cleanupIntervalMinutes": "Минут между очистками",
   "inventorybackups.configuration.migration": "Перенос",
-  "inventorybackups.configuration.legacyBackups": "Бэкапы 2.x после импорта",
+  "inventorybackups.configuration.legacyBackups": "Старые бэкапы после импорта",
   "inventorybackups.configuration.permissions": "Права",
   "inventorybackups.configuration.permissionLevel": "Уровень оператора",
   "inventorybackups.configuration.search": "Поиск",

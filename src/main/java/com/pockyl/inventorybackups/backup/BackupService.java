@@ -19,8 +19,10 @@ import java.util.Optional;
  * Owns the storage of the running server: opened when the server starts, flushed and closed when it has stopped.
  */
 public final class BackupService {
-    /** Folder of the 2.x JSON backups, relative to the server folder. */
+    /** Folder of the 1.2.x JSON backups, relative to the server folder. */
     private static final String LEGACY_FOLDER = "InventoryLog";
+    /** Folder of the 2.0.x NBT backups, relative to the server folder. */
+    private static final String SNAPSHOT_FOLDER = "invbackup";
 
     @Nullable
     private static BackupStore store;
@@ -41,7 +43,8 @@ public final class BackupService {
         if (ModSlots.any()) {
             InventoryBackups.LOGGER.info("Backing up the slots of {}", String.join(", ", ModSlots.installed()));
         }
-        importLegacyBackups(store, newServer.getServerDirectory().toPath().resolve(LEGACY_FOLDER));
+        Path serverDir = newServer.getServerDirectory().toPath();
+        importLegacyBackups(store, serverDir.resolve(LEGACY_FOLDER), serverDir.resolve(SNAPSHOT_FOLDER));
         ItemIndex newIndex = new ItemIndex(root.resolve("index.dat"), newServer.registryAccess());
         BackupStore opened = store;
         store.execute(() -> newIndex.loadOrRebuild(opened));
@@ -55,13 +58,13 @@ public final class BackupService {
         }
     }
 
-    /** Queues the one-time import of 2.x backups; it runs before any capture of this session is written. */
-    private static void importLegacyBackups(BackupStore target, Path legacy) {
+    /** Queues the one-time import of 1.2.x and 2.0.x backups; it runs before any capture of this session is written. */
+    private static void importLegacyBackups(BackupStore target, Path legacy, Path snapshots) {
         Config.LegacyAction action = Config.LEGACY_BACKUPS.get();
         target.execute(() -> {
-            LegacyImporter.Result result = LegacyImporter.run(target, legacy, action);
+            LegacyImporter.Result result = LegacyImporter.run(target, legacy, snapshots, action);
             if (result != null) {
-                InventoryBackups.LOGGER.info("Imported {} 2.x backups of {} players ({} unreadable files skipped)", result.files(),
+                InventoryBackups.LOGGER.info("Imported {} old backups of {} players ({} unreadable files skipped)", result.files(),
                         result.players(), result.skippedFiles());
             }
         });
