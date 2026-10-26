@@ -4,6 +4,26 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0+1.20.1] - Unreleased
+### Changed
+- Inventory Backups 3.2 comes to Minecraft 1.20.1 ([Forge](https://files.minecraftforge.net) 47; NeoForge for 1.20.1
+  works too) with everything of 3.2.0 for Minecraft 1.21.1 listed below: every inventory, armor, offhand, ender chest
+  and mod slot change on a timeline with deaths, joins, quits and container sessions; restore, undo, copy and live edit
+  for online and offline players; item search with transfer trails (`/invsearch`); the admin screen (`Ctrl+I`, for
+  admins who also install the mod on their client); permission nodes for [LuckPerms](https://luckperms.net); thinning
+  by age with disk budgets; death alerts for admins.
+- Mod slots of [Curios API](https://www.curseforge.com/minecraft/mc-mods/curios),
+  [Accessories](https://www.curseforge.com/minecraft/mc-mods/accessories),
+  [Cosmetic Armor Reworked](https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked),
+  [Traveler's Backpack](https://www.curseforge.com/minecraft/mc-mods/travelers-backpack) (9.1),
+  [Tool Belt](https://www.curseforge.com/minecraft/mc-mods/tool-belt) and
+  [Backpacked](https://www.curseforge.com/minecraft/mc-mods/backpacked) (2.2 and 3.0) are backed up as on 1.21.1.
+- The backups of the older 1.20.1 versions are imported automatically on the first start: 1.2.x (`InventoryLog`) and
+  2.0.x (`invbackup`, Curios slots included), each player's files merged into one timeline. The old folders are then
+  archived as `InventoryLog-1.2.x` and `invbackup-2.0.x` (option `migration.legacyBackups`). Their settings are not
+  taken over; the mod starts with its defaults in `config/inventory/InventoryBackups.toml`.
+- The Fabric version of 2.0.x is not continued.
+
 ## [3.2.0] - 2026-10-24
 ### Added
 - Death alerts for admins (option `general.deathAlerts`, off by default): when a player dies with items, online
