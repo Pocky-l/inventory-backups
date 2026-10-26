@@ -37,8 +37,8 @@ public final class ContainerLocator {
      * Armor, Tool Belt, Backpacked). Moving items there is equipping, not using a container; the slot changes are
      * recorded like any other inventory change.
      */
-    private static final Set<String> INVENTORY_SCREENS = Set.of("curios:curios_container", "accessories:original_menu",
-            "accessories:experimental_menu", "cosmeticarmorreworked:inventorycosarmor", "toolbelt:belt_slot_container",
+    private static final Set<String> INVENTORY_SCREENS = Set.of("curios:curios_container", "curios:curios_container_v2",
+            "accessories:accessories_menu", "cosmeticarmorreworked:inventorycosarmor", "toolbelt:belt_slot_container",
             "backpacked:management");
 
     /** Whether the menu is a slot mod's version of the player's inventory screen. */
