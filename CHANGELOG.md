@@ -4,6 +4,16 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0+1.20.1-fabric] - 2026-11-05
+### Added
+- The [Fabric](https://fabricmc.net/) version for Minecraft 1.20.1 is back, now with everything of 3.2.0: backups, timeline, item search,
+  commands and the admin screen. It needs [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api) and
+  [Forge Config API Port](https://www.curseforge.com/minecraft/mc-mods/forge-config-api-port); the config file is the
+  same as on Forge. Permission nodes work with [LuckPerms](https://www.curseforge.com/minecraft/mc-mods/luckperms)
+  (fabric-permissions-api is included). Mod slots are read from
+  [Accessories](https://www.curseforge.com/minecraft/mc-mods/accessories); the other supported slot mods exist only on
+  Forge. On Fabric the screen opens with I while Ctrl is held, and the config is edited in its file.
+
 ## [3.2.0+1.20.1] - 2026-10-26
 ### Changed
 - Inventory Backups 3.2 comes to Minecraft 1.20.1 ([Forge](https://files.minecraftforge.net) 47; NeoForge for 1.20.1
