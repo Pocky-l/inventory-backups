@@ -32,14 +32,14 @@ final class FabricNetwork {
             public <T extends CustomPacketPayload> void toServer(CustomPacketPayload.Type<T> type,
                                                                  StreamCodec<? super RegistryFriendlyByteBuf, T> codec,
                                                                  BiConsumer<T, ServerPlayer> handler) {
-                PayloadTypeRegistry.playC2S().register(type, codec);
+                PayloadTypeRegistry.serverboundPlay().register(type, codec);
                 ServerPlayNetworking.registerGlobalReceiver(type, (payload, context) -> handler.accept(payload, context.player()));
             }
 
             @Override
             public <T extends CustomPacketPayload> void toClient(CustomPacketPayload.Type<T> type,
                                                                  StreamCodec<? super RegistryFriendlyByteBuf, T> codec) {
-                PayloadTypeRegistry.playS2C().register(type, codec);
+                PayloadTypeRegistry.clientboundPlay().register(type, codec);
                 TO_CLIENT.add(type);
             }
         });

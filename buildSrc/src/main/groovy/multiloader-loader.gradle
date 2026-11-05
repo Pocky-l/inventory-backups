@@ -47,9 +47,10 @@ static String extractChangelog(String changelog, String version) {
 
 // This branch has its own "## [<version>+<minecraft version>]" sections; the plain version is the fallback. A release of
 // this loader alone (release.ps1 -Loaders) has a "## [<version>+<minecraft version>-<loader>]" section, used first.
+def releaseVersion = "${mod_version}+${minecraft_version}".toString()
 def changelogText = providers.fileContents(rootProject.layout.projectDirectory.file('CHANGELOG.md')).asText.getOrElse('')
 def releaseNotes = extractChangelog(changelogText, "${mod_version}+${minecraft_version}-${project.name}".toString())
-        ?: extractChangelog(changelogText, "${mod_version}+${minecraft_version}".toString())
+        ?: extractChangelog(changelogText, releaseVersion)
         ?: extractChangelog(changelogText, mod_version)
 def curseforgeToken = providers.gradleProperty('curseforge_token')
         .orElse(providers.environmentVariable('CURSEFORGE_TOKEN'))
@@ -60,7 +61,7 @@ var releaseNotesTask = tasks.register('releaseNotes') {
     description = 'Validates release metadata and writes notes for the current version.'
 
     def notes = releaseNotes
-    def version = mod_version
+    def version = releaseVersion
     def projectId = curseforge_project_id
     def output = layout.buildDirectory.file('release-notes.md')
     inputs.property('notes', notes ?: '')
@@ -88,7 +89,7 @@ publishMods {
         projectId = curseforge_project_id
         accessToken = curseforgeToken
         minecraftVersions.add(minecraft_version)
-        javaVersions.add(JavaVersion.VERSION_21)
+        javaVersions.add(JavaVersion.VERSION_25)
         client = curseforge_client.toBoolean()
         server = curseforge_server.toBoolean()
     }

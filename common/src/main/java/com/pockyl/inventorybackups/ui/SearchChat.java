@@ -10,6 +10,7 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.command.EntrySelector;
@@ -139,7 +140,7 @@ public final class SearchChat {
         MutableComponent label = stack.isEmpty() ? Component.literal(itemId) : stack.getHoverName().copy();
         MutableComponent text = Component.literal("[").append(label).append("]").withStyle(ChatFormatting.WHITE);
         if (!stack.isEmpty()) {
-            text.withStyle(style -> style.withHoverEvent(new HoverEvent.ShowItem(stack)));
+            text.withStyle(style -> style.withHoverEvent(new HoverEvent.ShowItem(ItemStackTemplate.fromNonEmptyStack(stack))));
         }
         if (fingerprint != null) {
             text.append(ChatUI.button("[⌕]", ChatFormatting.LIGHT_PURPLE, "/invsearch trace " + fingerprint,

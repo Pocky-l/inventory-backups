@@ -1,7 +1,7 @@
 package com.pockyl.inventorybackups.client.screen;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +58,7 @@ final class UiButton {
         return false;
     }
 
-    void render(GuiGraphics g, Font font, int mouseX, int mouseY) {
+    void render(GuiGraphicsExtractor g, Font font, int mouseX, int mouseY) {
         boolean hover = enabled && contains(mouseX, mouseY);
         int fill;
         int border;
@@ -92,7 +92,7 @@ final class UiButton {
         int color = enabled ? textColor : Theme.FAINT;
         // Labels that do not fit (long translations, narrow windows) are cut instead of running over the border.
         FormattedCharSequence shown = Theme.ellipsize(font, label, w - 6);
-        g.drawString(font, shown, x + (w - font.width(shown)) / 2, y + (h - 8) / 2, color, false);
+        g.text(font, shown, x + (w - font.width(shown)) / 2, y + (h - 8) / 2, color, false);
     }
 
     private static int brighter(int color) {

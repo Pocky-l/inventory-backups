@@ -1,7 +1,7 @@
 package com.pockyl.inventorybackups.client.screen;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -109,7 +109,7 @@ final class TimelinePanel {
         return screen.model.from + (long) ((mouseX - trackX - 1) * span / Math.max(1, trackW - 3));
     }
 
-    void render(GuiGraphics g, int mx, int my) {
+    void render(GuiGraphicsExtractor g, int mx, int my) {
         Font font = screen.mc().font;
         TimelineModel model = screen.model;
         g.fill(x, y, x + w, y + HEIGHT, Theme.PANEL);
@@ -217,7 +217,7 @@ final class TimelinePanel {
         return width;
     }
 
-    private void renderLegend(GuiGraphics g, Font font) {
+    private void renderLegend(GuiGraphicsExtractor g, Font font) {
         int lx = x + w - 8;
         for (Trigger trigger : LEGEND) {
             Component label = Component.translatable("inventorybackups.ui.legend." + trigger.key());
@@ -229,7 +229,7 @@ final class TimelinePanel {
         }
     }
 
-    private void renderDensity(GuiGraphics g) {
+    private void renderDensity(GuiGraphicsExtractor g) {
         int bins = Math.max(1, (trackW - 2) / DENSITY_BIN);
         int[] counts = new int[bins];
         int max = 1;
@@ -249,7 +249,7 @@ final class TimelinePanel {
         }
     }
 
-    private void renderPin(GuiGraphics g, Font font, Long time, String label, int color) {
+    private void renderPin(GuiGraphicsExtractor g, Font font, Long time, String label, int color) {
         if (time == null || time < screen.model.from || time > screen.model.to) {
             return;
         }
@@ -259,7 +259,7 @@ final class TimelinePanel {
         Theme.text(g, font, label, px - 2, trackY - 8, 0xFF000000);
     }
 
-    private void renderTicks(GuiGraphics g, Font font) {
+    private void renderTicks(GuiGraphicsExtractor g, Font font) {
         long span = Math.max(1, screen.model.to - screen.model.from);
         int count = Math.max(2, trackW / 110);
         for (int i = 0; i <= count; i++) {

@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
@@ -49,7 +49,7 @@ public final class FabricClientPlatform implements ClientPlatform {
     }
 
     @Override
-    public void renderItemTooltip(GuiGraphics graphics, Font font, List<Component> lines, ItemStack stack, int x, int y) {
+    public void renderItemTooltip(GuiGraphicsExtractor graphics, Font font, List<Component> lines, ItemStack stack, int x, int y) {
         graphics.setTooltipForNextFrame(font, lines, stack.getTooltipImage(), x, y);
     }
 }

@@ -1,8 +1,8 @@
 package com.pockyl.inventorybackups.client.screen;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.PlayerFaceRenderer;
+import net.minecraft.client.gui.components.PlayerFaceExtractor;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.resources.DefaultPlayerSkin;
@@ -116,14 +116,14 @@ final class PlayerListPanel {
         return Math.max(0, contentHeight() - (bottom - top));
     }
 
-    void render(GuiGraphics g, int mx, int my) {
+    void render(GuiGraphicsExtractor g, int mx, int my) {
         int x = 0;
         int y = AdminScreen.TOP;
         g.fill(x, y, AdminScreen.SIDEBAR - 1, bottom, Theme.PANEL);
         Theme.vline(g, AdminScreen.SIDEBAR - 1, y, bottom - y, Theme.LINE);
         Theme.box(g, 6, y + 6, 144, 16, Theme.FIELD, field.isFocused() ? Theme.ACCENT : Theme.LINE_2);
         Theme.text(g, screen.mc().font, Component.literal("⌕"), 10, y + 10, Theme.MUTED);
-        field.render(g, mx, my, 0);
+        field.extractRenderState(g, mx, my, 0);
 
         int cx = 6;
         int[] widths = filterWidths();
@@ -191,10 +191,10 @@ final class PlayerListPanel {
     }
 
     /** Draws the face of a player: their real skin when they are online, the default skin for their UUID otherwise. */
-    void face(GuiGraphics g, UUID uuid, int x, int y) {
+    void face(GuiGraphicsExtractor g, UUID uuid, int x, int y) {
         ClientPacketListener connection = screen.mc().getConnection();
         PlayerInfo info = connection == null ? null : connection.getPlayerInfo(uuid);
-        PlayerFaceRenderer.draw(g, info != null ? info.getSkin() : DefaultPlayerSkin.get(uuid), x, y, 16);
+        PlayerFaceExtractor.extractRenderState(g, info != null ? info.getSkin() : DefaultPlayerSkin.get(uuid), x, y, 16);
     }
 
     private int sc(int virtual) {

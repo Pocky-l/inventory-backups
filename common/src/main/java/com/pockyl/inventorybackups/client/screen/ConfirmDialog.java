@@ -1,7 +1,7 @@
 package com.pockyl.inventorybackups.client.screen;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -62,7 +62,7 @@ final class ConfirmDialog {
         choose(choices.get(choices.size() - 1));
     }
 
-    void render(GuiGraphics g, int mx, int my) {
+    void render(GuiGraphicsExtractor g, int mx, int my) {
         Font font = screen.mc().font;
         g.fill(0, 0, screen.vw, screen.vh, Theme.SHADE);
         Theme.box(g, x, y, WIDTH, h, Theme.PANEL, Theme.LINE_2);
@@ -70,7 +70,7 @@ final class ConfirmDialog {
         Theme.text(g, font, title.copy().withStyle(style -> style.withBold(true)), x + 8, y + 8, WIDTH - 16, Theme.TEXT);
         int ly = y + 22;
         for (FormattedCharSequence line : lines) {
-            g.drawString(font, line, x + 8, ly, Theme.MUTED, false);
+            g.text(font, line, x + 8, ly, Theme.MUTED, false);
             ly += 10;
         }
         for (UiButton button : buttons) {

@@ -2,7 +2,7 @@ package com.pockyl.inventorybackups.platform;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.item.ItemStack;
@@ -31,5 +31,5 @@ public interface ClientPlatform {
     boolean openKeyMatches(int keyCode, int scanCode);
 
     /** The tooltip of a stack with the given lines and its tooltip image, styled by the mods that style tooltips. */
-    void renderItemTooltip(GuiGraphics graphics, Font font, List<Component> lines, ItemStack stack, int x, int y);
+    void renderItemTooltip(GuiGraphicsExtractor graphics, Font font, List<Component> lines, ItemStack stack, int x, int y);
 }

@@ -23,11 +23,12 @@ import com.pockyl.inventorybackups.storage.Trigger;
 
 /**
  * Change detection for one online player. Nothing is serialized per tick: vanilla already compares menu slots every tick
- * to sync them to the client, and the slot listener added here only raises a flag. The tracker records the changes
+ * to sync them to the client, and the slot listener added here only raises a flag. The ender chest has no change
+ * listeners on this Minecraft version: its changes outside a menu are found by the periodic scan. The tracker records the changes
  * once the inventory has been still for the settle time, comparing against private copies of the last recorded stacks
  * and copying only the slots that differ.
  */
-final class TrackedPlayer implements ContainerListener, net.minecraft.world.ContainerListener {
+final class TrackedPlayer implements ContainerListener {
     private ServerPlayer player;
     /** Private copies of the last recorded stacks; handed to the storage thread and never modified afterwards. */
     private final Int2ObjectMap<ItemStack> last = new Int2ObjectOpenHashMap<>();
@@ -67,12 +68,10 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
     private void bind() {
         timesChanged = player.getInventory().getTimesChanged();
         player.inventoryMenu.addSlotListener(this);
-        player.getEnderChestInventory().addListener(this);
     }
 
     void unbind() {
         player.inventoryMenu.removeSlotListener(this);
-        player.getEnderChestInventory().removeListener(this);
     }
 
     void watchMenu(AbstractContainerMenu menu) {
@@ -125,13 +124,6 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
 
     @Override
     public void dataChanged(AbstractContainerMenu menu, int dataSlotIndex, int value) {
-    }
-
-    @Override
-    public void containerChanged(Container container) {
-        long start = System.nanoTime();
-        enderChanged();
-        PerfStats.addEvent(System.nanoTime() - start);
     }
 
     private void enderChanged() {

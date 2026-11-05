@@ -93,12 +93,12 @@ public final class GameTests {
     }
 
     private static void registerTests(RegisterGameTestsEvent event) {
-        Holder<TestEnvironmentDefinition> environment = event.registerEnvironment(InventoryBackups.id("default"),
+        Holder<TestEnvironmentDefinition<?>> environment = event.registerEnvironment(InventoryBackups.id("default"),
                 new TestEnvironmentDefinition.AllOf(List.of()));
         for (Test test : TESTS) {
             Identifier id = InventoryBackups.id(test.name());
-            TestData<Holder<TestEnvironmentDefinition>> data = new TestData<>(environment, EMPTY, test.timeoutTicks(), 0, true,
-                    Rotation.NONE, false, 1, 1, false);
+            TestData<Holder<TestEnvironmentDefinition<?>>> data = new TestData<>(environment, EMPTY, test.timeoutTicks(), 0, true,
+                    Rotation.NONE, false, 1, 1, false, 0);
             event.registerTest(id, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, id), data));
         }
     }

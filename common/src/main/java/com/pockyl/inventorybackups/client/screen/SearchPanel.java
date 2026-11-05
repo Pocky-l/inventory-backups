@@ -1,7 +1,7 @@
 package com.pockyl.inventorybackups.client.screen;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -147,14 +147,14 @@ final class SearchPanel {
         screen.runSearch(query, player, PERIODS[period], 0);
     }
 
-    void render(GuiGraphics g, int mx, int my) {
+    void render(GuiGraphicsExtractor g, int mx, int my) {
         Font font = screen.mc().font;
         int vw = screen.vw;
         g.fill(0, y, vw, y + BAR, Theme.PANEL);
         Theme.hline(g, 0, y + BAR - 1, vw, Theme.LINE);
         Theme.box(g, 8, y + 6, 220, 16, Theme.FIELD, field.isFocused() ? Theme.ACCENT : Theme.LINE_2);
         Theme.text(g, font, Component.literal("⌕"), 12, y + 10, Theme.MUTED);
-        field.render(g, mx, my, 0);
+        field.extractRenderState(g, mx, my, 0);
 
         int cx = 236;
         for (Mode option : Mode.values()) {
@@ -190,7 +190,7 @@ final class SearchPanel {
                     g.fill(9, ry, 227, ry + 18, Theme.ACCENT_DIM);
                 }
                 if (mode == Mode.ITEM) {
-                    BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(id)).ifPresent(item -> g.renderItem(new ItemStack(item),
+                    BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(id)).ifPresent(item -> g.item(new ItemStack(item),
                             11, ry + 1));
                 }
                 Theme.text(g, font, Component.literal(idPath(id)), 31, ry + 5, 150, on ? Theme.TEXT : Theme.MUTED);
@@ -212,12 +212,12 @@ final class SearchPanel {
                 result.query(), result.holders().size(), now, result.trail().size());
     }
 
-    private int chip(GuiGraphics g, Font font, int cx, int cy, Component label, boolean on) {
+    private int chip(GuiGraphicsExtractor g, Font font, int cx, int cy, Component label, boolean on) {
         return chip(g, font, cx, cy, label, on, Integer.MAX_VALUE);
     }
 
     /** A toggle chip; one wider than {@code maxWidth} (the last one on a narrow screen) gets its label cut. */
-    private int chip(GuiGraphics g, Font font, int cx, int cy, Component label, boolean on, int maxWidth) {
+    private int chip(GuiGraphicsExtractor g, Font font, int cx, int cy, Component label, boolean on, int maxWidth) {
         int w = Math.min(maxWidth, font.width(label) + 10);
         if (w < 16) {
             return 0;
@@ -227,13 +227,13 @@ final class SearchPanel {
         return w;
     }
 
-    private void header(GuiGraphics g, Font font, int x, int top, int w, Component title) {
+    private void header(GuiGraphicsExtractor g, Font font, int x, int top, int w, Component title) {
         Theme.text(g, font, title, x + 8, top + 4, w - 16, Theme.MUTED);
         Theme.hline(g, x, top + 15, w, Theme.LINE);
         Theme.vline(g, x + w - 1, top, bottom - top, Theme.LINE);
     }
 
-    private void renderItems(GuiGraphics g, Font font, int x, int top, int w, int mx, int my) {
+    private void renderItems(GuiGraphicsExtractor g, Font font, int x, int top, int w, int mx, int my) {
         header(g, font, x, top, w, Component.translatable("inventorybackups.ui.search.items"));
         if (result == null) {
             return;
@@ -253,7 +253,7 @@ final class SearchPanel {
             // The row for an item id stands for every stack of it, so it shows the plain item, not the stored sample.
             ItemStack shown = item.fingerprint().isEmpty() && !item.sample().isEmpty() ? new ItemStack(item.sample().getItem())
                     : item.sample();
-            g.renderItem(shown, x + 6, ry + 5);
+            g.item(shown, x + 6, ry + 5);
             Component name = shown.isEmpty() ? Component.literal(item.itemId()) : shown.getHoverName();
             Theme.text(g, font, name, x + 28, ry + 4, w - 34, item.fingerprint().isEmpty() ? Theme.TEXT : Theme.NAME);
             String shortPrint = item.fingerprint().substring(0, Math.min(6, item.fingerprint().length()));
@@ -274,7 +274,7 @@ final class SearchPanel {
         g.disableScissor();
     }
 
-    private void renderHolders(GuiGraphics g, Font font, int x, int top, int w, int mx, int my) {
+    private void renderHolders(GuiGraphicsExtractor g, Font font, int x, int top, int w, int mx, int my) {
         Component title = PERIODS[period] > 0
                 ? Component.translatable("inventorybackups.ui.search.holders_period",
                         Component.translatable("inventorybackups.ui.search.period."
@@ -363,7 +363,7 @@ final class SearchPanel {
         return steps;
     }
 
-    private void renderTrail(GuiGraphics g, Font font, int x, int top, int w, int mx, int my) {
+    private void renderTrail(GuiGraphicsExtractor g, Font font, int x, int top, int w, int mx, int my) {
         header(g, font, x, top, w, Component.translatable("inventorybackups.ui.search.trail"));
         if (result == null) {
             return;

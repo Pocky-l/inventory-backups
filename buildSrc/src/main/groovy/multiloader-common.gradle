@@ -10,7 +10,8 @@ base {
     archivesName = "${mod_id}-${project.name}-${minecraft_version}"
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+// Minecraft 26.2 runs on Java 25.
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 repositories {
     mavenCentral()
@@ -24,17 +25,13 @@ repositories {
         filter { includeGroupAndSubgroups('org.spongepowered') }
     }
     exclusiveContent {
-        forRepositories(
-                maven {
-                    name = 'ParchmentMC'
-                    url = 'https://maven.parchmentmc.org/'
-                },
-                maven {
-                    name = 'NeoForge'
-                    url = 'https://maven.neoforged.net/releases'
-                }
-        )
-        filter { includeGroup('org.parchmentmc.data') }
+        forRepository {
+            maven {
+                name = 'Fabric'
+                url = 'https://maven.fabricmc.net/'
+            }
+        }
+        filter { includeGroupAndSubgroups('net.fabricmc') }
     }
     exclusiveContent {
         forRepository {
@@ -49,6 +46,7 @@ repositories {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-Xmaxerrs', '50000'])
 }
 
 tasks.named('jar', Jar) {

@@ -4,7 +4,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -77,7 +77,7 @@ final class DetailsPanel {
         return bottom - 28 - (LINE * 7 + 18);
     }
 
-    void render(GuiGraphics g, int mx, int my) {
+    void render(GuiGraphicsExtractor g, int mx, int my) {
         Font font = screen.mc().font;
         Payloads.StateResponse state = screen.model.current();
         int sx = x + 6;
@@ -133,7 +133,7 @@ final class DetailsPanel {
         }
     }
 
-    private void renderBaseToggle(GuiGraphics g, Font font, int right, int ty, int mx, int my) {
+    private void renderBaseToggle(GuiGraphicsExtractor g, Font font, int right, int ty, int mx, int my) {
         TimelineModel model = screen.model;
         Component[] labels = {Component.translatable("inventorybackups.ui.base.previous"), Component.literal("A"), Component.literal("B")};
         TimelineModel.Base[] bases = TimelineModel.Base.values();
@@ -194,10 +194,10 @@ final class DetailsPanel {
         };
     }
 
-    private void renderChange(GuiGraphics g, Font font, Change change, int rx, int ry, int rw) {
+    private void renderChange(GuiGraphicsExtractor g, Font font, Change change, int rx, int ry, int rw) {
         Theme.hline(g, rx, ry + ROW - 1, rw, Theme.ROW_LINE);
         ItemStack shown = change.now().isEmpty() ? change.before() : change.now();
-        g.renderItem(shown, rx + 1, ry + 1);
+        g.item(shown, rx + 1, ry + 1);
         MutableComponent text;
         InventoryPanel.Diff diff = InventoryPanel.diff(change.now(), change.before());
         switch (diff) {
@@ -226,7 +226,7 @@ final class DetailsPanel {
         Theme.text(g, font, where, rx + rw - whereWidth, ry + 5, whereWidth, Theme.FAINT);
     }
 
-    private void renderEntry(GuiGraphics g, Font font, int ex, int ey, int ew, int mx, int my) {
+    private void renderEntry(GuiGraphicsExtractor g, Font font, int ex, int ey, int ew, int mx, int my) {
         EntryRow row = screen.model.selected();
         Theme.text(g, font, Component.translatable("inventorybackups.ui.entry"), ex, ey + 2, Theme.MUTED);
         Theme.hline(g, ex, ey + 13, ew, Theme.LINE);
@@ -298,14 +298,14 @@ final class DetailsPanel {
         return width + 8;
     }
 
-    private int contextLine(GuiGraphics g, Font font, int lx, int ly, int labelWidth, int width, Component label, Component value) {
+    private int contextLine(GuiGraphicsExtractor g, Font font, int lx, int ly, int labelWidth, int width, Component label, Component value) {
         Theme.text(g, font, label, lx, ly, Theme.FAINT);
         Theme.text(g, font, value, lx + labelWidth, ly, width - labelWidth, Theme.TEXT);
         return ly + LINE;
     }
 
     /** A text link drawn right-aligned at {@code right}; returns the x where the next link may end. */
-    private int link(GuiGraphics g, Font font, int right, int ly, Component label, int mx, int my, Runnable action) {
+    private int link(GuiGraphicsExtractor g, Font font, int right, int ly, Component label, int mx, int my, Runnable action) {
         int lw = font.width(label);
         int lx = right - lw;
         boolean hover = mx >= lx && mx < right && my >= ly - 1 && my < ly + 9;

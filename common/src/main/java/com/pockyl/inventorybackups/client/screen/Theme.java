@@ -1,7 +1,7 @@
 package com.pockyl.inventorybackups.client.screen;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
@@ -63,30 +63,30 @@ final class Theme {
         };
     }
 
-    static void box(GuiGraphics g, int x, int y, int w, int h, int fill, int border) {
+    static void box(GuiGraphicsExtractor g, int x, int y, int w, int h, int fill, int border) {
         g.fill(x, y, x + w, y + h, border);
         g.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);
     }
 
-    static void hline(GuiGraphics g, int x, int y, int w, int color) {
+    static void hline(GuiGraphicsExtractor g, int x, int y, int w, int color) {
         g.fill(x, y, x + w, y + 1, color);
     }
 
-    static void vline(GuiGraphics g, int x, int y, int h, int color) {
+    static void vline(GuiGraphicsExtractor g, int x, int y, int h, int color) {
         g.fill(x, y, x + 1, y + h, color);
     }
 
-    static void text(GuiGraphics g, Font font, String text, int x, int y, int color) {
-        g.drawString(font, text, x, y, color, false);
+    static void text(GuiGraphicsExtractor g, Font font, String text, int x, int y, int color) {
+        g.text(font, text, x, y, color, false);
     }
 
-    static void text(GuiGraphics g, Font font, Component text, int x, int y, int color) {
-        g.drawString(font, text, x, y, color, false);
+    static void text(GuiGraphicsExtractor g, Font font, Component text, int x, int y, int color) {
+        g.text(font, text, x, y, color, false);
     }
 
     /** Text cut to the width, with an ellipsis when it does not fit. */
-    static void text(GuiGraphics g, Font font, Component text, int x, int y, int width, int color) {
-        g.drawString(font, ellipsize(font, text, width), x, y, color, false);
+    static void text(GuiGraphicsExtractor g, Font font, Component text, int x, int y, int width, int color) {
+        g.text(font, ellipsize(font, text, width), x, y, color, false);
     }
 
     /**
@@ -94,7 +94,7 @@ final class Theme {
      *
      * @return the number of lines drawn
      */
-    static int wrapped(GuiGraphics g, Font font, Component text, int x, int y, int width, int maxLines, int color) {
+    static int wrapped(GuiGraphicsExtractor g, Font font, Component text, int x, int y, int width, int maxLines, int color) {
         List<FormattedText> lines = font.getSplitter().splitLines(text, width, Style.EMPTY);
         int count = Math.min(lines.size(), maxLines);
         for (int i = 0; i < count; i++) {
@@ -102,7 +102,7 @@ final class Theme {
             FormattedCharSequence line = cut
                     ? ellipsize(font, Component.literal(lines.get(i).getString() + " " + lines.get(i + 1).getString()), width)
                     : Language.getInstance().getVisualOrder(lines.get(i));
-            g.drawString(font, line, x, y + i * 10, color, false);
+            g.text(font, line, x, y + i * 10, color, false);
         }
         return count;
     }
@@ -123,12 +123,12 @@ final class Theme {
         return fitted;
     }
 
-    static void textRight(GuiGraphics g, Font font, Component text, int right, int y, int color) {
-        g.drawString(font, text, right - font.width(text), y, color, false);
+    static void textRight(GuiGraphicsExtractor g, Font font, Component text, int right, int y, int color) {
+        g.text(font, text, right - font.width(text), y, color, false);
     }
 
-    static void textCentered(GuiGraphics g, Font font, Component text, int centerX, int y, int color) {
-        g.drawString(font, text, centerX - font.width(text) / 2, y, color, false);
+    static void textCentered(GuiGraphicsExtractor g, Font font, Component text, int centerX, int y, int color) {
+        g.text(font, text, centerX - font.width(text) / 2, y, color, false);
     }
 
     static FormattedCharSequence ellipsize(Font font, Component text, int width) {
@@ -140,7 +140,7 @@ final class Theme {
     }
 
     /** A slot with the inset look of the inventory screen. */
-    static void slot(GuiGraphics g, int x, int y, int fill) {
+    static void slot(GuiGraphicsExtractor g, int x, int y, int fill) {
         g.fill(x, y, x + 18, y + 18, fill);
         hline(g, x, y, 18, SLOT_LO);
         vline(g, x, y, 18, SLOT_LO);
@@ -148,7 +148,7 @@ final class Theme {
         vline(g, x + 17, y, 18, SLOT_HI);
     }
 
-    static void outline(GuiGraphics g, int x, int y, int w, int h, int color) {
-        g.renderOutline(x, y, w, h, color);
+    static void outline(GuiGraphicsExtractor g, int x, int y, int w, int h, int color) {
+        g.outline(x, y, w, h, color);
     }
 }

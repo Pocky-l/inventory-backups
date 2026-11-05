@@ -3,7 +3,7 @@ package com.pockyl.inventorybackups.client.screen;
 import com.mojang.blaze3d.platform.Window;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -381,7 +381,7 @@ public final class AdminScreen extends Screen {
     // ---------------------------------------------------------------------------------------------------------------
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         tooltip = null;
         int mx = virtual(mouseX);
         int my = virtual(mouseY);
@@ -423,11 +423,11 @@ public final class AdminScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         // The screen covers everything with its own background.
     }
 
-    private void renderTopBar(GuiGraphics g, int mx, int my) {
+    private void renderTopBar(GuiGraphicsExtractor g, int mx, int my) {
         g.fill(0, 0, vw, TOP, Theme.TOPBAR);
         Theme.hline(g, 0, TOP - 1, vw, Theme.LINE);
         Theme.text(g, font, title, 8, 7, Theme.ACCENT);
@@ -443,7 +443,7 @@ public final class AdminScreen extends Screen {
         Theme.textCentered(g, font, Component.literal("✕"), vw - 11, 7, hover ? Theme.TEXT : Theme.MUTED);
     }
 
-    private void tabButton(GuiGraphics g, Tab which, Component label, int x, int mx, int my) {
+    private void tabButton(GuiGraphicsExtractor g, Tab which, Component label, int x, int mx, int my) {
         boolean active = tab == which;
         boolean hover = mx >= x && mx < x + 72 && my < TOP;
         if (active) {
@@ -454,7 +454,7 @@ public final class AdminScreen extends Screen {
         Theme.vline(g, x + 71, 0, TOP, Theme.LINE);
     }
 
-    private void renderWho(GuiGraphics g) {
+    private void renderWho(GuiGraphicsExtractor g) {
         PlayerRow row = model.player;
         if (row == null) {
             return;
@@ -482,7 +482,7 @@ public final class AdminScreen extends Screen {
         }
     }
 
-    private void renderStatus(GuiGraphics g) {
+    private void renderStatus(GuiGraphicsExtractor g) {
         int y = vh - STATUS;
         g.fill(0, y, vw, vh, Theme.TOPBAR);
         Theme.hline(g, 0, y, vw, Theme.LINE);
@@ -499,7 +499,7 @@ public final class AdminScreen extends Screen {
         Theme.textRight(g, font, Component.literal(String.join(" · ", granted)), vw - 8, y + 4, Theme.FAINT);
     }
 
-    private void renderToasts(GuiGraphics g) {
+    private void renderToasts(GuiGraphicsExtractor g) {
         int y = vh - STATUS - 6;
         for (int i = toasts.size() - 1; i >= 0; i--) {
             Toast toast = toasts.get(i);
@@ -653,9 +653,9 @@ public final class AdminScreen extends Screen {
             return true;
         }
         if (tab == Tab.SEARCH) {
-            return search.charTyped(event.codepoint(), event.modifiers());
+            return search.charTyped(event.codepoint(), 0);
         }
-        return players.charTyped(event.codepoint(), event.modifiers());
+        return players.charTyped(event.codepoint(), 0);
     }
 
     @Override
@@ -667,7 +667,7 @@ public final class AdminScreen extends Screen {
         dialog = null;
     }
 
-    void playerFace(GuiGraphics g, UUID player, int x, int y) {
+    void playerFace(GuiGraphicsExtractor g, UUID player, int x, int y) {
         players.face(g, player, x, y);
     }
 

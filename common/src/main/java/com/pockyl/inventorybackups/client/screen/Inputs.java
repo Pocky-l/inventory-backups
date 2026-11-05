@@ -23,7 +23,7 @@ final class Inputs {
     }
 
     static CharacterEvent character(int codePoint, int modifiers) {
-        return new CharacterEvent(codePoint, modifiers);
+        return new CharacterEvent(codePoint);
     }
 
     static boolean shiftDown() {

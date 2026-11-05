@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -252,7 +252,7 @@ final class InventoryPanel {
         return selection.toIntArray();
     }
 
-    void render(GuiGraphics g, int mx, int my) {
+    void render(GuiGraphicsExtractor g, int mx, int my) {
         Font font = screen.mc().font;
         Theme.vline(g, x + WIDTH - 1, y, bottom - y, Theme.LINE);
         Payloads.StateResponse state = screen.model.current();
@@ -299,7 +299,7 @@ final class InventoryPanel {
         }
     }
 
-    private void renderTabs(GuiGraphics g, Font font, @Nullable Payloads.StateResponse state, int mx, int my) {
+    private void renderTabs(GuiGraphicsExtractor g, Font font, @Nullable Payloads.StateResponse state, int mx, int my) {
         for (Tab tab : tabs(font, state)) {
             boolean on = section == tab.section();
             boolean hover = mx >= tab.x() && mx < tab.x() + tab.w() && my >= y + 5 && my < y + 18;
@@ -308,7 +308,7 @@ final class InventoryPanel {
         }
     }
 
-    private void renderScrollbar(GuiGraphics g, @Nullable Payloads.StateResponse state) {
+    private void renderScrollbar(GuiGraphicsExtractor g, @Nullable Payloads.StateResponse state) {
         int max = maxModScroll(state);
         if (max <= 0) {
             return;
@@ -325,7 +325,7 @@ final class InventoryPanel {
         return virtual;
     }
 
-    private void renderCell(GuiGraphics g, Font font, Cell cell, ItemStack now, @Nullable ItemStack before, boolean hover) {
+    private void renderCell(GuiGraphicsExtractor g, Font font, Cell cell, ItemStack now, @Nullable ItemStack before, boolean hover) {
         int cx = cell.x();
         int cy = cell.y();
         Diff diff = diff(now, before);
@@ -344,10 +344,10 @@ final class InventoryPanel {
             Theme.outline(g, cx, cy, 18, 18, border);
         }
         if (!now.isEmpty()) {
-            g.renderItem(now, cx + 1, cy + 1);
-            g.renderItemDecorations(font, now, cx + 1, cy + 1);
+            g.item(now, cx + 1, cy + 1);
+            g.itemDecorations(font, now, cx + 1, cy + 1);
         } else if (diff == Diff.REMOVED && before != null) {
-            g.renderItem(before, cx + 1, cy + 1);
+            g.item(before, cx + 1, cy + 1);
             g.fill(cx + 1, cy + 1, cx + 17, cy + 17, 0xA03D1F22);
         } else if (cell.hint() != null) {
             Theme.text(g, font, cell.hint(), cx + 6, cy + 5, 0xFF3A404C);
@@ -387,7 +387,7 @@ final class InventoryPanel {
         return Diff.REPLACED;
     }
 
-    private void renderSelectedCard(GuiGraphics g, Font font, @Nullable Payloads.StateResponse state) {
+    private void renderSelectedCard(GuiGraphicsExtractor g, Font font, @Nullable Payloads.StateResponse state) {
         int cy = section == Section.ENDER_CHEST ? y + 36 + 18 * 3 + 8 : y + 156;
         int cx = x + 6;
         int cw = WIDTH - 12;
@@ -402,7 +402,7 @@ final class InventoryPanel {
         int slot = selection.iterator().nextInt();
         ItemStack stack = state.items().getOrDefault(slot, ItemStack.EMPTY);
         if (!stack.isEmpty()) {
-            g.renderItem(stack, cx + 4, cy + 4);
+            g.item(stack, cx + 4, cy + 4);
             Theme.text(g, font, stack.getHoverName(), cx + 24, cy + 5, cw - 28, Theme.NAME);
         } else {
             Theme.text(g, font, Component.translatable("inventorybackups.ui.empty_slot"), cx + 24, cy + 5, cw - 28, Theme.MUTED);
@@ -416,7 +416,7 @@ final class InventoryPanel {
     }
 
     /** The color key below the slots; on one line when it fits, otherwise on two. */
-    private void renderKey(GuiGraphics g, Font font) {
+    private void renderKey(GuiGraphicsExtractor g, Font font) {
         Object[][] keys = {{Theme.ADDED, "inventorybackups.ui.key.added"}, {Theme.REMOVED, "inventorybackups.ui.key.removed"},
                 {Theme.CHANGED, "inventorybackups.ui.key.count"}};
         int available = WIDTH - 12;

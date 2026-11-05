@@ -1,22 +1,19 @@
 plugins {
     id 'multiloader-loader'
-    id 'fabric-loom'
+    id 'net.fabricmc.fabric-loom'
 }
 
 dependencies {
+    // Minecraft 26.2 is not obfuscated: no mappings, and mods are used as they are (no remapping).
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${parchment_minecraft_version}:${parchment_mappings_version}@zip")
-    }
-    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
     // The config: NeoForge's ModConfigSpec, config files and config screen on Fabric, so both loaders share Config and
     // its file.
-    modApi "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port_version}"
+    api "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port_version}"
     // Permission nodes for LuckPerms and other permission mods; small, so it ships inside the jar.
     // Not transitive: its own Fabric API dependency is for another Minecraft version.
-    modImplementation("me.lucko:fabric-permissions-api:${fabric_permissions_api_version}") { transitive = false }
+    implementation("me.lucko:fabric-permissions-api:${fabric_permissions_api_version}") { transitive = false }
     include("me.lucko:fabric-permissions-api:${fabric_permissions_api_version}")
 }
 
@@ -57,7 +54,7 @@ tasks.named('processResources', ProcessResources) {
 }
 
 publishMods {
-    file = tasks.named('remapJar').flatMap { it.archiveFile }
+    file = tasks.named('jar', Jar).flatMap { it.archiveFile }
     displayName = "${mod_name} ${mod_version}+${minecraft_version} (Fabric)"
     modLoaders.add('fabric')
 
