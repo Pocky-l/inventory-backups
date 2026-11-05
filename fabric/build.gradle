@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    // Minecraft 26.2 is not obfuscated: no mappings, and mods are used as they are (no remapping).
+    // Minecraft 26.1.2 is not obfuscated: no mappings, and mods are used as they are (no remapping).
     minecraft "com.mojang:minecraft:${minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"

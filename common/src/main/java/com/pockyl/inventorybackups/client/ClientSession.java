@@ -77,10 +77,10 @@ public final class ClientSession {
         Minecraft minecraft = Minecraft.getInstance();
         if (payload instanceof Payloads.Hello newHello) {
             hello = newHello;
-            if (minecraft.gui.screen() instanceof AdminScreen screen) {
+            if (minecraft.screen instanceof AdminScreen screen) {
                 screen.updatePermissions(newHello);
             } else {
-                minecraft.gui.setScreen(new AdminScreen(newHello));
+                minecraft.setScreen(new AdminScreen(newHello));
             }
             return;
         }
@@ -99,7 +99,7 @@ public final class ClientSession {
         if (callback != null) {
             callback.accept(payload);
         } else if (payload instanceof Payloads.Notice notice) {
-            if (minecraft.gui.screen() instanceof AdminScreen screen) {
+            if (minecraft.screen instanceof AdminScreen screen) {
                 screen.toast(notice.message(), notice.ok());
             } else if (minecraft.player != null) {
                 minecraft.player.sendOverlayMessage(notice.message());

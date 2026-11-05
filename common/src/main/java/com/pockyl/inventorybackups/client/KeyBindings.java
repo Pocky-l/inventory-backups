@@ -29,7 +29,7 @@ public final class KeyBindings {
             }
             Minecraft minecraft = Minecraft.getInstance();
             if (!ClientSession.requestOpen()) {
-                minecraft.gui.hud.setOverlayMessage(Component.translatable("inventorybackups.ui.server_missing"), false);
+                minecraft.gui.setOverlayMessage(Component.translatable("inventorybackups.ui.server_missing"), false);
             }
         }
     }
