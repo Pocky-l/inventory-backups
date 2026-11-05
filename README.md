@@ -12,7 +12,7 @@
 
 <p align="center"><i>Inventory backups for server admins.</i></p>
 
-<p align="center"><b>The mod records every change in every player's inventory, armor, ender chest and mod slots. When someone loses their things to a creeper, a lava pool or a thief, open their timeline, pick the moment before it happened and give everything back with one click.</b></p>
+<p align="center"><b>The mod records every change in every player's inventory, armor, ender chest and mod slots. When someone loses their things to a server bug, a crash, a bad connection or anything like it, open their timeline, pick the moment before it happened and give everything back with one click.</b></p>
 
 <p align="center"><img src="docs/screenshots/restore.png" alt="The admin screen: a player's timeline and the inventory restored by an admin" width="834"></p>
 
