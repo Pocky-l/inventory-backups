@@ -18,6 +18,9 @@
 
 <p align="center"><b>About 100 bytes</b> per change &middot; <b>Offline players</b> too &middot; <b>Vanilla clients</b> work through chat</p>
 
+<h2 align="center">Main command: <code>/inventory ui</code></h2>
+<p align="center">Opens the admin screen; <code>Ctrl+I</code> does the same. The admin needs the mod on their client too.</p>
+
 ## Features
 
 <h3 align="center">After a death</h3>
