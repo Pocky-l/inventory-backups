@@ -4,6 +4,16 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0-fabric] - 2026-11-05
+### Added
+- A Fabric version for Minecraft 1.21.1, with the same backups, timeline, item search, commands and admin screen as
+  on NeoForge. It needs [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api) and
+  [Forge Config API Port](https://www.curseforge.com/minecraft/mc-mods/forge-config-api-port); the config file is the
+  same. Permission nodes work with [LuckPerms](https://www.curseforge.com/minecraft/mc-mods/luckperms) (fabric-permissions-api
+  is included). Mod slots are read from
+  [Accessories](https://www.curseforge.com/minecraft/mc-mods/accessories); the other supported slot mods exist only on
+  NeoForge. On Fabric the screen opens with I while Ctrl is held.
+
 ## [3.2.0] - 2026-10-24
 ### Added
 - Death alerts for admins (option `general.deathAlerts`, off by default): when a player dies with items, online

@@ -1,0 +1,68 @@
+plugins {
+    id 'multiloader-loader'
+    id 'fabric-loom'
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${parchment_minecraft_version}:${parchment_mappings_version}@zip")
+    }
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    // The config: NeoForge's ModConfigSpec, config files and config screen on Fabric, so both loaders share Config and
+    // its file.
+    modApi "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port_version}"
+    // Permission nodes for LuckPerms and other permission mods; small, so it ships inside the jar.
+    // Not transitive: its own Fabric API dependency is for another Minecraft version.
+    modImplementation("me.lucko:fabric-permissions-api:${fabric_permissions_api_version}") { transitive = false }
+    include("me.lucko:fabric-permissions-api:${fabric_permissions_api_version}")
+}
+
+loom {
+    runs {
+        client {
+            client()
+            configName = 'Fabric Client'
+            ideConfigGenerated(true)
+            runDir('run')
+        }
+        server {
+            server()
+            configName = 'Fabric Server'
+            ideConfigGenerated(true)
+            runDir('run-server')
+        }
+    }
+}
+
+tasks.named('processResources', ProcessResources) {
+    var replaceProperties = [
+            minecraft_version    : minecraft_version,
+            fabric_loader_version: fabric_loader_min_version,
+            fabric_api_version   : fabric_api_min_version,
+            mod_id               : mod_id,
+            mod_name             : mod_name,
+            mod_license          : mod_license,
+            mod_version          : mod_version,
+            mod_authors          : mod_authors,
+            mod_description      : mod_description,
+            mod_url              : mod_url,
+    ]
+    inputs.properties replaceProperties
+    filesMatching('fabric.mod.json') {
+        expand replaceProperties
+    }
+}
+
+publishMods {
+    file = tasks.named('remapJar').flatMap { it.archiveFile }
+    displayName = "${mod_name} ${mod_version} (Fabric)"
+    modLoaders.add('fabric')
+
+    curseforge {
+        curseforge_requires_fabric.split(',')*.trim().findAll().each { requires(it) }
+        curseforge_optional_fabric.split(',')*.trim().findAll().each { optional(it) }
+    }
+}
