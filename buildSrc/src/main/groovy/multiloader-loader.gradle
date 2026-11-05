@@ -1,0 +1,98 @@
+// A loader project (neoforge, fabric): compiles the common sources and resources into its own jar and publishes it.
+plugins {
+    id 'multiloader-common'
+    id 'me.modmuss50.mod-publish-plugin'
+}
+
+configurations {
+    commonJava {
+        canBeResolved = true
+    }
+    commonResources {
+        canBeResolved = true
+    }
+}
+
+dependencies {
+    compileOnly project(':common')
+    commonJava project(path: ':common', configuration: 'commonJava')
+    commonResources project(path: ':common', configuration: 'commonResources')
+}
+
+tasks.named('compileJava', JavaCompile) {
+    dependsOn(configurations.commonJava)
+    source(configurations.commonJava)
+}
+
+tasks.named('processResources', ProcessResources) {
+    dependsOn(configurations.commonResources)
+    from(configurations.commonResources)
+}
+
+// ---------------------------------------------------------------------------
+// Release
+// ---------------------------------------------------------------------------
+
+// Returns the body of the "## [version]" section of CHANGELOG.md, or null when it is missing.
+static String extractChangelog(String changelog, String version) {
+    def lines = changelog.readLines()
+    def start = lines.findIndexOf { it ==~ /^##\s+\[?${java.util.regex.Pattern.quote(version)}\]?(\s.*)?$/ }
+    if (start < 0) {
+        return null
+    }
+    def end = lines.findIndexOf(start + 1) { it.startsWith('## ') }
+    def body = lines.subList(start + 1, end < 0 ? lines.size() : end).join('\n').trim()
+    return body ?: null
+}
+
+// A release of this loader alone (release.ps1 -Loaders) has a "## [<version>-<loader>]" section, used first; the
+// plain version is the fallback.
+def changelogText = providers.fileContents(rootProject.layout.projectDirectory.file('CHANGELOG.md')).asText.getOrElse('')
+def releaseNotes = extractChangelog(changelogText, "${mod_version}-${project.name}".toString())
+        ?: extractChangelog(changelogText, mod_version)
+def curseforgeToken = providers.gradleProperty('curseforge_token')
+        .orElse(providers.environmentVariable('CURSEFORGE_TOKEN'))
+
+// Validates release metadata and writes the notes of the current version to build/release-notes.md.
+var releaseNotesTask = tasks.register('releaseNotes') {
+    group = 'publishing'
+    description = 'Validates release metadata and writes notes for the current version.'
+
+    def notes = releaseNotes
+    def version = mod_version
+    def projectId = curseforge_project_id
+    def output = layout.buildDirectory.file('release-notes.md')
+    inputs.property('notes', notes ?: '')
+    inputs.property('projectId', projectId)
+    outputs.file(output)
+
+    doLast {
+        if (!notes) {
+            throw new GradleException("CHANGELOG.md has no non-empty section for version ${version}")
+        }
+        if (!(projectId ==~ /\d+/)) {
+            throw new GradleException('curseforge_project_id is not set in gradle.properties')
+        }
+        output.get().asFile.text = notes + '\n'
+    }
+}
+
+// The loader projects add the file, the loader and their own dependencies (required and optional).
+publishMods {
+    changelog = releaseNotes ?: ''
+    type = STABLE
+    dryRun = providers.gradleProperty('dryRun').map { it != 'false' }.orElse(false)
+
+    curseforge {
+        projectId = curseforge_project_id
+        accessToken = curseforgeToken
+        minecraftVersions.add(minecraft_version)
+        javaVersions.add(JavaVersion.VERSION_21)
+        client = curseforge_client.toBoolean()
+        server = curseforge_server.toBoolean()
+    }
+}
+
+tasks.named('publishCurseforge') {
+    dependsOn releaseNotesTask
+}

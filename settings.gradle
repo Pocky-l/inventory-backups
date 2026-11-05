@@ -2,6 +2,10 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         maven { url = 'https://maven.neoforged.net/releases' }
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
     }
 }
 
@@ -10,3 +14,7 @@ plugins {
 }
 
 rootProject.name = 'inventorybackups'
+
+// common: the code shared by both loaders, compiled against vanilla Minecraft; neoforge / fabric: the loader glue. Each
+// loader project compiles the common sources into its own jar.
+include 'common', 'neoforge', 'fabric'
