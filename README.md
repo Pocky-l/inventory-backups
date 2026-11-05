@@ -1,46 +1,54 @@
 <p align="center">
-  <img src="src/main/resources/logo.png" alt="Inventory Backups" width="160">
-</p>
-
-<h1 align="center">Inventory Backups</h1>
-
-<p align="center">
-  <b>Every inventory change of every player, recorded</b> - roll back any moment with one click, find any item and see who took it, online or offline.
+  <img src="docs/showcase/title.png" alt="Inventory Backups" width="834">
 </p>
 
 <p align="center">
   <a href="https://www.curseforge.com/minecraft/mc-mods/inventory-backups"><img alt="CurseForge downloads" src="https://img.shields.io/curseforge/dt/836385?logo=curseforge&label=CurseForge&color=F16436"></a>
-  <a href="https://www.minecraft.net"><img alt="Minecraft 1.21.1" src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A"></a>
-  <a href="https://neoforged.net"><img alt="NeoForge" src="https://img.shields.io/badge/Loader-NeoForge-F16436"></a>
-  <img alt="Server side" src="https://img.shields.io/badge/Side-Server-7A5CFA">
+  <a href="https://www.curseforge.com/minecraft/mc-mods/inventory-backups/files"><img alt="Minecraft 1.20.1, 1.21.1, 1.21.11, 26.1.2, 26.2, 26.3" src="https://img.shields.io/badge/Minecraft-1.20.1%20%7C%201.21.1%20%7C%201.21.11%20%7C%2026.1.2%20%7C%2026.2%20%7C%2026.3-62B47A"></a>
+  <a href="https://neoforged.net"><img alt="NeoForge, Forge or Fabric" src="https://img.shields.io/badge/Loader-NeoForge%20%7C%20Forge%20%7C%20Fabric-F16436"></a>
+  <img alt="Server-side, client optional" src="https://img.shields.io/badge/Server--side-client%20optional-5a8ee8">
   <a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/License-MIT-blue"></a>
 </p>
 
-<p align="center">
-  <img src="docs/screenshots/mockup-timeline.png" alt="The admin screen: timeline, inventory at the selected moment and what changed" width="720">
-</p>
+<p align="center"><i>Inventory backups for server admins.</i></p>
+
+<p align="center"><b>The mod records every change in every player's inventory, armor, ender chest and mod slots. When someone loses their things to a creeper, a lava pool or a thief, open their timeline, pick the moment before it happened and give everything back with one click.</b></p>
+
+<p align="center"><img src="docs/screenshots/restore.png" alt="The admin screen: a player's timeline and the inventory restored by an admin" width="834"></p>
+
+<p align="center"><b>About 100 bytes</b> per change &middot; <b>Offline players</b> too &middot; <b>Vanilla clients</b> work through chat</p>
 
 ## Features
 
-- 📼 **Every change recorded** - inventory, armor, offhand, ender chest and mod slots, merged into one entry per
-  burst; about 100 bytes per change and 0.005 ms per player and tick.
-- 🕒 **A timeline with context** - deaths with cause and place (recorded before the items drop), joins, quits,
-  chests used, restores and edits by admins. Optional death alerts in the admins' chat with preview, restore and
-  teleport buttons.
-- ↩️ **Restore in one click** - a whole moment or only some slots, with undo; or give yourself a copy and leave the
-  player's items alone.
-- 🔍 **Find any item** - who has it now, who had it and when, by id, name, enchantment or one exact stack, with its
-  trail through drops, death loot and chests; `/invsearch container` shows who emptied a chest.
-- 🖥️ **Admin screen** - scrub the timeline, play it back, compare two moments, see what changed and where every item
-  came from (`Ctrl+I`, needs the mod on the admin's client).
-- 💤 **Offline players too** - restore and edit players who are not online; the change goes into their save file.
-  Commands suggest their names too.
-- 🎒 **Mod slots** - Curios, Accessories, Cosmetic Armor, Traveler's Backpack, Tool Belt and Backpacked are backed up
-  and restored with the rest.
-- 🗜️ **Small and safe storage** - compact day files written in the background, thinned with age instead of cut off,
-  with disk budgets; a crash loses seconds at most.
-- 🔐 **Permissions** - separate view, restore, edit and search nodes for LuckPerms; operators without one. Works for
-  vanilla clients through clickable chat.
+<h3 align="center">After a death</h3>
+<p align="center"><img src="docs/screenshots/death.png" alt="The entry after a death: every slot marked as lost" width="834"></p>
+<p align="center"><i>Kestrel was blown up by a creeper deep in a mine and came back with nothing. The death entry still holds every slot, with the cause and the place.<br>Restore all puts it back, or pick only some slots. An admin who restored the wrong moment can undo it.</i></p>
+
+<h3 align="center">Every change on the timeline</h3>
+<p align="center"><img src="docs/screenshots/timeline.png" alt="A slot's tooltip with the time and place the item arrived" width="834"></p>
+<p align="center"><i>Pickups, crafting and chest visits become entries, one for each burst of changes. Hover a slot to see when the item got there and where the player stood.<br>Pin two moments as A and B to compare them, or play the whole day back.</i></p>
+
+<h3 align="center">Where did the sword go?</h3>
+<p align="center"><img src="docs/screenshots/search.png" alt="Item search: holders of a named sword and its transfer trail" width="834"></p>
+<p align="center"><i>Search for any item by id, name or enchantment and see who has it now and who had it before.<br>One named or enchanted stack can be followed from player to player: dropped at a death, picked up, put into a barrel, taken out.</i></p>
+
+<h3 align="center">From chat, without the client mod</h3>
+<p align="center"><img src="docs/screenshots/chat.png" alt="The clickable timeline in chat and a death alert with buttons" width="720"></p>
+<p align="center"><i>Admins with a vanilla client get clickable lists in chat with view, restore, copy and teleport buttons on every entry.<br>With <code>deathAlerts</code> on, online admins get a message about every death with items and can restore it from there.</i></p>
+
+More in detail:
+
+- Inventory, armor, offhand, ender chest and the slots of other mods are recorded, merged into one entry per burst of
+  changes: about 100 bytes per change and 0.005 ms per player and tick. Deaths are recorded before the items drop,
+  even when a grave or backpack mod moves them away first.
+- The timeline marks deaths with cause and place, joins, quits, chests used, restores and edits by admins.
+- Restore a whole moment or only the selected slots, undo the last restore, or give yourself a copy and leave the
+  player's items alone. Live edit opens the player's real inventory.
+- Players who are offline can be restored and edited too: the change goes into their save file. Commands suggest
+  their names.
+- Storage is a set of compact day files written in the background, thinned with age instead of cut off, with disk
+  budgets per player and in total. A crash loses a few seconds at most.
+- Separate permission nodes for viewing, restoring, editing and searching; operators without a permission mod.
 
 ## Controls
 
@@ -107,26 +115,28 @@ Each command needs its permission node (default: operator level 2). `/enderchest
 
 ## Installation
 
-1. Install [NeoForge](https://neoforged.net) 21.1 for Minecraft 1.21.1, or [Forge](https://files.minecraftforge.net) 47
-   for Minecraft 1.20.1 (files marked `+1.20.1`), on the server and put the mod into `mods`.
+1. Install the mod on the server: [NeoForge](https://neoforged.net) (1.21.1, 1.21.11, 26.1.2, 26.2, 26.3),
+   [Forge](https://files.minecraftforge.net) (1.20.1) or [Fabric](https://fabricmc.net) (every version). On Fabric it
+   also needs [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api) and
+   [Forge Config API Port](https://www.curseforge.com/minecraft/mc-mods/forge-config-api-port).
 2. Optional: admins who want the timeline screen put the same jar into their client's `mods` folder. Other players
    do not need it.
 
 ## Compatibility
 
-[![Curios API](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/curios.png)](https://www.curseforge.com/minecraft/mc-mods/curios) ✅ **[Curios API](https://www.curseforge.com/minecraft/mc-mods/curios)** (optional) - every curio slot, cosmetic slots included, is recorded, shown on the Mod slots tab, restored with the inventory and editable live.
+[![Curios API](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/curios.png)](https://www.curseforge.com/minecraft/mc-mods/curios) ✅ **[Curios API](https://www.curseforge.com/minecraft/mc-mods/curios)** (optional, NeoForge and Forge) - every curio slot, cosmetic slots included, is recorded, shown on the Mod slots tab, restored with the inventory and editable live.
 
-[![Accessories](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/accessories.png)](https://www.curseforge.com/minecraft/mc-mods/accessories) ✅ **[Accessories](https://www.curseforge.com/minecraft/mc-mods/accessories)** (optional) - accessory and cosmetic slots are recorded and restored the same way; with the Curios compatibility layer each slot is recorded once.
+[![Accessories](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/accessories.png)](https://www.curseforge.com/minecraft/mc-mods/accessories) ✅ **[Accessories](https://www.curseforge.com/minecraft/mc-mods/accessories)** (optional, also on Fabric) - accessory and cosmetic slots are recorded and restored the same way; with the Curios compatibility layer each slot is recorded once.
 
-[![Cosmetic Armor Reworked](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/cosmetic-armor-reworked.png)](https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked) ✅ **[Cosmetic Armor Reworked](https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked)** (optional) - the cosmetic armor slots are recorded and restored.
+[![Cosmetic Armor Reworked](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/cosmetic-armor-reworked.png)](https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked) ✅ **[Cosmetic Armor Reworked](https://www.curseforge.com/minecraft/mc-mods/cosmetic-armor-reworked)** (optional, NeoForge and Forge) - the cosmetic armor slots are recorded and restored.
 
-[![Traveler's Backpack](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/travelers-backpack.png)](https://www.curseforge.com/minecraft/mc-mods/travelers-backpack) ✅ **[Traveler's Backpack](https://www.curseforge.com/minecraft/mc-mods/travelers-backpack)** (optional) - the worn backpack and everything in it is recorded and restored, also when it is placed on the ground at death.
+[![Traveler's Backpack](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/travelers-backpack.png)](https://www.curseforge.com/minecraft/mc-mods/travelers-backpack) ✅ **[Traveler's Backpack](https://www.curseforge.com/minecraft/mc-mods/travelers-backpack)** (optional, NeoForge and Forge) - the worn backpack and everything in it is recorded and restored, also when it is placed on the ground at death.
 
-[![Tool Belt](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/tool-belt.png)](https://www.curseforge.com/minecraft/mc-mods/tool-belt) ✅ **[Tool Belt](https://www.curseforge.com/minecraft/mc-mods/tool-belt)** (optional) - the belt slot and the tools on the belt are recorded and restored.
+[![Tool Belt](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/tool-belt.png)](https://www.curseforge.com/minecraft/mc-mods/tool-belt) ✅ **[Tool Belt](https://www.curseforge.com/minecraft/mc-mods/tool-belt)** (optional, NeoForge and Forge) - the belt slot and the tools on the belt are recorded and restored.
 
-[![Backpacked](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/backpacked.png)](https://www.curseforge.com/minecraft/mc-mods/backpacked) ✅ **[Backpacked](https://www.curseforge.com/minecraft/mc-mods/backpacked)** (optional) - the equipped backpacks and their contents are recorded and restored.
+[![Backpacked](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/backpacked.png)](https://www.curseforge.com/minecraft/mc-mods/backpacked) ✅ **[Backpacked](https://www.curseforge.com/minecraft/mc-mods/backpacked)** (optional, NeoForge and Forge) - the equipped backpacks and their contents are recorded and restored.
 
-[![LuckPerms](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/luckperms.png)](https://luckperms.net) ✅ **[LuckPerms](https://luckperms.net)** (optional) - grant `inventorybackups.view`, `.restore`, `.edit`, `.search` and `.ui` per group instead of operator status.
+[![LuckPerms](https://raw.githubusercontent.com/Pocky-l/inventory-backups/main/docs/compat/luckperms.png)](https://luckperms.net) ✅ **[LuckPerms](https://luckperms.net)** (optional) - grant `inventorybackups.view`, `.restore`, `.edit`, `.search` and `.ui` per group instead of operator status. On Fabric through the bundled fabric-permissions-api.
 
 ## Building
 
@@ -134,7 +144,8 @@ Each command needs its permission node (default: operator level 2). `/enderchest
 ./gradlew build
 ```
 
-The jar is written to `build/libs/`. `./gradlew runGameTestServer` runs the game tests. The design of the admin
+The jars are written to `neoforge/build/libs/` and `fabric/build/libs/`. `./gradlew :neoforge:runGameTestServer` runs
+the game tests. The design of the admin
 screen is in `docs/ui-mockup` (open `index.html` in a browser).
 
 ## Credits
