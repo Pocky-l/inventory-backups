@@ -2,7 +2,6 @@ package com.pockyl.inventorybackups.client.screen;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -274,7 +273,8 @@ final class TimelinePanel {
     }
 
     private int sc(int virtual) {
-        return Math.round(virtual * screen.scale);
+        // Since 1.21.6 the scissor box goes through the pose, which already holds the screen scale.
+        return virtual;
     }
 
     boolean mouseClicked(double mx, double my, int button) {
@@ -312,7 +312,7 @@ final class TimelinePanel {
         if (my < y || my >= y + HEIGHT || mx < x) {
             return false;
         }
-        if (Screen.hasShiftDown()) {
+        if (Inputs.shiftDown()) {
             screen.model.pan(-amount * 0.25);
         } else {
             long around = mx >= trackX && mx < trackX + trackW ? timeAt(mx) : screen.model.selectedTime();

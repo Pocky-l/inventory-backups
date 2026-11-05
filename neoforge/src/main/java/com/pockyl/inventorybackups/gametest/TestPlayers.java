@@ -2,6 +2,7 @@ package com.pockyl.inventorybackups.gametest;
 
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket;
 import net.minecraft.server.level.ServerPlayer;
 
 import com.pockyl.inventorybackups.backup.BackupService;
@@ -20,13 +21,16 @@ final class TestPlayers {
 
     @SuppressWarnings("removal")
     static ServerPlayer join(GameTestHelper helper) {
-        return helper.makeMockServerPlayerInLevel();
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        // Players are invulnerable until their client reports the world loaded; mock players have no client.
+        player.connection.handleAcceptPlayerLoad(new ServerboundPlayerLoadedPacket());
+        return player;
     }
 
     static BackupStore store() {
         BackupStore store = BackupService.store();
         if (store == null) {
-            throw new GameTestAssertException("No backup storage is running");
+            throw GameTests.failure("No backup storage is running");
         }
         return store;
     }

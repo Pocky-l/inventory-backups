@@ -3,7 +3,7 @@ package com.pockyl.inventorybackups.registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
@@ -19,7 +19,7 @@ import java.util.function.Supplier;
  * Keep this file identical across mods (it lives in the workspace template).
  */
 public final class PockyModsTab {
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("pockymods", "pocky_mods");
+    public static final Identifier ID = Identifier.fromNamespaceAndPath("pockymods", "pocky_mods");
     public static final ResourceKey<CreativeModeTab> KEY = ResourceKey.create(Registries.CREATIVE_MODE_TAB, ID);
 
     private PockyModsTab() {

@@ -1,11 +1,8 @@
 package com.pockyl.inventorybackups.gametest;
 
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.storage.BackupStore;
@@ -28,8 +25,6 @@ import static com.pockyl.inventorybackups.gametest.TestStores.slots;
 /**
  * Thinning by age, the newest-entry guarantee, disk budgets and cleanup of empty folders.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class RetentionTests {
     private static final long MINUTE = 60_000L;
     private static final long DAY = 24 * 60 * MINUTE;
@@ -39,7 +34,7 @@ public final class RetentionTests {
     private RetentionTests() {
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void oldEntriesAreThinned(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {
@@ -83,7 +78,7 @@ public final class RetentionTests {
         }
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void newestStateSurvivesInactivity(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {
@@ -102,7 +97,7 @@ public final class RetentionTests {
         }
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void budgetsDeleteOldestDays(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {
@@ -126,7 +121,7 @@ public final class RetentionTests {
         }
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void emptyFoldersAreRemoved(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {

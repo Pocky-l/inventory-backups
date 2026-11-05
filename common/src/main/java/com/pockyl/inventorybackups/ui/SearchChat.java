@@ -1,5 +1,6 @@
 package com.pockyl.inventorybackups.ui;
 
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.HolderLookup;
@@ -94,7 +95,7 @@ public final class SearchChat {
             String key = flow.type() == FlowType.PUT ? "inventorybackups.search.put" : "inventorybackups.search.took";
             source.sendSystemMessage(Component.literal(EntrySelector.display(flow.time()) + " ").withStyle(ChatFormatting.GRAY)
                     .append(tr(key, player(name(server, flow.player(), flow.playerName()), flow.time()), flow.count(),
-                            item(server.registryAccess(), flow.item(), flow.item().getString("id"), null))
+                            item(server.registryAccess(), flow.item(), flow.item().getStringOr("id", ""), null))
                             .withStyle(flow.type() == FlowType.PUT ? ChatFormatting.GREEN : ChatFormatting.RED)));
         }
         source.sendSystemMessage(ChatUI.rule());
@@ -138,7 +139,7 @@ public final class SearchChat {
         MutableComponent label = stack.isEmpty() ? Component.literal(itemId) : stack.getHoverName().copy();
         MutableComponent text = Component.literal("[").append(label).append("]").withStyle(ChatFormatting.WHITE);
         if (!stack.isEmpty()) {
-            text.withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemStackInfo(stack))));
+            text.withStyle(style -> style.withHoverEvent(new HoverEvent.ShowItem(stack)));
         }
         if (fingerprint != null) {
             text.append(ChatUI.button("[⌕]", ChatFormatting.LIGHT_PURPLE, "/invsearch trace " + fingerprint,
@@ -152,8 +153,8 @@ public final class SearchChat {
         if (!stored.isEmpty()) {
             return stored;
         }
-        if (server.getProfileCache() != null) {
-            return server.getProfileCache().get(player).map(profile -> profile.getName()).orElse(player.toString());
+        if (true) {
+            return server.services().nameToIdCache().get(player).map(NameAndId::name).orElse(player.toString());
         }
         return player.toString();
     }

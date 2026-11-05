@@ -4,7 +4,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.animal.nautilus.AbstractNautilus;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import org.objectweb.asm.Opcodes;
@@ -54,6 +55,11 @@ abstract class ServerPlayerMixin {
 
     @Inject(method = "openHorseInventory", at = @At("TAIL"))
     private void inventorybackups$openedHorse(AbstractHorse horse, Container inventory, CallbackInfo info) {
+        CommonEvents.containerOpened(inventorybackups$self(), inventorybackups$self().containerMenu);
+    }
+
+    @Inject(method = "openNautilusInventory", at = @At("TAIL"))
+    private void inventorybackups$openedNautilus(AbstractNautilus nautilus, Container inventory, CallbackInfo info) {
         CommonEvents.containerOpened(inventorybackups$self(), inventorybackups$self().containerMenu);
     }
 

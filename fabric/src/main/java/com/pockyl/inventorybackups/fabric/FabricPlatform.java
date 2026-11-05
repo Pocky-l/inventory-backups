@@ -8,6 +8,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -47,6 +48,11 @@ public final class FabricPlatform implements Platform {
         // A new copy each time: FakePlayer.get would hand out one cached player per profile.
         return new FakePlayer(level, profile) {
         };
+    }
+
+    @Override
+    public void playerLoaded(ServerPlayer player, MinecraftServer server) {
+        // Fabric has no event for it; mods read their player data from the loaded tag itself.
     }
 
     @Override

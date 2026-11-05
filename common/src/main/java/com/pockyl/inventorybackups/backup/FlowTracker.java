@@ -95,6 +95,6 @@ public final class FlowTracker {
     }
 
     private static String dimension(ServerPlayer player) {
-        return player.level().dimension().location().toString();
+        return player.level().dimension().identifier().toString();
     }
 }

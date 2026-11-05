@@ -1,7 +1,5 @@
 package com.pockyl.inventorybackups.gametest;
 
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -10,8 +8,6 @@ import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.BackupKind;
@@ -37,8 +33,6 @@ import java.util.function.BiConsumer;
  * The slots of other mods, through a provider of this test: numbering, change detection, restores into changed slot
  * layouts, deaths that empty the slots early and the chat preview.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class ModSlotTests {
     private static final int TIMEOUT = 400;
     private static final TestSlots SLOTS = new TestSlots();
@@ -62,7 +56,7 @@ public final class ModSlotTests {
     }
 
     /** A slot keeps its number for the world, also after a restart, and numbers are never handed out twice. */
-    @GameTest(template = "empty")
+    @ModTest
     public static void slotNumbersAreStable(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {
@@ -86,7 +80,7 @@ public final class ModSlotTests {
     }
 
     /** Mod slots have no change events: the periodic scan finds the change, and a restore puts the item back. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void modSlotsAreRecordedAndRestored(GameTestHelper helper) {
         ServerPlayer player = TestPlayers.join(helper);
         UUID uuid = player.getUUID();
@@ -111,7 +105,7 @@ public final class ModSlotTests {
     }
 
     /** A stored item whose slot is gone (the slot type shrank or its mod was removed) goes into the inventory. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void itemsOfMissingSlotsGoToTheInventory(GameTestHelper helper) {
         ServerPlayer player = TestPlayers.join(helper);
         UUID uuid = player.getUUID();
@@ -137,7 +131,7 @@ public final class ModSlotTests {
     }
 
     /** Items a mod moves out of its slots during the death are still in the death entry. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void deathsKeepModSlots(GameTestHelper helper) {
         ServerPlayer player = TestPlayers.join(helper);
         UUID uuid = player.getUUID();
@@ -147,12 +141,12 @@ public final class ModSlotTests {
                 .thenWaitUntil(() -> helper.assertTrue(!TestPlayers.entries(uuid).isEmpty(), "No join entry"))
                 .thenExecute(() -> {
                     SLOTS.players.get(uuid).put("charm/0", new ItemStack(Items.HEART_OF_THE_SEA));
-                    player.kill();
+                    player.kill(player.level());
                     helper.assertTrue(SLOTS.players.get(uuid).get("charm/0").isEmpty(), "Test listener did not empty the slot");
                 })
                 .thenWaitUntil(() -> {
                     Entry death = TestPlayers.entries(uuid).stream().filter(e -> e.trigger() == Trigger.DEATH).findFirst()
-                            .orElseThrow(() -> new GameTestAssertException("No death entry"));
+                            .orElseThrow(() -> GameTests.failure("No death entry"));
                     BackupStore store = TestPlayers.store();
                     StateView state = store.call(() -> store.stateAt(uuid, death.time())).join().orElseThrow();
                     helper.assertTrue(itemInSlot(state, "test:charm/0").is(Items.HEART_OF_THE_SEA), "Mod slot missing from the death");
@@ -165,7 +159,7 @@ public final class ModSlotTests {
     }
 
     /** The chat preview shows mod slots after the offhand. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void previewShowsModSlots(GameTestHelper helper) {
         ServerPlayer player = TestPlayers.join(helper);
         UUID uuid = player.getUUID();
@@ -189,7 +183,7 @@ public final class ModSlotTests {
 
     private static StateView latest(UUID player) {
         BackupStore store = TestPlayers.store();
-        return store.call(() -> store.latest(player)).join().orElseThrow(() -> new GameTestAssertException("No state stored"));
+        return store.call(() -> store.latest(player)).join().orElseThrow(() -> GameTests.failure("No state stored"));
     }
 
     /** Slots {@code charm/<index>} for the test players that asked for them; other players have none. */

@@ -1,6 +1,6 @@
 package com.pockyl.inventorybackups.fabric;
 
-import fuzs.forgeconfigapiport.fabric.api.neoforge.v4.NeoForgeConfigRegistry;
+import fuzs.forgeconfigapiport.fabric.api.v5.ConfigRegistry;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
@@ -23,7 +23,7 @@ import com.pockyl.inventorybackups.event.CommonEvents;
 public final class InventoryBackupsFabric implements ModInitializer {
     @Override
     public void onInitialize() {
-        NeoForgeConfigRegistry.INSTANCE.register(InventoryBackups.MOD_ID, ModConfig.Type.COMMON, Config.SPEC, InventoryBackups.CONFIG_FILE);
+        ConfigRegistry.INSTANCE.register(InventoryBackups.MOD_ID, ModConfig.Type.COMMON, Config.SPEC, InventoryBackups.CONFIG_FILE);
         FabricNetwork.register();
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registries, environment) -> CommonEvents.registerCommands(dispatcher));

@@ -6,6 +6,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
@@ -67,6 +68,11 @@ public final class NeoForgePlatform implements Platform {
     @Override
     public ServerPlayer createFakePlayer(ServerLevel level, GameProfile profile) {
         return new FakePlayer(level, profile);
+    }
+
+    @Override
+    public void playerLoaded(ServerPlayer player, MinecraftServer server) {
+        EventHooks.firePlayerLoadingEvent(player, server.getPlayerList(), player.getStringUUID());
     }
 
     @Override

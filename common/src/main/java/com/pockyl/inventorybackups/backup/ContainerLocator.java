@@ -2,7 +2,7 @@ package com.pockyl.inventorybackups.backup;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
@@ -65,8 +65,8 @@ public final class ContainerLocator {
                 return new Location(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString(), entity.blockPosition());
             }
         }
-        if (clicked != null && player.serverLevel().getGameTime() - clickTick <= CLICK_TICKS) {
-            ResourceLocation block = BuiltInRegistries.BLOCK.getKey(player.serverLevel().getBlockState(clicked).getBlock());
+        if (clicked != null && player.level().getGameTime() - clickTick <= CLICK_TICKS) {
+            Identifier block = BuiltInRegistries.BLOCK.getKey(player.level().getBlockState(clicked).getBlock());
             return new Location(block.toString(), clicked);
         }
         return new Location(menuId(menu), player.blockPosition());
@@ -78,7 +78,7 @@ public final class ContainerLocator {
 
     private static String menuId(AbstractContainerMenu menu) {
         try {
-            ResourceLocation id = BuiltInRegistries.MENU.getKey(menu.getType());
+            Identifier id = BuiltInRegistries.MENU.getKey(menu.getType());
             return id == null ? "unknown" : id.toString();
         } catch (UnsupportedOperationException e) {
             // Menus without a registered type (the player's own inventory) throw instead of returning null.

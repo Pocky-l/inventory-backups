@@ -1,11 +1,8 @@
 package com.pockyl.inventorybackups.gametest;
 
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.server.permission.PermissionAPI;
 
 import com.pockyl.inventorybackups.Config;
@@ -15,13 +12,11 @@ import com.pockyl.inventorybackups.permission.Permissions;
 /**
  * Permission nodes: registered with the PermissionAPI and falling back to the operator level without a permission mod.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class PermissionTests {
     private PermissionTests() {
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void nodesFallBackToOperatorLevel(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
         ServerPlayer player = TestPlayers.join(helper);

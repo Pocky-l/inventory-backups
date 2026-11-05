@@ -2,6 +2,8 @@ package com.pockyl.inventorybackups.storage;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
@@ -37,7 +39,7 @@ public final class NbtHash {
         hasher.putByte(tag.getId());
         switch (tag) {
             case CompoundTag compound -> {
-                List<String> keys = new ArrayList<>(compound.getAllKeys());
+                List<String> keys = new ArrayList<>(compound.keySet());
                 keys.sort(null);
                 hasher.putInt(keys.size());
                 for (String key : keys) {
@@ -62,13 +64,14 @@ public final class NbtHash {
                     hasher.putLong(value);
                 }
             }
-            case ByteTag value -> hasher.putByte(value.getAsByte());
-            case ShortTag value -> hasher.putShort(value.getAsShort());
-            case IntTag value -> hasher.putInt(value.getAsInt());
-            case LongTag value -> hasher.putLong(value.getAsLong());
-            case FloatTag value -> hasher.putFloat(value.getAsFloat());
-            case DoubleTag value -> hasher.putDouble(value.getAsDouble());
-            default -> hasher.putString(tag.getAsString(), StandardCharsets.UTF_8);
+            case ByteTag value -> hasher.putByte(value.byteValue());
+            case ShortTag value -> hasher.putShort(value.shortValue());
+            case IntTag value -> hasher.putInt(value.intValue());
+            case LongTag value -> hasher.putLong(value.longValue());
+            case FloatTag value -> hasher.putFloat(value.floatValue());
+            case DoubleTag value -> hasher.putDouble(value.doubleValue());
+            case StringTag value -> hasher.putString(value.value(), StandardCharsets.UTF_8);
+            default -> hasher.putString(tag.toString(), StandardCharsets.UTF_8);
         }
     }
 }

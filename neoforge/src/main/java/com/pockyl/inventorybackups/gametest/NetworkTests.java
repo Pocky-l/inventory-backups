@@ -6,8 +6,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -16,8 +14,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.network.connection.ConnectionType;
 
 import com.pockyl.inventorybackups.Config;
@@ -36,13 +32,11 @@ import java.util.UUID;
 /**
  * Payload codecs and the server side of the admin screen: permission checks, validation and answers.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class NetworkTests {
     private NetworkTests() {
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void payloadsSurviveTheWire(GameTestHelper helper) {
         ItemStack named = new ItemStack(Items.DIAMOND_PICKAXE);
         named.set(DataComponents.CUSTOM_NAME, Component.literal("Digger"));
@@ -70,7 +64,7 @@ public final class NetworkTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", timeoutTicks = 200)
+    @ModTest(timeoutTicks = 200)
     public static void requestsArePermissionChecked(GameTestHelper helper) {
         ServerPlayer admin = TestPlayers.join(helper);
         List<CustomPacketPayload> received = new ArrayList<>();
@@ -130,7 +124,7 @@ public final class NetworkTests {
                 }
             }
         }
-        throw new GameTestAssertException("No " + type.getSimpleName() + " for request " + id);
+        throw GameTests.failure("No " + type.getSimpleName() + " for request " + id);
     }
 
     private static <T> T roundTrip(GameTestHelper helper, StreamCodec<RegistryFriendlyByteBuf, T> codec, T value) {

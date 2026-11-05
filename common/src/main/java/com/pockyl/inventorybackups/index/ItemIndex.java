@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -273,22 +274,22 @@ public final class ItemIndex implements BackupStore.Listener {
         }
         try {
             CompoundTag root = LogFile.readCompound(file);
-            if (root.getInt("v") != VERSION) {
+            if (root.getIntOr("v", 0) != VERSION) {
                 return false;
             }
             keys.clear();
-            watermark = root.getLong("t");
-            for (Tag tag : root.getList("k", Tag.TAG_COMPOUND)) {
+            watermark = root.getLongOr("t", 0L);
+            for (Tag tag : root.getListOrEmpty("k")) {
                 CompoundTag key = (CompoundTag) tag;
                 List<String> enchantments = new ArrayList<>();
-                for (Tag enchantment : key.getList("e", Tag.TAG_STRING)) {
-                    enchantments.add(enchantment.getAsString());
+                for (Tag enchantment : key.getListOrEmpty("e")) {
+                    enchantment.asString().ifPresent(enchantments::add);
                 }
-                KeyEntry entry = new KeyEntry(key.getString("k"), key.getString("i"), key.contains("n") ? key.getString("n") : null,
-                        List.copyOf(enchantments), key.contains("s") ? key.getCompound("s") : null);
-                for (Tag holder : key.getList("h", Tag.TAG_COMPOUND)) {
+                KeyEntry entry = new KeyEntry(key.getStringOr("k", ""), key.getStringOr("i", ""), key.contains("n") ? key.getStringOr("n", "") : null,
+                        List.copyOf(enchantments), key.contains("s") ? key.getCompoundOrEmpty("s") : null);
+                for (Tag holder : key.getListOrEmpty("h")) {
                     CompoundTag presence = (CompoundTag) holder;
-                    entry.holders.put(presence.getUUID("u"), Presence.load(presence));
+                    entry.holders.put(presence.read("u", UUIDUtil.CODEC).orElseThrow(), Presence.load(presence));
                 }
                 keys.put(entry.key(), entry);
             }
@@ -322,7 +323,7 @@ public final class ItemIndex implements BackupStore.Listener {
             ListTag holders = new ListTag();
             entry.holders().forEach((uuid, presence) -> {
                 CompoundTag holder = presence.save();
-                holder.putUUID("u", uuid);
+                holder.store("u", UUIDUtil.CODEC, uuid);
                 holders.add(holder);
             });
             key.put("h", holders);

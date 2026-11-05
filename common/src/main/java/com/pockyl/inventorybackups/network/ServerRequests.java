@@ -1,11 +1,11 @@
 package com.pockyl.inventorybackups.network;
 
-import com.mojang.authlib.GameProfile;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
@@ -14,11 +14,11 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +122,7 @@ public final class ServerRequests {
         String filter = request.filter().toLowerCase(Locale.ROOT).trim();
         int max = Config.MAX_RESULTS.get();
         query(admin, request.id(), Permissions.VIEW, BackupStore::playerInfos, infos -> {
-            MinecraftServer server = admin.server;
+            MinecraftServer server = admin.level().getServer();
             Map<UUID, PlayerRow> rows = new HashMap<>();
             for (PlayerInfo info : infos) {
                 String name = SearchChat.name(server, info.uuid(), info.name());
@@ -163,7 +163,7 @@ public final class ServerRequests {
     }
 
     public static void state(Payloads.StateRequest request, ServerPlayer admin) {
-        RegistryAccess registries = admin.server.registryAccess();
+        RegistryAccess registries = admin.level().getServer().registryAccess();
         query(admin, request.id(), Permissions.VIEW, store -> {
             Optional<StateView> found = store.stateAt(request.player(), request.time());
             if (found.isEmpty()) {
@@ -195,7 +195,7 @@ public final class ServerRequests {
 
     /** Adds the mod slots the player has now (read on the main thread), so the screen can show empty ones too. */
     private static Payloads.StateResponse withLiveSlots(ServerPlayer admin, Payloads.StateResponse response) {
-        ServerPlayer player = admin.server.getPlayerList().getPlayer(response.player());
+        ServerPlayer player = admin.level().getServer().getPlayerList().getPlayer(response.player());
         BackupStore store = BackupService.store();
         if (player == null || store == null || !ModSlots.any()) {
             return response;
@@ -298,14 +298,14 @@ public final class ServerRequests {
             }
             case TELEPORT -> {
                 EntryContext context = state.entry().context();
-                ResourceLocation dimension = ResourceLocation.tryParse(context.dimension());
-                ServerLevel level = dimension == null ? null : admin.server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
+                Identifier dimension = Identifier.tryParse(context.dimension());
+                ServerLevel level = dimension == null ? null : admin.level().getServer().getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
                 if (level == null) {
                     notice(admin, request.id(), false, tr("inventorybackups.ui.no_position"));
                     return;
                 }
                 BlockPos pos = context.pos();
-                admin.teleportTo(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, admin.getYRot(), admin.getXRot());
+                admin.teleportTo(level, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, Set.of(), admin.getYRot(), admin.getXRot(), true);
                 notice(admin, request.id(), true, tr("inventorybackups.ui.teleported", ChatPosition.of(context)));
             }
             default -> {
@@ -340,7 +340,7 @@ public final class ServerRequests {
             return;
         }
         ItemIndex index = BackupService.index();
-        RegistryAccess registries = admin.server.registryAccess();
+        RegistryAccess registries = admin.level().getServer().registryAccess();
         long now = System.currentTimeMillis();
         long since = request.since() > 0 ? now - request.since() : 0;
         SearchService.Options options = new SearchService.Options(request.player(), since, since, Math.max(0, request.at()),
@@ -397,7 +397,7 @@ public final class ServerRequests {
             } else if (!admin.hasDisconnected()) {
                 then.accept(result);
             }
-        }, admin.server);
+        }, admin.level().getServer());
     }
 
     private static boolean check(ServerPlayer admin, int id, Permissions.Node node) {
@@ -414,13 +414,12 @@ public final class ServerRequests {
      */
     @Nullable
     private static ServerPlayer editable(ServerPlayer admin, int id, UUID target) {
-        ServerPlayer online = admin.server.getPlayerList().getPlayer(target);
+        ServerPlayer online = admin.level().getServer().getPlayerList().getPlayer(target);
         if (online != null) {
             return online;
         }
-        GameProfileCache cache = admin.server.getProfileCache();
-        String name = cache == null ? target.toString() : cache.get(target).map(GameProfile::getName).orElse(target.toString());
-        Optional<ServerPlayer> offline = OfflinePlayers.acquire(admin.server, target, name);
+        String name = admin.level().getServer().services().nameToIdCache().get(target).map(NameAndId::name).orElse(target.toString());
+        Optional<ServerPlayer> offline = OfflinePlayers.acquire(admin.level().getServer(), target, name);
         if (offline.isEmpty()) {
             notice(admin, id, false, tr("inventorybackups.error.no_save_file", name));
         }
@@ -429,7 +428,7 @@ public final class ServerRequests {
 
     @Nullable
     private static ServerPlayer online(ServerPlayer admin, int id, UUID target) {
-        ServerPlayer player = admin.server.getPlayerList().getPlayer(target);
+        ServerPlayer player = admin.level().getServer().getPlayerList().getPlayer(target);
         if (player == null) {
             notice(admin, id, false, tr("inventorybackups.ui.offline"));
         }
@@ -535,8 +534,8 @@ public final class ServerRequests {
         }
 
         static String of(EntryContext context) {
-            ResourceLocation id = ResourceLocation.tryParse(context.dimension());
-            boolean vanilla = id != null && id.getNamespace().equals(ResourceLocation.DEFAULT_NAMESPACE);
+            Identifier id = Identifier.tryParse(context.dimension());
+            boolean vanilla = id != null && id.getNamespace().equals(Identifier.DEFAULT_NAMESPACE);
             String dimension = vanilla ? id.getPath() : context.dimension();
             return dimension + " " + context.pos().getX() + " " + context.pos().getY() + " " + context.pos().getZ();
         }

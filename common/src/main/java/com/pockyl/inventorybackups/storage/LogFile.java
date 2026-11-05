@@ -68,14 +68,14 @@ public final class LogFile {
         Frames frames = readFrames(file);
         DayLog log = new DayLog(day, 0);
         if (!frames.frames().isEmpty()) {
-            log.setThin(frames.frames().get(0).getInt("thin"));
+            log.setThin(frames.frames().get(0).getIntOr("thin", 0));
         }
         for (CompoundTag frame : frames.frames()) {
-            for (Tag item : frame.getList("p", Tag.TAG_COMPOUND)) {
+            for (Tag item : frame.getListOrEmpty("p")) {
                 CompoundTag pooled = (CompoundTag) item;
-                log.addToPool(pooled.getLong("h"), pooled.getCompound("i"));
+                log.addToPool(pooled.getLongOr("h", 0L), pooled.getCompoundOrEmpty("i"));
             }
-            for (Tag entry : frame.getList("e", Tag.TAG_COMPOUND)) {
+            for (Tag entry : frame.getListOrEmpty("e")) {
                 log.addEntry(Entry.load((CompoundTag) entry));
             }
         }
@@ -144,7 +144,7 @@ public final class LogFile {
                     try {
                         CompoundTag frame = NbtIo.read(new DataInputStream(new ByteArrayInputStream(inflate(payload.array()))),
                                 NbtAccounter.unlimitedHeap());
-                        thin = frame.getInt("thin");
+                        thin = frame.getIntOr("thin", 0);
                     } catch (DataFormatException e) {
                         break;
                     }

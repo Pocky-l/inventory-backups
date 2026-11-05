@@ -48,7 +48,7 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
     TrackedPlayer(ServerPlayer player) {
         this.player = player;
         // Spread the scans of different players over the interval instead of running them all in one tick.
-        this.nextScan = player.server.getTickCount() + Math.floorMod(player.getUUID().hashCode(), 100);
+        this.nextScan = player.level().getServer().getTickCount() + Math.floorMod(player.getUUID().hashCode(), 100);
         bind();
     }
 
@@ -61,7 +61,7 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
         unbind();
         player = newPlayer;
         bind();
-        markDirty(player.server.getTickCount());
+        markDirty(player.level().getServer().getTickCount());
     }
 
     private void bind() {
@@ -114,7 +114,7 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
             Container container = menu.getSlot(slotIndex).container;
             if (container == player.getInventory()) {
                 if (Config.TICK_SAVE_ENABLED.get()) {
-                    markDirty(player.server.getTickCount());
+                    markDirty(player.level().getServer().getTickCount());
                 }
             } else if (container == player.getEnderChestInventory()) {
                 enderChanged();
@@ -136,7 +136,7 @@ final class TrackedPlayer implements ContainerListener, net.minecraft.world.Cont
 
     private void enderChanged() {
         if (Config.ENDER_CHEST_ENABLED.get() && Config.ENDER_CHEST_TICK_SAVE_ENABLED.get()) {
-            markDirty(player.server.getTickCount());
+            markDirty(player.level().getServer().getTickCount());
         }
     }
 

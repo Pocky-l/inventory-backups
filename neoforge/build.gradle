@@ -93,7 +93,7 @@ idea {
 
 publishMods {
     file = tasks.named('jar', Jar).flatMap { it.archiveFile }
-    displayName = "${mod_name} ${mod_version} (NeoForge)"
+    displayName = "${mod_name} ${mod_version}+${minecraft_version} (NeoForge)"
     modLoaders.add('neoforge')
 
     curseforge {

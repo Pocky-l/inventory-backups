@@ -173,8 +173,8 @@ public final class LegacyImporter {
                 }
                 int index = item.get("index").getAsInt();
                 try {
-                    CompoundTag tag = TagParser.parseTag(item.get("nbt").getAsString());
-                    ItemStack stack = ItemStack.parseOptional(store.registries(), tag);
+                    CompoundTag tag = TagParser.parseCompoundFully(item.get("nbt").getAsString());
+                    ItemStack stack = ItemCodec.parse(store.registries(), tag);
                     if (!stack.isEmpty()) {
                         items.put(index, stack);
                     }

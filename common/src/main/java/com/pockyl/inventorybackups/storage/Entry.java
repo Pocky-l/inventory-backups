@@ -31,13 +31,13 @@ public record Entry(long time, Trigger trigger, EntryContext context, boolean ke
     }
 
     static Entry load(CompoundTag tag) {
-        int[] slots = tag.getIntArray("s");
-        int[] refs = tag.getIntArray("r");
-        int[] counts = tag.getIntArray("n");
+        int[] slots = tag.getIntArray("s").orElseGet(() -> new int[0]);
+        int[] refs = tag.getIntArray("r").orElseGet(() -> new int[0]);
+        int[] counts = tag.getIntArray("n").orElseGet(() -> new int[0]);
         if (refs.length != slots.length || counts.length != slots.length) {
             throw new IllegalStateException("Corrupt entry at " + tag.getLong("t"));
         }
-        return new Entry(tag.getLong("t"), Trigger.byId(tag.getByte("g")), EntryContext.load(tag.getCompound("x")),
-                tag.getBoolean("k"), tag.getInt("c"), slots, refs, counts);
+        return new Entry(tag.getLongOr("t", 0L), Trigger.byId(tag.getByteOr("g", (byte) 0)), EntryContext.load(tag.getCompoundOrEmpty("x")),
+                tag.getBooleanOr("k", false), tag.getIntOr("c", 0), slots, refs, counts);
     }
 }

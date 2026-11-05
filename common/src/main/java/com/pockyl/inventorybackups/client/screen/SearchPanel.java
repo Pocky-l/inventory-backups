@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -102,11 +102,11 @@ final class SearchPanel {
             suggestions = List.of();
             return;
         }
-        Iterable<ResourceLocation> ids = mode == Mode.ENCHANTMENT && screen.mc().level != null
-                ? screen.mc().level.registryAccess().registryOrThrow(Registries.ENCHANTMENT).keySet()
+        Iterable<Identifier> ids = mode == Mode.ENCHANTMENT && screen.mc().level != null
+                ? screen.mc().level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).keySet()
                 : BuiltInRegistries.ITEM.keySet();
         List<String> found = new ArrayList<>();
-        for (ResourceLocation id : ids) {
+        for (Identifier id : ids) {
             String full = id.toString();
             if (id.getPath().contains(text) || full.startsWith(text)) {
                 found.add(full);
@@ -179,8 +179,7 @@ final class SearchPanel {
         renderTrail(g, font, itemsWidth + holdersWidth, columnTop, vw - itemsWidth - holdersWidth, mx, my);
 
         if (showSuggestions && field.isFocused() && !suggestions.isEmpty()) {
-            g.pose().pushPose();
-            g.pose().translate(0, 0, 300);
+            g.nextStratum();
             int sy = y + 23;
             Theme.box(g, 8, sy, 220, suggestions.size() * 18 + 2, Theme.FIELD, Theme.ACCENT);
             for (int i = 0; i < suggestions.size(); i++) {
@@ -191,14 +190,13 @@ final class SearchPanel {
                     g.fill(9, ry, 227, ry + 18, Theme.ACCENT_DIM);
                 }
                 if (mode == Mode.ITEM) {
-                    BuiltInRegistries.ITEM.getOptional(ResourceLocation.tryParse(id)).ifPresent(item -> g.renderItem(new ItemStack(item),
+                    BuiltInRegistries.ITEM.getOptional(Identifier.tryParse(id)).ifPresent(item -> g.renderItem(new ItemStack(item),
                             11, ry + 1));
                 }
                 Theme.text(g, font, Component.literal(idPath(id)), 31, ry + 5, 150, on ? Theme.TEXT : Theme.MUTED);
                 int colon = id.indexOf(':');
                 Theme.textRight(g, font, Component.literal(colon < 0 ? "" : id.substring(0, colon)), 224, ry + 5, Theme.FAINT);
             }
-            g.pose().popPose();
         }
     }
 
@@ -423,7 +421,8 @@ final class SearchPanel {
     }
 
     private int sc(int virtual) {
-        return Math.round(virtual * screen.scale);
+        // Since 1.21.6 the scissor box goes through the pose, which already holds the screen scale.
+        return virtual;
     }
 
     boolean mouseClicked(double mx, double my, int button) {
@@ -435,7 +434,7 @@ final class SearchPanel {
         }
         if (my >= y + 6 && my < y + 22 && mx >= 8 && mx < 228) {
             field.setFocused(true);
-            field.mouseClicked(mx, my, button);
+            field.mouseClicked(Inputs.click(mx, my, button), false);
             return true;
         }
         field.setFocused(false);
@@ -562,7 +561,7 @@ final class SearchPanel {
             }
             default -> {
                 String before = field.getValue();
-                boolean handled = field.keyPressed(keyCode, scanCode, modifiers);
+                boolean handled = field.keyPressed(Inputs.key(keyCode, scanCode, modifiers));
                 if (!before.equals(field.getValue())) {
                     updateSuggestions();
                 }
@@ -571,11 +570,11 @@ final class SearchPanel {
         }
     }
 
-    boolean charTyped(char codePoint, int modifiers) {
+    boolean charTyped(int codePoint, int modifiers) {
         if (!field.isFocused()) {
             return false;
         }
-        boolean handled = field.charTyped(codePoint, modifiers);
+        boolean handled = field.charTyped(Inputs.character(codePoint, modifiers));
         updateSuggestions();
         return handled;
     }

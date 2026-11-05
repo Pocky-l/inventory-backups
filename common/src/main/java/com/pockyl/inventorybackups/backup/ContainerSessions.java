@@ -74,7 +74,7 @@ final class ContainerSessions {
             }
             if (type != null) {
                 flows.add(new FlowDraft(time, type, player.getUUID(), player.getScoreboardName(), prototype.copyWithCount(count),
-                        player.level().dimension().location().toString(), player.blockPosition(), null, null, location.id(),
+                        player.level().dimension().identifier().toString(), player.blockPosition(), null, null, location.id(),
                         location.pos()));
             }
         }

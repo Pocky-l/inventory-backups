@@ -3,15 +3,12 @@ package com.pockyl.inventorybackups.gametest;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.index.ItemIndex;
@@ -32,15 +29,13 @@ import static com.pockyl.inventorybackups.gametest.TestStores.slots;
 /**
  * The item index: holders over time, fingerprints that survive wear, names and enchantments, persistence and rebuild.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class IndexTests {
     private static final long T0 = 1_760_000_000_000L;
 
     private IndexTests() {
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void holdersAreTrackedOverTime(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {
@@ -62,7 +57,7 @@ public final class IndexTests {
         }
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void indexIsSavedAndRebuilt(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         BackupStore reopened = null;

@@ -1,7 +1,5 @@
 package com.pockyl.inventorybackups.gametest;
 
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -9,8 +7,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.storage.LevelResource;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.OfflinePlayers;
@@ -30,8 +26,6 @@ import java.util.UUID;
 /**
  * Restoring and editing players who are offline, through their save file.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class OfflineTests {
     private static final int TIMEOUT = 400;
 
@@ -39,7 +33,7 @@ public final class OfflineTests {
     }
 
     /** A restore of an offline player lands in their save file and is recorded with a restore marker. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void offlinePlayersCanBeRestored(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
         ServerPlayer player = TestPlayers.join(helper);
@@ -58,7 +52,7 @@ public final class OfflineTests {
                     // Logging out saves the player file with the dirt.
                     server.getPlayerList().remove(player);
                     ServerPlayer offline = OfflinePlayers.acquire(server, uuid, name)
-                            .orElseThrow(() -> new GameTestAssertException("Offline player not loaded"));
+                            .orElseThrow(() -> GameTests.failure("Offline player not loaded"));
                     helper.assertTrue(offline.getInventory().getItem(0).is(Items.DIRT), "Save file not loaded");
                     Restorer.restore(offline, saved[0], true, false, "Admin");
                     OfflinePlayers.release(offline);
@@ -77,7 +71,7 @@ public final class OfflineTests {
     }
 
     /** The live editor works on the save file of an offline player and records the edit. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void offlinePlayersCanBeEdited(GameTestHelper helper) {
         MinecraftServer server = helper.getLevel().getServer();
         ServerPlayer admin = TestPlayers.join(helper);
@@ -116,7 +110,7 @@ public final class OfflineTests {
     }
 
     /** Players without a save file cannot be loaded. */
-    @GameTest(template = "empty")
+    @ModTest
     public static void unknownPlayersAreRefused(GameTestHelper helper) {
         UUID stranger = UUID.randomUUID();
         MinecraftServer server = helper.getLevel().getServer();
@@ -127,7 +121,7 @@ public final class OfflineTests {
 
     private static StateView latest(UUID player) {
         BackupStore store = TestPlayers.store();
-        return store.call(() -> store.latest(player)).join().orElseThrow(() -> new GameTestAssertException("No state stored"));
+        return store.call(() -> store.latest(player)).join().orElseThrow(() -> GameTests.failure("No state stored"));
     }
 
     /** Deletes the backups and the save file of a test player who already left. */

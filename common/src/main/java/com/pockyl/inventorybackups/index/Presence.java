@@ -100,11 +100,11 @@ public final class Presence {
 
     static Presence load(CompoundTag tag) {
         Presence presence = new Presence();
-        presence.first = tag.getLong("f");
-        presence.last = tag.getLong("l");
-        presence.count = tag.getInt("c");
-        presence.max = tag.getInt("m");
-        long[] ranges = tag.getLongArray("r");
+        presence.first = tag.getLongOr("f", 0L);
+        presence.last = tag.getLongOr("l", 0L);
+        presence.count = tag.getIntOr("c", 0);
+        presence.max = tag.getIntOr("m", 0);
+        long[] ranges = tag.getLongArray("r").orElseGet(() -> new long[0]);
         if (ranges.length % 2 == 0) {
             presence.ranges.addElements(0, ranges);
         }

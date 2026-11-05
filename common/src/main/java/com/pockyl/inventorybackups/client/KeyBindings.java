@@ -3,7 +3,9 @@ package com.pockyl.inventorybackups.client;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
+import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.platform.ClientPlatform;
 
 /**
@@ -12,7 +14,8 @@ import com.pockyl.inventorybackups.platform.ClientPlatform;
  */
 public final class KeyBindings {
     public static final String OPEN_NAME = "key.inventorybackups.open";
-    public static final String CATEGORY = "key.categories.inventorybackups";
+    /** Shown as {@code key.category.inventorybackups.main}. */
+    public static final Identifier CATEGORY = InventoryBackups.id("main");
     public static final KeyMapping OPEN = ClientPlatform.INSTANCE.createOpenKey();
 
     private KeyBindings() {

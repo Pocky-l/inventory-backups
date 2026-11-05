@@ -120,7 +120,7 @@ public final class ChangeTracker {
     public static void onRightClickBlock(ServerPlayer player, BlockPos pos) {
         TrackedPlayer tracked = PLAYERS.get(player.getUUID());
         if (tracked != null) {
-            tracked.rememberClick(pos, player.serverLevel().getGameTime());
+            tracked.rememberClick(pos, player.level().getGameTime());
         }
     }
 

@@ -4,6 +4,14 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0+1.21.11] - 2026-11-05
+### Added
+- A version for Minecraft 1.21.11, for [NeoForge](https://neoforged.net/) and [Fabric](https://fabricmc.net/) (with
+  [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api) and
+  [Forge Config API Port](https://www.curseforge.com/minecraft/mc-mods/forge-config-api-port)), with everything of 3.2.0.
+- A server moved from Minecraft 1.21.1 keeps its backups: items stored in the old format are updated when they are
+  read, with their names and enchantments.
+
 ## [3.2.0-fabric] - 2026-11-05
 ### Added
 - A Fabric version for Minecraft 1.21.1, with the same backups, timeline, item search, commands and admin screen as

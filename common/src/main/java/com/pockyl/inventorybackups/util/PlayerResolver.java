@@ -1,9 +1,8 @@
 package com.pockyl.inventorybackups.util;
 
-import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.server.players.NameAndId;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.backup.BackupService;
@@ -37,16 +36,14 @@ public final class PlayerResolver {
             if (byUuid != null) {
                 return Optional.of(new ResolvedPlayer(uuid, byUuid.getScoreboardName(), byUuid));
             }
-            GameProfileCache cache = server.getProfileCache();
-            String known = cache == null ? null : cache.get(uuid).map(GameProfile::getName).orElse(null);
+            String known = server.services().nameToIdCache().get(uuid).map(NameAndId::name).orElse(null);
             return Optional.of(new ResolvedPlayer(uuid, known == null ? name : known, null));
         }
         ServerPlayer online = server.getPlayerList().getPlayerByName(name);
         if (online != null) {
             return Optional.of(new ResolvedPlayer(online.getUUID(), online.getScoreboardName(), online));
         }
-        GameProfileCache cache = server.getProfileCache();
-        Optional<ResolvedPlayer> cached = cache == null ? Optional.empty() : cache.get(name).map(PlayerResolver::offline);
+        Optional<ResolvedPlayer> cached = server.services().nameToIdCache().get(name).map(PlayerResolver::offline);
         if (cached.isPresent()) {
             return cached;
         }
@@ -68,7 +65,7 @@ public final class PlayerResolver {
         }
     }
 
-    private static ResolvedPlayer offline(GameProfile profile) {
-        return new ResolvedPlayer(profile.getId(), profile.getName(), null);
+    private static ResolvedPlayer offline(NameAndId profile) {
+        return new ResolvedPlayer(profile.id(), profile.name(), null);
     }
 }

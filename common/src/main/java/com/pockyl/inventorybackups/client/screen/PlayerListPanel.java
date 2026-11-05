@@ -198,7 +198,8 @@ final class PlayerListPanel {
     }
 
     private int sc(int virtual) {
-        return Math.round(virtual * screen.scale);
+        // Since 1.21.6 the scissor box goes through the pose, which already holds the screen scale.
+        return virtual;
     }
 
     boolean mouseClicked(double mx, double my, int button) {
@@ -209,7 +210,7 @@ final class PlayerListPanel {
         }
         if (my >= y + 6 && my < y + 22) {
             field.setFocused(true);
-            field.mouseClicked(mx, my, button);
+            field.mouseClicked(Inputs.click(mx, my, button), false);
             return true;
         }
         field.setFocused(false);
@@ -276,16 +277,16 @@ final class PlayerListPanel {
             field.setFocused(false);
             return true;
         }
-        boolean handled = field.keyPressed(keyCode, scanCode, modifiers);
+        boolean handled = field.keyPressed(Inputs.key(keyCode, scanCode, modifiers));
         refilter();
         return handled || keyCode != GLFW.GLFW_KEY_ESCAPE;
     }
 
-    boolean charTyped(char codePoint, int modifiers) {
+    boolean charTyped(int codePoint, int modifiers) {
         if (!field.isFocused()) {
             return false;
         }
-        boolean handled = field.charTyped(codePoint, modifiers);
+        boolean handled = field.charTyped(Inputs.character(codePoint, modifiers));
         refilter();
         return handled;
     }

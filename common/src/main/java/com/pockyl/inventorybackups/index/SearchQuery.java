@@ -1,6 +1,6 @@
 package com.pockyl.inventorybackups.index;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
@@ -29,13 +29,13 @@ public record SearchQuery(Kind kind, String value) {
             return name.isEmpty() ? null : new SearchQuery(Kind.NAME, name);
         }
         if (lower.startsWith("ench:")) {
-            ResourceLocation id = ResourceLocation.tryParse(lower.substring(5).trim());
+            Identifier id = Identifier.tryParse(lower.substring(5).trim());
             return id == null ? null : new SearchQuery(Kind.ENCHANTMENT, id.toString());
         }
         if (lower.startsWith("#")) {
             return fingerprint(lower.substring(1));
         }
-        ResourceLocation id = ResourceLocation.tryParse(lower);
+        Identifier id = Identifier.tryParse(lower);
         return id == null ? null : new SearchQuery(Kind.ITEM, id.toString());
     }
 

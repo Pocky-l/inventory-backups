@@ -1,8 +1,6 @@
 package com.pockyl.inventorybackups.gametest;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -10,8 +8,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.storage.BackupStore;
@@ -24,19 +20,17 @@ import java.util.UUID;
 /**
  * Item flows: container sessions and drops picked up by another player.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class FlowTests {
     private FlowTests() {
     }
 
     /** "Who took the diamonds from my chest": puts and takes are recorded per player and container. */
-    @GameTest(template = "empty", timeoutTicks = 200)
+    @ModTest(timeoutTicks = 200)
     public static void containerSessionsRecordPutsAndTakes(GameTestHelper helper) {
         long start = System.currentTimeMillis();
         BlockPos chestPos = new BlockPos(0, 1, 0);
         helper.setBlock(chestPos, Blocks.CHEST);
-        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(chestPos);
+        ChestBlockEntity chest = helper.getBlockEntity(chestPos, ChestBlockEntity.class);
         BlockPos absolute = helper.absolutePos(chestPos);
         ServerPlayer owner = TestPlayers.join(helper);
         ServerPlayer thief = TestPlayers.join(helper);
@@ -55,7 +49,7 @@ public final class FlowTests {
         helper.startSequence()
                 .thenWaitUntil(() -> {
                     Flow put = find(start, owner.getUUID(), FlowType.PUT);
-                    helper.assertTrue(put.count() == 4 && "minecraft:diamond".equals(put.item().getString("id")), "Put wrong: " + put);
+                    helper.assertTrue(put.count() == 4 && "minecraft:diamond".equals(put.item().getStringOr("id", "")), "Put wrong: " + put);
                     helper.assertTrue(absolute.equals(put.containerPos()) && "minecraft:chest".equals(put.container()),
                             "Container not located: " + put);
                     Flow take = find(start, thief.getUUID(), FlowType.TAKE);
@@ -69,14 +63,14 @@ public final class FlowTests {
     }
 
     /** A pickup names the player who dropped the items. */
-    @GameTest(template = "empty", timeoutTicks = 200)
+    @ModTest(timeoutTicks = 200)
     public static void pickupsNameTheDropper(GameTestHelper helper) {
         long start = System.currentTimeMillis();
         ServerPlayer dropper = TestPlayers.join(helper);
         ServerPlayer finder = TestPlayers.join(helper);
         ItemEntity dropped = dropper.drop(new ItemStack(Items.EMERALD, 7), false);
         if (dropped == null) {
-            throw new GameTestAssertException("Nothing was dropped");
+            throw GameTests.failure("Nothing was dropped");
         }
         dropped.setNoPickUpDelay();
         dropped.playerTouch(finder);
@@ -98,6 +92,6 @@ public final class FlowTests {
         BackupStore store = TestPlayers.store();
         List<Flow> flows = store.call(() -> store.flows(since, Long.MAX_VALUE)).join();
         return flows.stream().filter(flow -> flow.player().equals(player) && flow.type() == type).findFirst()
-                .orElseThrow(() -> new GameTestAssertException("No " + type + " flow of " + player));
+                .orElseThrow(() -> GameTests.failure("No " + type + " flow of " + player));
     }
 }

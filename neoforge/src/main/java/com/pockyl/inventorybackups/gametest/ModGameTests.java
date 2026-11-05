@@ -3,13 +3,10 @@ package com.pockyl.inventorybackups.gametest;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.BackupKind;
@@ -28,19 +25,17 @@ import java.util.OptionalLong;
  * In-game tests, run headless by {@code gradlew runGameTestServer}.
  * Tests use the 1x1x1 {@code empty} structure unless they need a prepared one.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class ModGameTests {
     private ModGameTests() {
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void modLoads(GameTestHelper helper) {
         helper.succeed();
     }
 
     /** Chat texts carry the English text, so players without the mod do not see raw keys. */
-    @GameTest(template = "empty")
+    @ModTest
     public static void chatTextsHaveEnglishFallback(GameTestHelper helper) {
         TranslatableContents contents = (TranslatableContents) Texts.tr("inventorybackups.prefix").getContents();
         helper.assertTrue("Backups".equals(contents.getFallback()), "Missing fallback: " + contents.getFallback());
@@ -48,7 +43,7 @@ public final class ModGameTests {
     }
 
     /** Entry names typed in commands: buttons use milliseconds, admins can type 2.x style timestamps. */
-    @GameTest(template = "empty")
+    @ModTest
     public static void entryNamesAndFilters(GameTestHelper helper) {
         helper.assertTrue(EntrySelector.parse("1760000000000").equals(OptionalLong.of(1_760_000_000_000L)), "Millis not parsed");
         helper.assertTrue(EntrySelector.parse("latest").equals(OptionalLong.of(Long.MAX_VALUE)), "latest not parsed");
@@ -67,7 +62,7 @@ public final class ModGameTests {
     }
 
     /** The chest preview reads like the player screen: main rows, hotbar, armor from the helmet down, offhand, mod slots. */
-    @GameTest(template = "empty")
+    @ModTest
     public static void previewLayout(GameTestHelper helper) {
         BackupKind inventory = BackupKind.INVENTORY;
         helper.assertTrue(inventory.chestSlot(9) == 0, "Main inventory misplaced");

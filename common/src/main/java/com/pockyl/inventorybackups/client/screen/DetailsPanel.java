@@ -315,7 +315,8 @@ final class DetailsPanel {
     }
 
     private int sc(int virtual) {
-        return Math.round(virtual * screen.scale);
+        // Since 1.21.6 the scissor box goes through the pose, which already holds the screen scale.
+        return virtual;
     }
 
     boolean mouseClicked(double mx, double my, int button) {

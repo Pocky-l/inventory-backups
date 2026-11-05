@@ -1,16 +1,19 @@
 package com.pockyl.inventorybackups.backup;
 
 import com.mojang.authlib.GameProfile;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.NameAndId;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.storage.LevelResource;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +93,7 @@ public final class OfflinePlayers {
 
     /** Whether the copy may still be changed: false once the real player is online again. */
     public static boolean isValid(ServerPlayer player) {
-        return isOffline(player) && player.server.getPlayerList().getPlayer(player.getUUID()) == null;
+        return isOffline(player) && player.level().getServer().getPlayerList().getPlayer(player.getUUID()) == null;
     }
 
     /** Whether the player has a save file to load. */
@@ -104,10 +107,15 @@ public final class OfflinePlayers {
         if (handle == null || handle.player != player || !isValid(player)) {
             return;
         }
-        Path dir = player.server.getWorldPath(LevelResource.PLAYER_DATA_DIR);
+        Path dir = player.level().getServer().getWorldPath(LevelResource.PLAYER_DATA_DIR);
         String uuid = player.getStringUUID();
         try {
-            CompoundTag tag = player.saveWithoutId(new CompoundTag());
+            CompoundTag tag;
+            try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(player.problemPath(), InventoryBackups.LOGGER)) {
+                TagValueOutput output = TagValueOutput.createWithContext(reporter, player.registryAccess());
+                player.saveWithoutId(output);
+                tag = output.buildResult();
+            }
             for (String key : KEPT_KEYS) {
                 tag.remove(key);
                 if (handle.loaded.contains(key)) {
@@ -126,29 +134,31 @@ public final class OfflinePlayers {
 
     @Nullable
     private static Handle load(MinecraftServer server, UUID uuid, String name) {
-        Path file = dataFile(server, uuid);
-        if (!Files.isRegularFile(file)) {
+        if (!Files.isRegularFile(dataFile(server, uuid))) {
+            return null;
+        }
+        String known = server.services().nameToIdCache().get(uuid).map(NameAndId::name).orElse(name);
+        // Read like vanilla reads a joining player: brought up to date by the data fixers.
+        Optional<CompoundTag> loaded = server.getPlayerList().loadPlayerData(new NameAndId(uuid, known));
+        if (loaded.isEmpty()) {
+            InventoryBackups.LOGGER.error("Could not read the save file of {}", name);
             return null;
         }
         // The copy is made in the player's dimension, so saving it keeps them where they logged out.
         ServerLevel level = server.overworld();
-        try {
-            CompoundTag raw = NbtIo.readCompressed(file, NbtAccounter.unlimitedHeap());
-            ResourceLocation dimension = ResourceLocation.tryParse(raw.getString("Dimension"));
-            if (dimension != null) {
-                ServerLevel found = server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
-                level = found != null ? found : level;
-            }
-        } catch (IOException | RuntimeException e) {
-            InventoryBackups.LOGGER.error("Could not read the save file of {}", name, e);
+        Identifier dimension = Identifier.tryParse(loaded.get().getStringOr("Dimension", ""));
+        if (dimension != null) {
+            ServerLevel found = server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
+            level = found != null ? found : level;
+        }
+        ServerPlayer player = Platform.INSTANCE.createFakePlayer(level, new GameProfile(uuid, known));
+        try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(player.problemPath(), InventoryBackups.LOGGER)) {
+            player.load(TagValueInput.create(reporter, server.registryAccess(), loaded.get()));
+        } catch (RuntimeException e) {
+            InventoryBackups.LOGGER.error("Could not load the save file of {}", name, e);
             return null;
         }
-        GameProfile profile = server.getProfileCache() == null ? null : server.getProfileCache().get(uuid).orElse(null);
-        ServerPlayer player = Platform.INSTANCE.createFakePlayer(level, profile != null ? profile : new GameProfile(uuid, name));
-        Optional<CompoundTag> loaded = server.getPlayerList().load(player);
-        if (loaded.isEmpty()) {
-            return null;
-        }
+        Platform.INSTANCE.playerLoaded(player, server);
         return new Handle(player, loaded.get());
     }
 
@@ -162,7 +172,7 @@ public final class OfflinePlayers {
         if (!OPEN.containsKey(uuid)) {
             return;
         }
-        for (ServerPlayer admin : player.server.getPlayerList().getPlayers()) {
+        for (ServerPlayer admin : player.level().getServer().getPlayerList().getPlayers()) {
             if (admin.containerMenu instanceof LivePlayerMenu menu && menu.target().getUUID().equals(uuid)) {
                 admin.closeContainer();
             }

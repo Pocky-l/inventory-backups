@@ -1,13 +1,10 @@
 package com.pockyl.inventorybackups.gametest;
 
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.Slots;
@@ -31,15 +28,13 @@ import static com.pockyl.inventorybackups.gametest.TestStores.slots;
 /**
  * The binary delta storage: round trips, deltas, keyframes, the item pool and crash recovery.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class StorageTests {
     private static final long T0 = 1_760_000_000_000L;
 
     private StorageTests() {
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void deltasRebuildEveryState(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {
@@ -75,7 +70,7 @@ public final class StorageTests {
         }
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void playersAreFoundByTheirName(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {
@@ -91,7 +86,7 @@ public final class StorageTests {
         }
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void unchangedStatesAreNotDuplicated(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {
@@ -111,7 +106,7 @@ public final class StorageTests {
         }
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void identicalStacksAreStoredOnce(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {
@@ -131,7 +126,7 @@ public final class StorageTests {
         }
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void keyframesAndDayFiles(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {
@@ -158,7 +153,7 @@ public final class StorageTests {
         }
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void tornFramesAreRecovered(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         BackupStore reopened = null;
@@ -189,7 +184,7 @@ public final class StorageTests {
         }
     }
 
-    @GameTest(template = "empty")
+    @ModTest
     public static void entryTimesAreUnique(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {

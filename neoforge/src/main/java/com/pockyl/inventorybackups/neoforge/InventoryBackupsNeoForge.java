@@ -7,6 +7,7 @@ import net.neoforged.fml.config.ModConfig;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
+import com.pockyl.inventorybackups.gametest.GameTests;
 
 /**
  * NeoForge entry point: the config and the payloads; the game events are forwarded by {@link NeoForgeEvents}.
@@ -16,5 +17,6 @@ public final class InventoryBackupsNeoForge {
     public InventoryBackupsNeoForge(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, Config.SPEC, InventoryBackups.CONFIG_FILE);
         modBus.addListener(NeoForgeNetwork::register);
+        GameTests.register(modBus);
     }
 }

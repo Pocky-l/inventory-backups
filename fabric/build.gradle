@@ -58,7 +58,7 @@ tasks.named('processResources', ProcessResources) {
 
 publishMods {
     file = tasks.named('remapJar').flatMap { it.archiveFile }
-    displayName = "${mod_name} ${mod_version} (Fabric)"
+    displayName = "${mod_name} ${mod_version}+${minecraft_version} (Fabric)"
     modLoaders.add('fabric')
 
     curseforge {

@@ -27,7 +27,10 @@ public final class NeoForgeClient {
         container.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         InventoryBackupsClient.init();
-        modBus.addListener((RegisterKeyMappingsEvent event) -> event.register(KeyBindings.OPEN));
+        modBus.addListener((RegisterKeyMappingsEvent event) -> {
+            event.registerCategory(NeoForgeClientPlatform.CATEGORY);
+            event.register(KeyBindings.OPEN);
+        });
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> KeyBindings.onClientTick());
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut event) -> ClientSession.onLoggingOut());
     }

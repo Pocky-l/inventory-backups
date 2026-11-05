@@ -1,9 +1,12 @@
 package com.pockyl.inventorybackups.client.screen;
 
 import com.mojang.blaze3d.platform.Window;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -385,8 +388,8 @@ public final class AdminScreen extends Screen {
         boolean blocked = dialog != null;
         int pmx = blocked ? -1 : mx;
         int pmy = blocked ? -1 : my;
-        g.pose().pushPose();
-        g.pose().scale(scale, scale, 1);
+        g.pose().pushMatrix();
+        g.pose().scale(scale, scale);
         g.fill(0, 0, vw, vh, Theme.BG);
         renderTopBar(g, pmx, pmy);
         if (tab == Tab.TIMELINE) {
@@ -406,13 +409,13 @@ public final class AdminScreen extends Screen {
         renderStatus(g);
         renderToasts(g);
         if (dialog != null) {
-            g.pose().translate(0, 0, 400);
+            g.nextStratum();
             dialog.render(g, mx, my);
         }
-        g.pose().popPose();
+        g.pose().popMatrix();
         if (tooltip != null && dialog == null) {
             if (tooltip.stack().isEmpty()) {
-                g.renderComponentTooltip(font, tooltip.lines(), mouseX, mouseY);
+                g.setComponentTooltipForNextFrame(font, tooltip.lines(), mouseX, mouseY);
             } else {
                 ClientPlatform.INSTANCE.renderItemTooltip(g, font, tooltip.lines(), tooltip.stack(), mouseX, mouseY);
             }
@@ -503,11 +506,8 @@ public final class AdminScreen extends Screen {
             int w = Math.min(vw - 40, font.width(toast.message()) + 16);
             int x = (vw - w) / 2;
             y -= 18;
-            g.pose().pushPose();
-            g.pose().translate(0, 0, 300);
             Theme.box(g, x, y, w, 16, Theme.PANEL_2, toast.ok() ? Theme.ADDED : Theme.REMOVED);
             Theme.text(g, font, toast.message(), x + 8, y + 4, w - 16, Theme.TEXT);
-            g.pose().popPose();
         }
     }
 
@@ -520,9 +520,10 @@ public final class AdminScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        double mx = mouseX / scale;
-        double my = mouseY / scale;
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        int button = event.button();
+        double mx = event.x() / scale;
+        double my = event.y() / scale;
         if (dialog != null) {
             dialog.mouseClicked(mx, my, button);
             return true;
@@ -551,17 +552,17 @@ public final class AdminScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
         if (dialog == null && tab == Tab.TIMELINE) {
-            timeline.mouseDragged(mouseX / scale, mouseY / scale);
+            timeline.mouseDragged(event.x() / scale, event.y() / scale);
         }
         return true;
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(MouseButtonEvent event) {
         timeline.mouseReleased();
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(event);
     }
 
     @Override
@@ -579,7 +580,10 @@ public final class AdminScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
         if (dialog != null) {
             if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
                 dialog = null;
@@ -614,7 +618,7 @@ public final class AdminScreen extends Screen {
         if (!typing && tab == Tab.TIMELINE && timelineKey(keyCode, ctrl, shift)) {
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     private boolean timelineKey(int keyCode, boolean ctrl, boolean shift) {
@@ -644,14 +648,14 @@ public final class AdminScreen extends Screen {
     }
 
     @Override
-    public boolean charTyped(char codePoint, int modifiers) {
+    public boolean charTyped(CharacterEvent event) {
         if (dialog != null) {
             return true;
         }
         if (tab == Tab.SEARCH) {
-            return search.charTyped(codePoint, modifiers);
+            return search.charTyped(event.codepoint(), event.modifiers());
         }
-        return players.charTyped(codePoint, modifiers);
+        return players.charTyped(event.codepoint(), event.modifiers());
     }
 
     @Override

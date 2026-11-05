@@ -142,7 +142,7 @@ public final class ChatUI {
         if (summary != null) {
             line.append(Component.literal(" ").append(summary).withStyle(ChatFormatting.GRAY));
         }
-        return line.withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, details(entry))));
+        return line.withStyle(style -> style.withHoverEvent(new HoverEvent.ShowText(details(entry))));
     }
 
     /** Short description of an entry: the death cause, the container, the admin or the number of changed slots. */
@@ -287,8 +287,8 @@ public final class ChatUI {
 
     private static Component withClick(MutableComponent text, ChatFormatting color, String command, Component hover) {
         return text.withStyle(style -> style.withColor(color)
-                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover.copy().withStyle(color))));
+                .withClickEvent(new ClickEvent.RunCommand(command))
+                .withHoverEvent(new HoverEvent.ShowText(hover.copy().withStyle(color))));
     }
 
     private static Component prefixed(Component message) {

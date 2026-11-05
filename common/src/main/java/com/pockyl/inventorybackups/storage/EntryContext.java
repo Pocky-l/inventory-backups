@@ -1,5 +1,7 @@
 package com.pockyl.inventorybackups.storage;
 
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.LongTag;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntArrayTag;
@@ -22,7 +24,7 @@ public record EntryContext(String dimension, BlockPos pos, @Nullable String deta
 
     /** Dimension and position of the player. */
     public static EntryContext of(ServerPlayer player) {
-        return new EntryContext(player.level().dimension().location().toString(), player.blockPosition(), null, null, null);
+        return new EntryContext(player.level().dimension().identifier().toString(), player.blockPosition(), null, null, null);
     }
 
     public EntryContext withDetail(@Nullable String newDetail) {
@@ -64,9 +66,9 @@ public record EntryContext(String dimension, BlockPos pos, @Nullable String deta
             int[] xyz = array.getAsIntArray();
             pos = new BlockPos(xyz[0], xyz[1], xyz[2]);
         }
-        return new EntryContext(tag.getString("d"), pos,
-                tag.contains("i", Tag.TAG_STRING) ? tag.getString("i") : null,
-                tag.contains("c", Tag.TAG_LONG) ? BlockPos.of(tag.getLong("c")) : null,
-                tag.contains("a", Tag.TAG_STRING) ? tag.getString("a") : null);
+        return new EntryContext(tag.getStringOr("d", ""), pos,
+                tag.get("i") instanceof StringTag ? tag.getStringOr("i", "") : null,
+                tag.get("c") instanceof LongTag ? BlockPos.of(tag.getLongOr("c", 0L)) : null,
+                tag.get("a") instanceof StringTag ? tag.getStringOr("a", "") : null);
     }
 }

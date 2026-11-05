@@ -10,12 +10,12 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.arguments.IdentifierArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.Config;
@@ -63,11 +63,11 @@ public final class SearchCommands {
                 .then(Commands.literal("name").then(Commands.argument("text", StringArgumentType.greedyString())
                         .executes(context -> search(context, SearchQuery.parse("name:" + StringArgumentType.getString(context, "text")),
                                 null, 0, 0))))
-                .then(Commands.literal("ench").then(Commands.argument("enchantment", ResourceLocationArgument.id())
+                .then(Commands.literal("ench").then(Commands.argument("enchantment", IdentifierArgument.id())
                         .suggests((context, builder) -> SharedSuggestionProvider.suggestResource(
-                                context.getSource().registryAccess().registryOrThrow(Registries.ENCHANTMENT).keySet(), builder))
+                                context.getSource().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).keySet(), builder))
                         .executes(context -> search(context,
-                                SearchQuery.parse("ench:" + ResourceLocationArgument.getId(context, "enchantment")), null, 0, 0))))
+                                SearchQuery.parse("ench:" + IdentifierArgument.getId(context, "enchantment")), null, 0, 0))))
                 .then(Commands.literal("trace").then(Commands.argument("fingerprint", StringArgumentType.word())
                         .executes(context -> search(context, SearchQuery.fingerprint(StringArgumentType.getString(context, "fingerprint")),
                                 null, 0, 0))))
@@ -87,8 +87,8 @@ public final class SearchCommands {
                                                 StringArgumentType.getString(context, "since")))))));
     }
 
-    private static RequiredArgumentBuilder<CommandSourceStack, ResourceLocation> item() {
-        return Commands.argument("item", ResourceLocationArgument.id()).suggests(SearchCommands::suggestItems);
+    private static RequiredArgumentBuilder<CommandSourceStack, Identifier> item() {
+        return Commands.argument("item", IdentifierArgument.id()).suggests(SearchCommands::suggestItems);
     }
 
     /** Items that were ever stored first, then every registered item. */
@@ -121,7 +121,7 @@ public final class SearchCommands {
             ChatUI.error(context.getSource(), tr("inventorybackups.error.bad_duration", value(since)));
             return 0;
         }
-        SearchQuery query = SearchQuery.parse(ResourceLocationArgument.getId(context, "item").toString());
+        SearchQuery query = SearchQuery.parse(IdentifierArgument.getId(context, "item").toString());
         return search(context, query, player, window.getAsLong(), 0);
     }
 
@@ -132,7 +132,7 @@ public final class SearchCommands {
             ChatUI.error(context.getSource(), tr("inventorybackups.error.backup_not_found", value(name)));
             return 0;
         }
-        return search(context, SearchQuery.parse(ResourceLocationArgument.getId(context, "item").toString()), null, 0, time.getAsLong());
+        return search(context, SearchQuery.parse(IdentifierArgument.getId(context, "item").toString()), null, 0, time.getAsLong());
     }
 
     /**
@@ -182,7 +182,7 @@ public final class SearchCommands {
             ChatUI.error(source, tr("inventorybackups.error.storage_unavailable"));
             return 0;
         }
-        String dimension = source.getLevel().dimension().location().toString();
+        String dimension = source.getLevel().dimension().identifier().toString();
         long from = System.currentTimeMillis() - (window.getAsLong() > 0 ? window.getAsLong() : DEFAULT_SINCE);
         int max = Config.MAX_RESULTS.get();
         store.call(() -> SearchService.containerHistory(store, dimension, pos, from, max)).whenCompleteAsync((flows, error) -> {

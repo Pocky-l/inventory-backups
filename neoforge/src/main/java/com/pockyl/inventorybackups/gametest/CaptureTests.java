@@ -1,17 +1,15 @@
 package com.pockyl.inventorybackups.gametest;
 
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.GameRules;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import net.minecraft.world.level.gamerules.GameRules;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.Restorer;
@@ -30,8 +28,6 @@ import java.util.UUID;
 /**
  * The live change tracker: joins, coalescing, deaths, in-place changes, the ender chest and restores.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class CaptureTests {
     private static final int TIMEOUT = 400;
 
@@ -39,7 +35,7 @@ public final class CaptureTests {
     }
 
     /** Moving items around for a while makes one entry once the inventory is still, not one per move. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void burstsAreCoalesced(GameTestHelper helper) {
         ServerPlayer player = TestPlayers.join(helper);
         UUID uuid = player.getUUID();
@@ -63,7 +59,7 @@ public final class CaptureTests {
     }
 
     /** Stacks changed in place (eating, durability) are found through the slot sync, not only through setItem. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void inPlaceChangesAreDetected(GameTestHelper helper) {
         ServerPlayer player = TestPlayers.join(helper);
         UUID uuid = player.getUUID();
@@ -84,7 +80,7 @@ public final class CaptureTests {
     }
 
     /** The ender chest is part of the same timeline and reports its own changes. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void enderChestChangesAreRecorded(GameTestHelper helper) {
         ServerPlayer player = TestPlayers.join(helper);
         UUID uuid = player.getUUID();
@@ -100,19 +96,19 @@ public final class CaptureTests {
     }
 
     /** A death is recorded with its cause and the items the player carried, before they drop. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void deathsKeepTheItems(GameTestHelper helper) {
         ServerPlayer player = TestPlayers.join(helper);
         UUID uuid = player.getUUID();
         ItemStack sword = new ItemStack(Items.NETHERITE_SWORD);
         sword.set(DataComponents.CUSTOM_NAME, Component.literal("Last Words"));
         player.getInventory().setItem(4, sword.copy());
-        player.getInventory().armor.set(3, new ItemStack(Items.DIAMOND_HELMET));
-        player.kill();
+        player.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.DIAMOND_HELMET));
+        player.kill(player.level());
         helper.startSequence()
                 .thenWaitUntil(() -> {
                     Entry death = TestPlayers.entries(uuid).stream().filter(e -> e.trigger() == Trigger.DEATH).findFirst()
-                            .orElseThrow(() -> new GameTestAssertException("No death entry"));
+                            .orElseThrow(() -> GameTests.failure("No death entry"));
                     BackupStore store = TestPlayers.store();
                     StateView state = store.call(() -> store.stateAt(uuid, death.time())).join().orElseThrow();
                     helper.assertTrue(ItemStack.matches(state.items().get(4), sword), "Sword missing from the death state");
@@ -125,28 +121,28 @@ public final class CaptureTests {
     }
 
     /** The death alert's restore button names the entry recorded for the death. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void deathAlertsRestoreTheDeathEntry(GameTestHelper helper) {
         ServerPlayer player = TestPlayers.join(helper);
         UUID uuid = player.getUUID();
         helper.assertFalse(DeathAlerts.worthTelling(player), "An empty inventory loses nothing");
         player.getInventory().setItem(0, new ItemStack(Items.DIAMOND, 5));
         helper.assertTrue(DeathAlerts.worthTelling(player), "Items would drop");
-        GameRules.BooleanValue keep = helper.getLevel().getGameRules().getRule(GameRules.RULE_KEEPINVENTORY);
-        boolean before = keep.get();
-        keep.set(true, helper.getLevel().getServer());
+        GameRules rules = helper.getLevel().getGameRules();
+        boolean before = rules.get(GameRules.KEEP_INVENTORY);
+        rules.set(GameRules.KEEP_INVENTORY, true, helper.getLevel().getServer());
         boolean kept = DeathAlerts.worthTelling(player);
-        keep.set(before, helper.getLevel().getServer());
+        rules.set(GameRules.KEEP_INVENTORY, before, helper.getLevel().getServer());
         helper.assertFalse(kept, "keepInventory loses nothing");
-        player.kill();
+        player.kill(player.level());
         helper.startSequence()
                 .thenWaitUntil(() -> {
                     Entry death = TestPlayers.entries(uuid).stream().filter(e -> e.trigger() == Trigger.DEATH).findFirst()
-                            .orElseThrow(() -> new GameTestAssertException("No death entry"));
+                            .orElseThrow(() -> GameTests.failure("No death entry"));
                     List<String> commands = new ArrayList<>();
                     DeathAlerts.line(player, "test", death.time(), death.context(), true, true).visit((style, text) -> {
-                        if (style.getClickEvent() != null) {
-                            commands.add(style.getClickEvent().getValue());
+                        if (style.getClickEvent() instanceof ClickEvent.RunCommand command) {
+                            commands.add(command.command());
                         }
                         return Optional.empty();
                     }, Style.EMPTY);
@@ -161,7 +157,7 @@ public final class CaptureTests {
     }
 
     /** A restore records the state before it and a marker naming the admin, so it can be undone. */
-    @GameTest(template = "empty", timeoutTicks = TIMEOUT)
+    @ModTest(timeoutTicks = TIMEOUT)
     public static void restoresAreFramedByEntries(GameTestHelper helper) {
         ServerPlayer player = TestPlayers.join(helper);
         UUID uuid = player.getUUID();
@@ -194,13 +190,13 @@ public final class CaptureTests {
     private static void assertEntries(UUID player, int count, Trigger lastTrigger) {
         List<Entry> entries = TestPlayers.entries(player);
         if (entries.size() != count || entries.get(count - 1).trigger() != lastTrigger) {
-            throw new GameTestAssertException("Expected " + count + " entries ending with " + lastTrigger + ", got "
+            throw GameTests.failure("Expected " + count + " entries ending with " + lastTrigger + ", got "
                     + entries.stream().map(e -> e.trigger().key()).toList());
         }
     }
 
     private static StateView latest(UUID player) {
         BackupStore store = TestPlayers.store();
-        return store.call(() -> store.latest(player)).join().orElseThrow(() -> new GameTestAssertException("No state stored"));
+        return store.call(() -> store.latest(player)).join().orElseThrow(() -> GameTests.failure("No state stored"));
     }
 }

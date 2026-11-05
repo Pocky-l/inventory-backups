@@ -54,7 +54,7 @@ public final class Restorer {
     private static void finish(ServerPlayer target, StateView state, String admin, List<ItemStack> left) {
         OfflinePlayers.save(target);
         if (!left.isEmpty()) {
-            ServerPlayer receiver = target.server.getPlayerList().getPlayerByName(admin);
+            ServerPlayer receiver = target.level().getServer().getPlayerList().getPlayerByName(admin);
             if (receiver != null) {
                 PlayerSlots.give(receiver, left);
             } else {

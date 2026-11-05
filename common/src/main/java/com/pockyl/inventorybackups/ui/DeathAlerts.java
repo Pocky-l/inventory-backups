@@ -4,7 +4,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.backup.BackupKind;
@@ -29,7 +29,7 @@ public final class DeathAlerts {
         if (!Config.DEATH_ALERTS.get() || !worthTelling(dead)) {
             return;
         }
-        for (ServerPlayer admin : dead.server.getPlayerList().getPlayers()) {
+        for (ServerPlayer admin : dead.level().getServer().getPlayerList().getPlayers()) {
             boolean view = Permissions.has(admin, Permissions.VIEW);
             boolean restore = Permissions.has(admin, Permissions.RESTORE);
             if (view || restore) {
@@ -40,7 +40,7 @@ public final class DeathAlerts {
 
     /** Whether the death loses anything: not with keepInventory, and an empty inventory has nothing to give back. */
     public static boolean worthTelling(ServerPlayer dead) {
-        return !dead.getInventory().isEmpty() && !dead.serverLevel().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY);
+        return !dead.getInventory().isEmpty() && !dead.level().getGameRules().get(GameRules.KEEP_INVENTORY);
     }
 
     /** The alert with the buttons the admin may use. */

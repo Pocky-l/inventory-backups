@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -37,6 +38,9 @@ public interface Platform {
 
     /** A player that never joins the world, to load and save the data of an offline player. */
     ServerPlayer createFakePlayer(ServerLevel level, GameProfile profile);
+
+    /** Tells other mods that a player was loaded from its save file, so they load their own part of it. */
+    void playerLoaded(ServerPlayer player, MinecraftServer server);
 
     /** Tells other mods that a player's save file was written, so they save their own part of it. */
     void playerSaved(ServerPlayer player, Path playerDataDir, String uuid);

@@ -199,7 +199,7 @@
   "inventorybackups.inventory.help.ui": "/inventory ui",
   "inventorybackups.inventory.help.ui.desc": "Открыть экран истории (нужен клиентский мод)",
   "key.inventorybackups.open": "Открыть Inventory Backups",
-  "key.categories.inventorybackups": "Inventory Backups",
+  "key.category.inventorybackups.main": "Inventory Backups",
   "inventorybackups.configuration.screen": "Экран администратора",
   "inventorybackups.configuration.playSpeed": "Скорость воспроизведения (записей в секунду)",
   "inventorybackups.configuration.defaultZoom": "Масштаб по умолчанию",

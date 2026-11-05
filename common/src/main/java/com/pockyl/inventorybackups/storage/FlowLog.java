@@ -1,6 +1,9 @@
 package com.pockyl.inventorybackups.storage;
 
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -179,15 +182,15 @@ final class FlowLog {
         List<Long> poolHashes = new ArrayList<>();
         List<Flow> flows = new ArrayList<>();
         for (CompoundTag frame : frames) {
-            for (Tag tag : frame.getList("p", Tag.TAG_COMPOUND)) {
+            for (Tag tag : frame.getListOrEmpty("p")) {
                 CompoundTag pooled = (CompoundTag) tag;
-                poolIndex.put(pooled.getLong("h"), poolTags.size());
-                poolHashes.add(pooled.getLong("h"));
-                poolTags.add(pooled.getCompound("i"));
+                poolIndex.put(pooled.getLongOr("h", 0L), poolTags.size());
+                poolHashes.add(pooled.getLongOr("h", 0L));
+                poolTags.add(pooled.getCompoundOrEmpty("i"));
             }
-            for (Tag tag : frame.getList("f", Tag.TAG_COMPOUND)) {
+            for (Tag tag : frame.getListOrEmpty("f")) {
                 CompoundTag flow = (CompoundTag) tag;
-                int ref = flow.getInt("r");
+                int ref = flow.getIntOr("r", 0);
                 if (ref < 0 || ref >= poolTags.size()) {
                     continue;
                 }
@@ -201,14 +204,14 @@ final class FlowLog {
         CompoundTag tag = new CompoundTag();
         tag.putLong("t", flow.time());
         tag.putByte("y", (byte) flow.type().id());
-        tag.putUUID("u", flow.player());
+        tag.store("u", UUIDUtil.CODEC, flow.player());
         tag.putString("n", flow.playerName());
         tag.putInt("r", ref);
         tag.putInt("c", flow.count());
         tag.putString("d", flow.dimension());
         tag.putIntArray("p", new int[] {flow.pos().getX(), flow.pos().getY(), flow.pos().getZ()});
         if (flow.source() != null) {
-            tag.putUUID("s", flow.source());
+            tag.store("s", UUIDUtil.CODEC, flow.source());
             tag.putString("sn", flow.sourceName() == null ? "" : flow.sourceName());
         }
         if (flow.container() != null) {
@@ -226,10 +229,10 @@ final class FlowLog {
             int[] xyz = array.getAsIntArray();
             pos = new BlockPos(xyz[0], xyz[1], xyz[2]);
         }
-        UUID source = tag.hasUUID("s") ? tag.getUUID("s") : null;
-        return new Flow(tag.getLong("t"), FlowType.byId(tag.getByte("y")), tag.getUUID("u"), tag.getString("n"), hash, item,
-                tag.getInt("c"), tag.getString("d"), pos, source, source == null ? null : tag.getString("sn"),
-                tag.contains("k", Tag.TAG_STRING) ? tag.getString("k") : null,
-                tag.contains("kp", Tag.TAG_LONG) ? BlockPos.of(tag.getLong("kp")) : null);
+        UUID source = tag.read("s", UUIDUtil.CODEC).orElse(null);
+        return new Flow(tag.getLongOr("t", 0L), FlowType.byId(tag.getByteOr("y", (byte) 0)), tag.read("u", UUIDUtil.CODEC).orElseThrow(), tag.getStringOr("n", ""), hash, item,
+                tag.getIntOr("c", 0), tag.getStringOr("d", ""), pos, source, source == null ? null : tag.getStringOr("sn", ""),
+                tag.get("k") instanceof StringTag ? tag.getStringOr("k", "") : null,
+                tag.get("kp") instanceof LongTag ? BlockPos.of(tag.getLongOr("kp", 0L)) : null);
     }
 }

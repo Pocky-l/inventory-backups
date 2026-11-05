@@ -2,7 +2,7 @@ package com.pockyl.inventorybackups.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -79,8 +79,8 @@ public final class Formats {
 
     /** "overworld 120 64 -30", without the minecraft namespace. */
     public static String place(String dimension, int x, int y, int z) {
-        ResourceLocation id = ResourceLocation.tryParse(dimension);
-        String name = id != null && id.getNamespace().equals(ResourceLocation.DEFAULT_NAMESPACE) ? id.getPath() : dimension;
+        Identifier id = Identifier.tryParse(dimension);
+        String name = id != null && id.getNamespace().equals(Identifier.DEFAULT_NAMESPACE) ? id.getPath() : dimension;
         return name + " " + x + " " + y + " " + z;
     }
 }

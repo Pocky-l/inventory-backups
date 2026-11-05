@@ -1,14 +1,22 @@
 package com.pockyl.inventorybackups.gametest;
 
-import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.Slots;
+import com.pockyl.inventorybackups.index.ItemKeys;
+import com.pockyl.inventorybackups.storage.ItemCodec;
 import com.pockyl.inventorybackups.storage.BackupStore;
 import com.pockyl.inventorybackups.storage.Entry;
 import com.pockyl.inventorybackups.storage.LegacyImporter;
@@ -25,13 +33,35 @@ import java.util.UUID;
 /**
  * Import of 2.x JSON backups and compatibility with 2.x config files.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class MigrationTests {
     private MigrationTests() {
     }
 
-    @GameTest(template = "empty")
+    /** Backups made on Minecraft 1.21.1 store items in its format: names as JSON text, enchantments under "levels". */
+    @ModTest
+    public static void itemsSavedOnOlderMinecraftAreUpgraded(GameTestHelper helper) {
+        CompoundTag saved;
+        try {
+            saved = TagParser.parseCompoundFully("{id:\"minecraft:diamond_sword\",count:1,components:{"
+                    + "\"minecraft:custom_name\":'{\"text\":\"Crown\"}',"
+                    + "\"minecraft:enchantments\":{levels:{\"minecraft:sharpness\":5}}}}");
+        } catch (CommandSyntaxException e) {
+            throw GameTests.failure("Bad test item: " + e.getMessage());
+        }
+        RegistryAccess registries = helper.getLevel().registryAccess();
+        ItemStack stack = ItemCodec.decode(registries, saved, 1);
+        helper.assertTrue(stack.is(Items.DIAMOND_SWORD), "Old item not read: " + stack);
+        helper.assertTrue("Crown".equals(stack.getHoverName().getString()), "Old custom name lost: " + stack.getHoverName().getString());
+        Holder<Enchantment> sharpness = registries.lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.SHARPNESS);
+        helper.assertTrue(stack.getEnchantments().getLevel(sharpness) == 5, "Old enchantments lost");
+        ItemKeys keys = ItemKeys.of(saved, registries);
+        helper.assertTrue("crown".equals(keys.name()) && keys.enchantments().contains("minecraft:sharpness"), "Old item not indexed: " + keys);
+        CompoundTag current = ItemCodec.encode(registries, stack).tag();
+        helper.assertTrue(ItemCodec.decode(registries, current, 1).getHoverName().getString().equals("Crown"), "Current item not read back");
+        helper.succeed();
+    }
+
+    @ModTest
     public static void legacyBackupsAreImportedOnce(GameTestHelper helper) {
         BackupStore store = TestStores.create(helper);
         try {
@@ -73,7 +103,7 @@ public final class MigrationTests {
     }
 
     /** The keys of 2.x config files stay part of the spec, so old files load without being reset. */
-    @GameTest(template = "empty")
+    @ModTest
     public static void legacyConfigKeysStayValid(GameTestHelper helper) {
         for (String key : List.of("general.tickSaveEnabled", "general.preservationPeriod", "general.deadSaveEnabled",
                 "general.joinSaveEnabled", "general.quitSaveEnabled", "general.retentionDays", "enderchest.enderChestEnabled",

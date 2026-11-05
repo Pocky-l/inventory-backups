@@ -321,7 +321,8 @@ final class InventoryPanel {
     }
 
     private int sc(int virtual) {
-        return Math.round(virtual * screen.scale);
+        // Since 1.21.6 the scissor box goes through the pose, which already holds the screen scale.
+        return virtual;
     }
 
     private void renderCell(GuiGraphics g, Font font, Cell cell, ItemStack now, @Nullable ItemStack before, boolean hover) {
@@ -351,8 +352,6 @@ final class InventoryPanel {
         } else if (cell.hint() != null) {
             Theme.text(g, font, cell.hint(), cx + 6, cy + 5, 0xFF3A404C);
         }
-        g.pose().pushPose();
-        g.pose().translate(0, 0, 200);
         if (diff == Diff.COUNT && before != null) {
             int delta = now.getCount() - before.getCount();
             String badge = (delta > 0 ? "+" : "") + delta;
@@ -363,7 +362,6 @@ final class InventoryPanel {
         if (selection.contains(cell.slot())) {
             Theme.outline(g, cx - 1, cy - 1, 20, 20, Theme.ACCENT);
         }
-        g.pose().popPose();
     }
 
     enum Diff {
@@ -521,7 +519,7 @@ final class InventoryPanel {
             if (visible(cell) && mx >= cell.x() && mx < cell.x() + 18 && my >= cell.y() && my < cell.y() + 18) {
                 if (button == 1) {
                     selection.clear();
-                } else if (Screen.hasShiftDown() && anchor != Integer.MIN_VALUE) {
+                } else if (Inputs.shiftDown() && anchor != Integer.MIN_VALUE) {
                     selectRange(cells, anchor, cell.slot());
                 } else if (!selection.remove(cell.slot())) {
                     selection.add(cell.slot());

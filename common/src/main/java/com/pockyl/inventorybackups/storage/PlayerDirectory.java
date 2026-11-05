@@ -1,5 +1,6 @@
 package com.pockyl.inventorybackups.storage;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -38,11 +39,11 @@ final class PlayerDirectory {
         }
         try {
             CompoundTag root = LogFile.readCompound(file);
-            for (Tag tag : root.getList("players", Tag.TAG_COMPOUND)) {
+            for (Tag tag : root.getListOrEmpty("players")) {
                 CompoundTag player = (CompoundTag) tag;
-                UUID uuid = player.getUUID("u");
-                players.put(uuid, new PlayerInfo(uuid, player.getString("n"), player.getLong("s"), player.getLong("d"),
-                        player.getLong("e")));
+                UUID uuid = player.read("u", UUIDUtil.CODEC).orElseThrow();
+                players.put(uuid, new PlayerInfo(uuid, player.getStringOr("n", ""), player.getLongOr("s", 0L), player.getLongOr("d", 0L),
+                        player.getLongOr("e", 0L)));
             }
         } catch (IOException | RuntimeException e) {
             InventoryBackups.LOGGER.error("Could not read {}, it is rebuilt as players are seen", file, e);
@@ -56,7 +57,7 @@ final class PlayerDirectory {
         ListTag list = new ListTag();
         for (PlayerInfo info : players.values()) {
             CompoundTag player = new CompoundTag();
-            player.putUUID("u", info.uuid());
+            player.store("u", UUIDUtil.CODEC, info.uuid());
             player.putString("n", info.name());
             player.putLong("s", info.lastSeen());
             player.putLong("d", info.lastDeath());

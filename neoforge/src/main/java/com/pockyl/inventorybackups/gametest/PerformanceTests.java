@@ -1,12 +1,10 @@
 package com.pockyl.inventorybackups.gametest;
 
-import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import com.pockyl.inventorybackups.InventoryBackups;
 import com.pockyl.inventorybackups.backup.PerfStats;
@@ -20,8 +18,6 @@ import java.util.List;
  * Runs in its own batch, so other tests do not add to the numbers. Targets: well under 0.05 ms per player and tick on
  * average, a few hundred bytes per change.
  */
-@GameTestHolder(InventoryBackups.MOD_ID)
-@PrefixGameTestTemplate(false)
 public final class PerformanceTests {
     private static final int PLAYERS = 10;
     private static final int TICKS = 400;
@@ -31,7 +27,7 @@ public final class PerformanceTests {
     private PerformanceTests() {
     }
 
-    @GameTest(template = "empty", batch = "performance", timeoutTicks = TICKS + 300)
+    @ModTest(timeoutTicks = TICKS + 300)
     public static void trackingIsCheap(GameTestHelper helper) {
         List<ServerPlayer> players = new ArrayList<>();
         for (int i = 0; i < PLAYERS; i++) {
@@ -93,8 +89,8 @@ public final class PerformanceTests {
         for (int slot = 9; slot < 30; slot++) {
             player.getInventory().setItem(slot, new ItemStack(slot % 2 == 0 ? Items.STONE : Items.OAK_PLANKS, 64));
         }
-        player.getInventory().armor.set(0, new ItemStack(Items.IRON_BOOTS));
-        player.getInventory().armor.set(3, new ItemStack(Items.IRON_HELMET));
+        player.setItemSlot(EquipmentSlot.FEET, new ItemStack(Items.IRON_BOOTS));
+        player.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
         for (int slot = 0; slot < 27; slot += 3) {
             player.getEnderChestInventory().setItem(slot, new ItemStack(Items.DIAMOND, 1 + slot));
         }

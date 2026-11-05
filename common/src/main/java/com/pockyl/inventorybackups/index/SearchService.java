@@ -261,7 +261,7 @@ public final class SearchService {
     private static SearchResult.TrailLink link(Flow flow, SearchResult.LinkKind kind, @Nullable UUID from, String fromName, int count,
                                                long gap) {
         return new SearchResult.TrailLink(flow.time(), kind, from, fromName, flow.player(), flow.playerName(), count,
-                flow.item().getString("id"), flow.dimension(), flow.pos(), flow.container(), flow.containerPos(), gap);
+                flow.item().getStringOr("id", ""), flow.dimension(), flow.pos(), flow.container(), flow.containerPos(), gap);
     }
 
     /** A player starting or stopping to hold an item. */

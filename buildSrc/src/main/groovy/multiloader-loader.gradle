@@ -45,10 +45,11 @@ static String extractChangelog(String changelog, String version) {
     return body ?: null
 }
 
-// A release of this loader alone (release.ps1 -Loaders) has a "## [<version>-<loader>]" section, used first; the
-// plain version is the fallback.
+// This branch has its own "## [<version>+<minecraft version>]" sections; the plain version is the fallback. A release of
+// this loader alone (release.ps1 -Loaders) has a "## [<version>+<minecraft version>-<loader>]" section, used first.
 def changelogText = providers.fileContents(rootProject.layout.projectDirectory.file('CHANGELOG.md')).asText.getOrElse('')
-def releaseNotes = extractChangelog(changelogText, "${mod_version}-${project.name}".toString())
+def releaseNotes = extractChangelog(changelogText, "${mod_version}+${minecraft_version}-${project.name}".toString())
+        ?: extractChangelog(changelogText, "${mod_version}+${minecraft_version}".toString())
         ?: extractChangelog(changelogText, mod_version)
 def curseforgeToken = providers.gradleProperty('curseforge_token')
         .orElse(providers.environmentVariable('CURSEFORGE_TOKEN'))

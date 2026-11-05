@@ -1,11 +1,17 @@
 package com.pockyl.inventorybackups.index;
 
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.NumericTag;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
+import com.pockyl.inventorybackups.storage.ItemCodec;
 import com.pockyl.inventorybackups.storage.NbtHash;
 
 import java.util.ArrayList;
@@ -26,11 +32,13 @@ public record ItemKeys(String itemId, long fingerprint, @Nullable String name, L
     public static final String ITEM_PREFIX = "i:";
     public static final String FINGERPRINT_PREFIX = "f:";
 
-    public static ItemKeys of(CompoundTag tag, HolderLookup.Provider registries) {
-        String id = tag.getString("id");
-        CompoundTag components = tag.getCompound("components");
+    public static ItemKeys of(CompoundTag saved, HolderLookup.Provider registries) {
+        // Items saved on an older Minecraft get the same keys as their current form.
+        CompoundTag tag = ItemCodec.upgrade(saved);
+        String id = tag.getStringOr("id", "");
+        CompoundTag components = tag.getCompoundOrEmpty("components");
         CompoundTag distinctive = new CompoundTag();
-        for (String key : components.getAllKeys()) {
+        for (String key : components.keySet()) {
             if (!IGNORED.contains(key)) {
                 distinctive.put(key, components.get(key));
             }
@@ -47,8 +55,8 @@ public record ItemKeys(String itemId, long fingerprint, @Nullable String name, L
             }
         }
         List<String> enchantments = new ArrayList<>();
-        enchantments(components.getCompound("minecraft:enchantments"), enchantments);
-        enchantments(components.getCompound("minecraft:stored_enchantments"), enchantments);
+        enchantments(components.getCompoundOrEmpty("minecraft:enchantments"), enchantments);
+        enchantments(components.getCompoundOrEmpty("minecraft:stored_enchantments"), enchantments);
         return new ItemKeys(id, fingerprint, name(components, registries), List.copyOf(enchantments));
     }
 
@@ -67,23 +75,20 @@ public record ItemKeys(String itemId, long fingerprint, @Nullable String name, L
 
     @Nullable
     private static String name(CompoundTag components, HolderLookup.Provider registries) {
-        if (!components.contains("minecraft:custom_name", Tag.TAG_STRING)) {
+        Tag raw = components.get("minecraft:custom_name");
+        if (raw == null) {
             return null;
         }
-        String json = components.getString("minecraft:custom_name");
-        try {
-            Component name = Component.Serializer.fromJson(json, registries);
-            return name == null ? json.toLowerCase(Locale.ROOT) : name.getString().toLowerCase(Locale.ROOT);
-        } catch (RuntimeException e) {
-            return json.toLowerCase(Locale.ROOT);
-        }
+        return ComponentSerialization.CODEC.parse(registries.createSerializationContext(NbtOps.INSTANCE), raw).result()
+                .map(name -> name.getString().toLowerCase(Locale.ROOT))
+                .orElseGet(() -> raw.asString().map(text -> text.toLowerCase(Locale.ROOT)).orElse(null));
     }
 
     private static void enchantments(CompoundTag tag, List<String> into) {
         // Written with a "levels" map; a bare map is accepted too, as the codec reads both.
-        CompoundTag levels = tag.contains("levels", Tag.TAG_COMPOUND) ? tag.getCompound("levels") : tag;
-        for (String key : levels.getAllKeys()) {
-            if (levels.contains(key, Tag.TAG_ANY_NUMERIC) && !into.contains(key)) {
+        CompoundTag levels = tag.get("levels") instanceof CompoundTag ? tag.getCompoundOrEmpty("levels") : tag;
+        for (String key : levels.keySet()) {
+            if (levels.get(key) instanceof NumericTag && !into.contains(key)) {
                 into.add(key);
             }
         }

@@ -2,6 +2,9 @@ package com.pockyl.inventorybackups.permission;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
+import net.minecraft.server.permissions.PermissionSet;
 
 import com.pockyl.inventorybackups.Config;
 import com.pockyl.inventorybackups.InventoryBackups;
@@ -48,7 +51,12 @@ public final class Permissions {
 
     /** The answer without a permission mod. */
     public static boolean byOperatorLevel(ServerPlayer player) {
-        return player.hasPermissions(Config.PERMISSION_LEVEL.get());
+        return atLevel(player.permissions(), Config.PERMISSION_LEVEL.get());
+    }
+
+    /** Whether the permissions include the operator level {@code level} (0-4). */
+    public static boolean atLevel(PermissionSet permissions, int level) {
+        return permissions.hasPermission(new Permission.HasCommandLevel(PermissionLevel.byId(level)));
     }
 
     public static boolean has(ServerPlayer player, Node node) {
@@ -64,7 +72,7 @@ public final class Permissions {
     /** Players are checked through the permission system; the console and command blocks by operator level. */
     public static boolean has(CommandSourceStack source, Node node) {
         ServerPlayer player = source.getPlayer();
-        return player != null ? has(player, node) : source.hasPermission(Config.PERMISSION_LEVEL.get());
+        return player != null ? has(player, node) : atLevel(source.permissions(), Config.PERMISSION_LEVEL.get());
     }
 
     public static boolean hasAny(CommandSourceStack source) {

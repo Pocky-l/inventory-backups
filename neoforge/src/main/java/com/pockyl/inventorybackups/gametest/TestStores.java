@@ -31,7 +31,7 @@ final class TestStores {
             Path root = Files.createTempDirectory("inventorybackups-test");
             return new BackupStore(root, helper.getLevel().registryAccess(), () -> 4);
         } catch (IOException e) {
-            throw new GameTestAssertException("Could not create a temporary folder: " + e.getMessage());
+            throw GameTests.failure("Could not create a temporary folder: " + e.getMessage());
         }
     }
 
