@@ -1,0 +1,36 @@
+// The code shared by Forge and Fabric, compiled against plain Minecraft. Nothing here may use a loader API: what the
+// loaders do differently goes through platform.Platform / platform.ClientPlatform.
+plugins {
+    id 'multiloader-common'
+    id 'net.neoforged.moddev.legacyforge'
+}
+
+legacyForge {
+    mcpVersion = minecraft_version
+    parchment {
+        mappingsVersion = parchment_mappings_version
+        minecraftVersion = parchment_minecraft_version
+    }
+}
+
+dependencies {
+    compileOnly 'org.spongepowered:mixin:0.8.5'
+    // ForgeConfigSpec: Forge's own on Forge, Forge Config API Port's on Fabric.
+    compileOnly "fuzs.forgeconfigapiport:forgeconfigapiport-common:${forge_config_api_port_version}"
+}
+
+configurations {
+    commonJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    commonResources {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+}
+
+artifacts {
+    commonJava sourceSets.main.java.sourceDirectories.singleFile
+    commonResources sourceSets.main.resources.sourceDirectories.singleFile
+}
