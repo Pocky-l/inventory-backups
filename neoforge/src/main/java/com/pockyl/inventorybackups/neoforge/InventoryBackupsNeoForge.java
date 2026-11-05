@@ -15,7 +15,7 @@ import com.pockyl.inventorybackups.gametest.GameTests;
 @Mod(InventoryBackups.MOD_ID)
 public final class InventoryBackupsNeoForge {
     public InventoryBackupsNeoForge(IEventBus modBus, ModContainer container) {
-        container.registerConfig(ModConfig.Type.COMMON, Config.SPEC, InventoryBackups.CONFIG_FILE);
+        container.registerConfig(ModConfig.Type.LOCAL, Config.SPEC, InventoryBackups.CONFIG_FILE);
         modBus.addListener(NeoForgeNetwork::register);
         GameTests.register(modBus);
     }

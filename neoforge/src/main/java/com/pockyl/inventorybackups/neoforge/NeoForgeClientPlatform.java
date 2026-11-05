@@ -13,7 +13,6 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.client.settings.KeyModifier;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
-import org.lwjgl.glfw.GLFW;
 
 import com.pockyl.inventorybackups.client.KeyBindings;
 import com.pockyl.inventorybackups.platform.ClientPlatform;
@@ -41,7 +40,7 @@ public final class NeoForgeClientPlatform implements ClientPlatform {
     @Override
     public KeyMapping createOpenKey() {
         return new KeyMapping(KeyBindings.OPEN_NAME, KeyConflictContext.IN_GAME, KeyModifier.CONTROL,
-                InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I, CATEGORY);
+                InputConstants.Type.KEYBOARD, InputConstants.KEY_I, CATEGORY);
     }
 
     @Override

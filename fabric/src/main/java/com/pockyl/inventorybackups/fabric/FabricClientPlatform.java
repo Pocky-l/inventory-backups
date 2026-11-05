@@ -10,7 +10,6 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
 
 import com.pockyl.inventorybackups.client.KeyBindings;
 import com.pockyl.inventorybackups.platform.ClientPlatform;
@@ -35,7 +34,7 @@ public final class FabricClientPlatform implements ClientPlatform {
 
     @Override
     public KeyMapping createOpenKey() {
-        return new KeyMapping(KeyBindings.OPEN_NAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I, CATEGORY);
+        return new KeyMapping(KeyBindings.OPEN_NAME, InputConstants.Type.KEYBOARD, InputConstants.KEY_I, CATEGORY);
     }
 
     @Override

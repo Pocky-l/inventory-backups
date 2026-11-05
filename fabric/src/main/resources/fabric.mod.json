@@ -21,7 +21,7 @@
   "depends": {
     "fabricloader": ">=${fabric_loader_version}",
     "fabric-api": ">=${fabric_api_version}",
-    "forgeconfigapiport": ">=26.2.0",
+    "forgeconfigapiport": ">=26.3.0",
     "minecraft": "${minecraft_version}",
     "java": ">=25"
   },

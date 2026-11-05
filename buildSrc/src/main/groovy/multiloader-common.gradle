@@ -10,7 +10,7 @@ base {
     archivesName = "${mod_id}-${project.name}-${minecraft_version}"
 }
 
-// Minecraft 26.2 runs on Java 25.
+// Minecraft 26.3 runs on Java 25.
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 repositories {

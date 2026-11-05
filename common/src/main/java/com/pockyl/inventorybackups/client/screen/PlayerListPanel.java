@@ -1,5 +1,6 @@
 package com.pockyl.inventorybackups.client.screen;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.PlayerFaceExtractor;
@@ -9,7 +10,6 @@ import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import com.pockyl.inventorybackups.client.Formats;
 import com.pockyl.inventorybackups.network.PlayerRow;
@@ -273,13 +273,13 @@ final class PlayerListPanel {
         if (!field.isFocused()) {
             return false;
         }
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_ENTER) {
+        if (keyCode == InputConstants.KEY_ESCAPE || keyCode == InputConstants.KEY_RETURN) {
             field.setFocused(false);
             return true;
         }
         boolean handled = field.keyPressed(Inputs.key(keyCode, scanCode, modifiers));
         refilter();
-        return handled || keyCode != GLFW.GLFW_KEY_ESCAPE;
+        return handled || keyCode != InputConstants.KEY_ESCAPE;
     }
 
     boolean charTyped(int codePoint, int modifiers) {

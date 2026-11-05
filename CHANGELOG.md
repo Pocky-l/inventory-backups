@@ -4,6 +4,14 @@ All notable changes to this mod are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0+26.3] - 2026-11-05
+### Added
+- A version for Minecraft 26.3, for [NeoForge](https://neoforged.net/) and [Fabric](https://fabricmc.net/) (with
+  [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api) and
+  [Forge Config API Port](https://www.curseforge.com/minecraft/mc-mods/forge-config-api-port)), with everything of 3.2.0.
+- A server moved from an older Minecraft version keeps its backups: items stored in the old format are updated when
+  they are read, with their names and enchantments.
+
 ## [3.2.0+26.2] - 2026-11-05
 ### Added
 - A version for Minecraft 26.2, for [NeoForge](https://neoforged.net/) and [Fabric](https://fabricmc.net/) (with

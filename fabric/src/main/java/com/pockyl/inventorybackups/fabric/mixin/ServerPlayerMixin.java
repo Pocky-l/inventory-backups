@@ -6,8 +6,6 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.animal.nautilus.AbstractNautilus;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.item.ItemStack;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,12 +14,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.pockyl.inventorybackups.event.CommonEvents;
-import com.pockyl.inventorybackups.fabric.DeathDrops;
 
 import java.util.OptionalInt;
 
 /**
- * Deaths, dropped items and container sessions of players, where NeoForge fires its events. A canceled death (Fabric
+ * Deaths and container sessions of players, where NeoForge fires its events. A canceled death (Fabric
  * API's ALLOW_DEATH, totems) never reaches {@code die}.
  */
 @Mixin(ServerPlayer.class)
@@ -35,15 +32,6 @@ abstract class ServerPlayerMixin {
     private void inventorybackups$died(DamageSource cause, CallbackInfo info) {
         CommonEvents.beforeDeath(inventorybackups$self());
         CommonEvents.death(inventorybackups$self(), cause);
-    }
-
-    // Every item a player drops passes here: thrown out by hand or from a screen, or dropped on death.
-    @Inject(method = "drop(Lnet/minecraft/world/item/ItemStack;ZZ)Lnet/minecraft/world/entity/item/ItemEntity;", at = @At("RETURN"))
-    private void inventorybackups$dropped(ItemStack stack, boolean dropAround, boolean traceItem, CallbackInfoReturnable<ItemEntity> info) {
-        ItemEntity entity = info.getReturnValue();
-        if (entity != null && !DeathDrops.collect(inventorybackups$self(), entity)) {
-            CommonEvents.itemTossed(inventorybackups$self(), entity);
-        }
     }
 
     @Inject(method = "openMenu", at = @At("RETURN"))

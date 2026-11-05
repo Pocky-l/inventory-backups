@@ -3,6 +3,7 @@ package com.pockyl.inventorybackups.backup;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntCollection;
+import net.minecraft.util.Prediction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -148,7 +149,7 @@ public final class PlayerSlots {
                 continue;
             }
             if (!offline) {
-                receiver.drop(remaining, false);
+                receiver.drop(remaining, false, Prediction.SERVER_ONLY);
                 continue;
             }
             remaining = receiver.getEnderChestInventory().addItem(remaining);

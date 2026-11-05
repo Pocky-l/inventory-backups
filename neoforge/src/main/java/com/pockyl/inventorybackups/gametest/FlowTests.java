@@ -1,5 +1,6 @@
 package com.pockyl.inventorybackups.gametest;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
@@ -68,7 +69,7 @@ public final class FlowTests {
         long start = System.currentTimeMillis();
         ServerPlayer dropper = TestPlayers.join(helper);
         ServerPlayer finder = TestPlayers.join(helper);
-        ItemEntity dropped = dropper.drop(new ItemStack(Items.EMERALD, 7), false);
+        ItemEntity dropped = dropper.drop(new ItemStack(Items.EMERALD, 7), false, Prediction.SERVER_ONLY);
         if (dropped == null) {
             throw GameTests.failure("Nothing was dropped");
         }

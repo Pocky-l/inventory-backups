@@ -1,5 +1,6 @@
 package com.pockyl.inventorybackups.client.screen;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
@@ -11,7 +12,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import com.pockyl.inventorybackups.client.Formats;
 import com.pockyl.inventorybackups.network.Payloads;
@@ -538,20 +538,20 @@ final class SearchPanel {
             return false;
         }
         switch (keyCode) {
-            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
+            case InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
                 submit();
                 return true;
             }
-            case GLFW.GLFW_KEY_DOWN -> {
+            case InputConstants.KEY_DOWN -> {
                 suggestion = Math.min(suggestions.size() - 1, suggestion + 1);
                 showSuggestions = true;
                 return true;
             }
-            case GLFW.GLFW_KEY_UP -> {
+            case InputConstants.KEY_UP -> {
                 suggestion = Math.max(0, suggestion - 1);
                 return true;
             }
-            case GLFW.GLFW_KEY_ESCAPE -> {
+            case InputConstants.KEY_ESCAPE -> {
                 if (showSuggestions) {
                     showSuggestions = false;
                 } else {

@@ -1,5 +1,6 @@
 package com.pockyl.inventorybackups.client.screen;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
@@ -12,7 +13,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import com.pockyl.inventorybackups.client.ClientConfig;
 import com.pockyl.inventorybackups.client.ClientSession;
@@ -582,25 +582,25 @@ public final class AdminScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         int keyCode = event.key();
-        int scanCode = event.scancode();
+        int scanCode = event.keycode();
         int modifiers = event.modifiers();
         if (dialog != null) {
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            if (keyCode == InputConstants.KEY_ESCAPE) {
                 dialog = null;
-            } else if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+            } else if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_NUMPADENTER) {
                 dialog.confirm();
             }
             return true;
         }
-        boolean ctrl = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
-        boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
+        boolean ctrl = (modifiers & InputConstants.MOD_CONTROL) != 0;
+        boolean shift = (modifiers & InputConstants.MOD_SHIFT) != 0;
         boolean typing = tab == Tab.SEARCH ? search.isTyping() : players.isTyping();
-        if (ctrl && keyCode == GLFW.GLFW_KEY_F && canSearch()) {
+        if (ctrl && keyCode == InputConstants.KEY_F && canSearch()) {
             tab = Tab.SEARCH;
             search.focus();
             return true;
         }
-        if (keyCode == GLFW.GLFW_KEY_TAB && !typing) {
+        if (keyCode == InputConstants.KEY_TAB && !typing) {
             tab = tab == Tab.TIMELINE && canSearch() ? Tab.SEARCH : Tab.TIMELINE;
             return true;
         }
@@ -623,23 +623,23 @@ public final class AdminScreen extends Screen {
 
     private boolean timelineKey(int keyCode, boolean ctrl, boolean shift) {
         switch (keyCode) {
-            case GLFW.GLFW_KEY_LEFT -> step(shift ? -10 : -1);
-            case GLFW.GLFW_KEY_RIGHT -> step(shift ? 10 : 1);
-            case GLFW.GLFW_KEY_HOME -> select(0);
-            case GLFW.GLFW_KEY_END -> select(model.entries.size() - 1);
-            case GLFW.GLFW_KEY_SPACE -> togglePlay();
-            case GLFW.GLFW_KEY_D -> select(model.previousDeath());
-            case GLFW.GLFW_KEY_A -> {
+            case InputConstants.KEY_LEFT -> step(shift ? -10 : -1);
+            case InputConstants.KEY_RIGHT -> step(shift ? 10 : 1);
+            case InputConstants.KEY_HOME -> select(0);
+            case InputConstants.KEY_END -> select(model.entries.size() - 1);
+            case InputConstants.KEY_SPACE -> togglePlay();
+            case InputConstants.KEY_D -> select(model.previousDeath());
+            case InputConstants.KEY_A -> {
                 if (ctrl) {
                     inventory.selectAll();
                 } else {
                     timeline.pin(true);
                 }
             }
-            case GLFW.GLFW_KEY_B -> timeline.pin(false);
-            case GLFW.GLFW_KEY_C -> details.cycleBase();
-            case GLFW.GLFW_KEY_UP -> players.step(-1);
-            case GLFW.GLFW_KEY_DOWN -> players.step(1);
+            case InputConstants.KEY_B -> timeline.pin(false);
+            case InputConstants.KEY_C -> details.cycleBase();
+            case InputConstants.KEY_UP -> players.step(-1);
+            case InputConstants.KEY_DOWN -> players.step(1);
             default -> {
                 return false;
             }

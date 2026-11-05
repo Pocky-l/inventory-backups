@@ -3,7 +3,6 @@ package com.pockyl.inventorybackups.neoforge.compat;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import com.pockyl.inventorybackups.compat.SlotProvider;
@@ -13,8 +12,8 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 
 /**
- * Cosmetic Armor Reworked: {@code armor/<index>}, 0 boots to 3 helmet like the armor slots. Its inventory is a NeoForge
- * {@link ItemStackHandler}, so only finding it needs reflection.
+ * Cosmetic Armor Reworked: {@code armor/<index>}, 0 boots to 3 helmet like the armor slots. Its inventory (an item handler) is
+ * reached through reflection, so the NeoForge item API of this version does not matter.
  */
 public final class CosmeticArmorSlots implements SlotProvider {
     private static final String TYPE = "armor";
@@ -33,16 +32,17 @@ public final class CosmeticArmorSlots implements SlotProvider {
 
     @Override
     public void read(Player player, BiConsumer<String, ItemStack> slots) throws ReflectiveOperationException {
-        ItemStackHandler stacks = stacks(player);
-        for (int i = 0; i < stacks.getSlots(); i++) {
-            slots.accept(TYPE + "/" + i, stacks.getStackInSlot(i));
+        Object stacks = stacks(player);
+        int size = size(stacks);
+        for (int i = 0; i < size; i++) {
+            slots.accept(TYPE + "/" + i, stack(stacks, i));
         }
     }
 
     @Override
     public ItemStack get(Player player, String slot) throws ReflectiveOperationException {
         int index = index(player, slot);
-        return index < 0 ? ItemStack.EMPTY : stacks(player).getStackInSlot(index);
+        return index < 0 ? ItemStack.EMPTY : stack(stacks(player), index);
     }
 
     @Override
@@ -52,22 +52,31 @@ public final class CosmeticArmorSlots implements SlotProvider {
             return false;
         }
         // The inventory syncs itself to the clients on every change.
-        stacks(player).setStackInSlot(index, stack);
+        Object stacks = stacks(player);
+        stacks.getClass().getMethod("setStackInSlot", int.class, ItemStack.class).invoke(stacks, index, stack);
         return true;
     }
 
     private int index(Player player, String slot) throws ReflectiveOperationException {
         SlotProvider.IndexedSlot indexed = SlotProvider.indexed(slot);
-        if (indexed == null || !indexed.type().equals(TYPE) || indexed.index() >= stacks(player).getSlots()) {
+        if (indexed == null || !indexed.type().equals(TYPE) || indexed.index() >= size(stacks(player))) {
             return -1;
         }
         return indexed.index();
     }
 
-    private ItemStackHandler stacks(Player player) throws ReflectiveOperationException {
+    private Object stacks(Player player) throws ReflectiveOperationException {
         if (getStacks == null) {
             getStacks = Class.forName("lain.mods.cos.api.CosArmorAPI").getMethod("getCAStacks", UUID.class);
         }
-        return (ItemStackHandler) getStacks.invoke(null, player.getUUID());
+        return getStacks.invoke(null, player.getUUID());
+    }
+
+    private static int size(Object stacks) throws ReflectiveOperationException {
+        return (int) stacks.getClass().getMethod("getSlots").invoke(stacks);
+    }
+
+    private static ItemStack stack(Object stacks, int index) throws ReflectiveOperationException {
+        return (ItemStack) stacks.getClass().getMethod("getStackInSlot", int.class).invoke(stacks, index);
     }
 }
