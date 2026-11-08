@@ -177,19 +177,6 @@ screen is in `docs/ui-mockup` (open `index.html` in a browser).
   </tr>
 </table>
 
-**💡 Light**
-
-<table>
-  <tr>
-    <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/lumen-rigs"><img src="docs/more-mods/lumen_rigs.png" width="48" alt="Lumen Rigs"></a></td>
-    <td><a href="https://www.curseforge.com/minecraft/mc-mods/lumen-rigs"><b>Lumen Rigs</b></a> - aimable spotlights and floodlights with colored light and visible beams (<a href="https://github.com/Pocky-l/lumen-rigs">source</a>)</td>
-  </tr>
-  <tr>
-    <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/neon-glowsticks"><img src="docs/more-mods/neon_glowsticks.png" width="48" alt="Neon Glowsticks"></a></td>
-    <td><a href="https://www.curseforge.com/minecraft/mc-mods/neon-glowsticks"><b>Neon Glowsticks</b></a> - throwable glowsticks that bounce, roll and light up the dark (<a href="https://github.com/Pocky-l/neon-glowsticks">source</a>)</td>
-  </tr>
-</table>
-
 **🎨 Graphics & performance**
 
 <table>
@@ -200,19 +187,6 @@ screen is in `docs/ui-mockup` (open `index.html` in a browser).
   <tr>
     <td width="56"><a href="https://www.curseforge.com/minecraft/shaders/pocky-shaders"><img src="docs/more-mods/pocky_shaders.png" width="48" alt="Pocky Shaders"></a></td>
     <td><a href="https://www.curseforge.com/minecraft/shaders/pocky-shaders"><b>Pocky Shaders</b></a> - a cosy, natural shader pack that shows the weather of these mods (<a href="https://github.com/Pocky-l/pocky-shaders">source</a>)</td>
-  </tr>
-</table>
-
-**⚔️ Gear & gameplay**
-
-<table>
-  <tr>
-    <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/holy-staff"><img src="docs/more-mods/holy_staff.png" width="48" alt="Holy Staff"></a></td>
-    <td><a href="https://www.curseforge.com/minecraft/mc-mods/holy-staff"><b>Holy Staff</b></a> - a healing staff with three skills and flying heal numbers (<a href="https://github.com/Pocky-l/holy-staff">source</a>)</td>
-  </tr>
-  <tr>
-    <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/ranchers-vacpack"><img src="docs/more-mods/vacpack.png" width="48" alt="Rancher's Vacpack"></a></td>
-    <td><a href="https://www.curseforge.com/minecraft/mc-mods/ranchers-vacpack"><b>Rancher's Vacpack</b></a> - a Slime Rancher vacuum gun for items and small mobs (<a href="https://github.com/Pocky-l/ranchers-vacpack">source</a>)</td>
   </tr>
 </table>
 
@@ -231,6 +205,27 @@ screen is in `docs/ui-mockup` (open `index.html` in a browser).
   <tr>
     <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/mekanism-advancedgenerators"><img src="docs/more-mods/mekanismadvancedgenerators.png" width="48" alt="Mekanism Advanced Generators"></a></td>
     <td><a href="https://www.curseforge.com/minecraft/mc-mods/mekanism-advancedgenerators"><b>Mekanism Advanced Generators</b></a> - nine tiers of solar panels, big solar generators, cubes and cables for Mekanism (<a href="https://github.com/Pocky-l/Mekanism-MoreSolarPanels">source</a>)</td>
+  </tr>
+</table>
+
+**🧩 Libraries & addons**
+
+<table>
+  <tr>
+    <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/diegesis"><img src="docs/more-mods/diegesis.png" width="48" alt="Diegesis"></a></td>
+    <td><a href="https://www.curseforge.com/minecraft/mc-mods/diegesis"><b>Diegesis</b></a> - a library for interfaces you work with right on the block, with no menu screen (<a href="https://github.com/Pocky-l/diegesis">source</a>)</td>
+  </tr>
+  <tr>
+    <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-delight"><img src="docs/more-mods/handson_delight.png" width="48" alt="Hands-On Delight"></a></td>
+    <td><a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-delight"><b>Hands-On Delight</b></a> - cook in Farmer's Delight with your own hands, right on its blocks (<a href="https://github.com/Pocky-l/handson-delight">source</a>)</td>
+  </tr>
+  <tr>
+    <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-furniture"><img src="docs/more-mods/handson_furniture.png" width="48" alt="Hands-On Furniture"></a></td>
+    <td><a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-furniture"><b>Hands-On Furniture</b></a> - open MrCrayfish's fridges, cabinets and drawers by hand and put food anywhere on their shelves (<a href="https://github.com/Pocky-l/handson-furniture">source</a>)</td>
+  </tr>
+  <tr>
+    <td width="56"><a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla"><img src="docs/more-mods/handson_vanilla.png" width="48" alt="Hands-On Vanilla"></a></td>
+    <td><a href="https://www.curseforge.com/minecraft/mc-mods/hands-on-vanilla"><b>Hands-On Vanilla</b></a> - craft and smelt with your own hands, right on the crafting table and the furnace, client-side (<a href="https://github.com/Pocky-l/handson-vanilla">source</a>)</td>
   </tr>
 </table>
 
